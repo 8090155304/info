@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .print-btn {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .print-btn button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .print-btn button:hover {
+            background: #45a049;
+        }
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .company-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 60px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border: 2px solid #000;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .logo-upload {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .control-group input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .logo-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-btn {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .logo-btn:hover {
+            background: #F57C00;
+        }
+        
+        .company-text {
+            font-size: 12px;
+            color: #333;
+        }
+        
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .invoice-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border-bottom: 2px solid #000;
+        }
+        
+        .detail-section {
+            padding: 15px;
+            border-right: 1px solid #000;
+        }
+        
+        .detail-section:last-child {
+            border-right: none;
+        }
+        
+        .detail-section h4 {
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        .detail-section p {
+            font-size: 14px;
+            margin-bottom: 3px;
+            color: #333;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        
+        .items-table th,
+        .items-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .items-table th:nth-child(1),
+        .items-table td:nth-child(1) { width: 5% !important; }
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) { width: 41% !important; }
+        .items-table th:nth-child(3),
+        .items-table td:nth-child(3) { width: 8% !important; }
+        .items-table th:nth-child(4),
+        .items-table td:nth-child(4) { width: 12% !important; }
+        .items-table th:nth-child(5),
+        .items-table td:nth-child(5) { 
+            width: 80px !important; 
+            max-width: 80px !important;
+            min-width: 80px !important;
+        }
+        .items-table th:nth-child(6),
+        .items-table td:nth-child(6) { width: 8% !important; }
+        .items-table th:nth-child(7),
+        .items-table td:nth-child(7) { width: 8% !important; }
+        .items-table th:nth-child(8),
+        .items-table td:nth-child(8) { width: 12% !important; }
+        
+        .items-table th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .items-table .item-name {
+            text-align: left;
+        }
+        
+        .editable {
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: inherit;
+            font-size: inherit;
+            color: inherit;
+            outline: none;
+        }
+        
+        .editable:focus {
+            background: #f9f9f9;
+            border: 1px dashed #4CAF50;
+        }
+        
+        .total-row {
+            background: #f9f9f9;
+            font-weight: bold;
+        }
+        
+        .add-row-btn {
+            margin: 10px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .add-row-btn:hover {
+            background: #1976D2;
+        }
+        
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-top: 2px solid #000;
+        }
+        
+        .authorized {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .footer-logo {
+            width: Autopx;
+            height: 40px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        @media print {
+            .print-btn, .controls {
+                display: none !important;
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                border: 2px solid #000;
+            }
+            
+            .add-row-btn {
+                display: none !important;
+            }
+            
+            .items-table th:nth-child(8),
+            .items-table td:nth-child(8) {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-btn">
+        <button onclick="window.print()">🖨️ Print Invoice</button>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="invoiceNum">Invoice Number:</label>
+            <input type="text" id="invoiceNum" placeholder="A00001" onchange="updateInvoiceNumber()">
+        </div>
+        
+        <div class="control-group">
+            <label for="companyName">Company Name:</label>
+            <input type="text" id="companyName" placeholder="SHIV COMPUTER" onchange="updateCompanyName()">
+        </div>
+        
+        <div class="control-group logo-controls">
+            <label>Logo:</label>
+            <input type="file" id="logoUpload" accept="image/*" onchange="updateLogo()" style="display: none;">
+            <button class="logo-btn" onclick="document.getElementById('logoUpload').click()">📷 Upload Logo</button>
+            <button class="logo-btn" onclick="resetLogo()">🔄 Reset Logo</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="invoice-header">
+            <div class="company-info">
+                <div class="logo" id="logoContainer" onclick="document.getElementById('logoUpload').click()" title="Click to change logo">
+                    <span id="logoText">SC</span>
+                </div>
+                <div class="company-text">
+                    <div style="font-weight: bold;" id="companyNameDisplay">SHIV COMPUTER</div>
+                    <div>We Understand Your Problem</div>
+                </div>
+            </div>
+            <div class="invoice-title">Invoice</div>
+        </div>
+        
+        <div class="invoice-details">
+            <div class="detail-section">
+                <h4>Invoice No #</h4>
+                <p><input type="text" class="editable" id="invoiceDisplay" value="A00001" placeholder="Invoice Number"></p>
+                <h4>Invoice Date</h4>
+                <p><input type="date" class="editable" value="2025-08-20"></p>
+                <h4>Due Date</h4>
+                <p><input type="date" class="editable" value="2025-09-17"></p>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Billed By</h4>
+                <p><input type="text" class="editable" id="billedByDisplay" value="Shiv Computer" placeholder="Company Name"></p>
+                <p><textarea class="editable" rows="3" placeholder="Address">Shree Durge Ma Bal Govind Inter College, Lucknow , India - 227306</textarea></p>
+                <p>Phone: <input type="text" class="editable" value="+91 80901 55304" placeholder="Phone"></p>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Billed To</h4>
+                <p><input type="text" class="editable" placeholder="Client Name"></p>
+                <p><textarea class="editable" rows="3" placeholder="Client Address">India</textarea></p>
+                <p>Phone: <input type="text" class="editable" value="+91 79854 46581" placeholder="Phone"></p>
+            </div>
+        </div>
+        
+        <table class="items-table" id="itemsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Subtotal</th>
+                    <th>Discount (%)</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="itemsBody">
+                <tr>
+                    <td>1.</td>
+                    <td class="item-name"><input type="text" class="editable" value="Item" placeholder="Item name"></td>
+                    <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0"></td>
+                    <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0" step="0.01"></td>
+                    <td class="subtotal">₹0.00</td>
+                    <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0" max="100" step="0.01"></td>
+                    <td class="amount">₹0.00</td>
+                    <td><button onclick="deleteRow(this)" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button></td>
+                </tr>
+                <tr>
+                    <td>2.</td>
+                    <td class="item-name"><input type="text" class="editable" value="Item" placeholder="Item name"></td>
+                    <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0"></td>
+                    <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0" step="0.01"></td>
+                    <td class="subtotal">₹0.00</td>
+                    <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0" max="100" step="0.01"></td>
+                    <td class="amount">₹0.00</td>
+                    <td><button onclick="deleteRow(this)" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="4" style="text-align: right; font-weight: bold;">Subtotal</td>
+                    <td id="subtotalAmount" style="font-weight: bold;">₹300.00</td>
+                    <td style="font-weight: bold;">After Discount</td>
+                    <td id="totalAmount" style="font-weight: bold;">₹290.00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <button class="add-row-btn" onclick="addRow()">+ Add Item</button>
+        
+        <div class="footer">
+            <div class="footer-logo">  Thank You   </div>
+            <div class="footer-logo">   Visit Again   </div>
+            <div class="authorized">
+                <div style="font-weight: bold;">SHIV COMPUTER</div>
+                <div style="margin-top: 5px;">We Understand Your Problem</div>
+                <div style="margin-top: 5px;">................................</div>
+                <div style="margin-top: 10px;">Authorised Signatory</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let rowCount = 2;
+        
+        function addRow() {
+            rowCount++;
+            const tbody = document.getElementById('itemsBody');
+            const row = tbody.insertRow();
+            
+            row.innerHTML = `
+                <td>${rowCount}.</td>
+                <td class="item-name"><input type="text" class="editable" placeholder="Item name"></td>
+                <td><input type="number" class="editable" value="1" onchange="calculateRow(this)" min="0"></td>
+                <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0" step="0.01"></td>
+                <td class="subtotal">₹0.00</td>
+                <td><input type="number" class="editable" value="0" onchange="calculateRow(this)" min="0" max="100" step="0.01"></td>
+                <td class="amount">₹0.00</td>
+                <td><button onclick="deleteRow(this)" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button></td>
+            `;
+            
+            calculateTotal();
+        }
+        
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+            updateRowNumbers();
+            calculateTotal();
+        }
+        
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('#itemsBody tr');
+            rowCount = 0;
+            rows.forEach((row, index) => {
+                row.cells[0].textContent = (index + 1) + '.';
+                rowCount = index + 1;
+            });
+        }
+        
+        function calculateRow(input) {
+            const row = input.closest('tr');
+            const quantity = parseFloat(row.cells[2].querySelector('input').value) || 0;
+            const rate = parseFloat(row.cells[3].querySelector('input').value) || 0;
+            const discount = parseFloat(row.cells[5].querySelector('input').value) || 0;
+            
+            const subtotal = quantity * rate;
+            const discountAmount = subtotal * (discount / 100);
+            const amount = subtotal - discountAmount;
+            
+            row.cells[4].textContent = '₹' + subtotal.toFixed(2);
+            row.cells[6].textContent = '₹' + amount.toFixed(2);
+            
+            calculateTotal();
+        }
+        
+        function calculateTotal() {
+            const amounts = document.querySelectorAll('.amount');
+            const subtotals = document.querySelectorAll('.subtotal');
+            let total = 0;
+            let subtotalSum = 0;
+            
+            amounts.forEach(amount => {
+                const value = parseFloat(amount.textContent.replace('₹', '')) || 0;
+                total += value;
+            });
+            
+            subtotals.forEach(subtotal => {
+                const value = parseFloat(subtotal.textContent.replace('₹', '')) || 0;
+                subtotalSum += value;
+            });
+            
+            document.getElementById('totalAmount').textContent = '₹' + total.toFixed(2);
+            document.getElementById('subtotalAmount').textContent = '₹' + subtotalSum.toFixed(2);
+        }
+        
+        // Logo and Invoice Number Functions
+        function updateLogo() {
+            const logoUpload = document.getElementById('logoUpload');
+            const logoContainer = document.getElementById('logoContainer');
+            const logoText = document.getElementById('logoText');
+            
+            if (logoUpload.files && logoUpload.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoContainer.style.backgroundImage = `url(${e.target.result})`;
+                    logoContainer.style.backgroundSize = 'cover';
+                    logoContainer.style.backgroundPosition = 'center';
+                    logoText.style.display = 'none';
+                }
+                reader.readAsDataURL(logoUpload.files[0]);
+            }
+        }
+        
+        function resetLogo() {
+            const logoContainer = document.getElementById('logoContainer');
+            const logoText = document.getElementById('logoText');
+            
+            logoContainer.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+            logoContainer.style.backgroundImage = '';
+            logoText.style.display = 'flex';
+            logoText.textContent = 'SC';
+            
+            document.getElementById('logoUpload').value = '';
+        }
+        
+        function updateInvoiceNumber() {
+            const invoiceNum = document.getElementById('invoiceNum').value;
+            const invoiceDisplay = document.getElementById('invoiceDisplay');
+            
+            if (invoiceNum.trim() !== '') {
+                invoiceDisplay.value = invoiceNum;
+            }
+        }
+        
+        function updateCompanyName() {
+            const companyName = document.getElementById('companyName').value;
+            const companyDisplay = document.getElementById('companyNameDisplay');
+            const billedByDisplay = document.getElementById('billedByDisplay');
+            
+            if (companyName.trim() !== '') {
+                companyDisplay.textContent = companyName;
+                billedByDisplay.value = companyName;
+                
+                // Update logo text with first letters
+                const logoText = document.getElementById('logoText');
+                const words = companyName.split(' ');
+                let initials = '';
+                words.forEach(word => {
+                    if (word.length > 0) {
+                        initials += word[0].toUpperCase();
+                    }
+                });
+                logoText.textContent = initials.substring(0, 2);
+            }
+        }
+        
+        // Initialize calculations and setup on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateTotal();
+            
+            // Set initial values
+            document.getElementById('invoiceNum').value = 'A00001';
+            document.getElementById('companyName').value = 'SHIV COMPUTER';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOB Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            color: white;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 1.1em;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.2s forwards;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+            color: #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.4s forwards;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.6s forwards;
+        }
+
+        .calculate-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .calculate-btn:hover::before {
+            left: 100%;
+        }
+
+        .calculate-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-size: 1.2em;
+            line-height: 1.8;
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            animation: resultPulse 0.8s ease-out;
+        }
+
+        @keyframes resultPulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            border-left: 4px solid #00bcd4;
+            animation: slideInRight 0.6s ease-out;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-label {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.1em;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .result-value {
+            font-weight: 900;
+            color: #ffeb3b;
+            font-size: 1.15em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #ffeb3b, #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 40%;
+            left: 80%;
+            animation-delay: 4s;
+        }
+
+        .speak-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speak-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .speak-btn:active {
+            transform: translateY(0);
+        }
+
+        .speak-btn.speaking {
+            animation: speaking 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes speaking {
+            0% {
+                background: linear-gradient(135deg, #4caf50, #45a049);
+            }
+            100% {
+                background: linear-gradient(135deg, #ff9800, #f57c00);
+            }
+        }
+
+        .age-highlight {
+            font-size: 1.4em;
+            color: #4caf50;
+            font-weight: 900;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(45deg, #4caf50, #8bc34a, #cddc39);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: ageGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes ageGlow {
+            0% {
+                filter: brightness(1);
+                transform: scale(1);
+            }
+            100% {
+                filter: brightness(1.2);
+                transform: scale(1.05);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+                max-width: 95%;
+            }
+
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                font-size: 1em;
+                margin-bottom: 6px;
+            }
+
+            input[type="date"] {
+                padding: 12px 15px;
+                font-size: 1em;
+            }
+
+            .calculate-btn {
+                padding: 15px;
+                font-size: 1.1em;
+            }
+
+            .result {
+                margin-top: 20px;
+                padding: 20px;
+                font-size: 1em;
+            }
+
+            .result-item {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .result-label {
+                font-size: 1em;
+                margin-bottom: 8px;
+                color: #e6250b;
+            }
+
+            .result-value {
+                font-size: 1.2em;
+                font-weight: 900;
+            }
+
+            .age-highlight {
+                font-size: 1.3em;
+            }
+
+            .speak-btn {
+                padding: 12px 20px;
+                font-size: 1em;
+                margin-top: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+                margin: 5px;
+                border-radius: 15px;
+            }
+
+            h1 {
+                font-size: 1.6em;
+                margin-bottom: 15px;
+            }
+
+            .result {
+                padding: 15px;
+                margin-top: 15px;
+            }
+
+            .result-item {
+                padding: 12px;
+                margin-bottom: 12px;
+                border-radius: 8px;
+            }
+
+            .result-label {
+                font-size: 0.9em;
+            }
+
+            .result-value {
+                font-size: 1.1em;
+            }
+
+            .age-highlight {
+                font-size: 1.2em;
+            }
+
+            .floating-shapes {
+                display: none; /* Hide floating shapes on very small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="container">
+        <h1>🎂 Age Calculator</h1>
+        
+        <div class="form-group">
+            <label for="birthDate">Enter Your Date of Birth:</label>
+            <input type="date" id="birthDate" required>
+        </div>
+        
+        <button class="calculate-btn" onclick="calculateAge()">
+            ✨ Calculate My Age ✨
+        </button>
+        
+        <div class="result" id="result"></div>
+        
+        <button class="speak-btn" id="speakBtn" onclick="speakResults()" style="display: none;">
+            🔊 हिंदी में सुनें
+        </button>
+    </div>
+
+    <script>
+        function calculateAge() {
+            const birthDate = document.getElementById('birthDate').value;
+            
+            if (!birthDate) {
+                alert('Please select your date of birth!');
+                return;
+            }
+
+            const birth = new Date(birthDate);
+            const today = new Date();
+            
+            // Calculate age
+            let years = today.getFullYear() - birth.getFullYear();
+            let months = today.getMonth() - birth.getMonth();
+            let days = today.getDate() - birth.getDate();
+
+            // Adjust for negative days
+            if (days < 0) {
+                months--;
+                const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += lastMonth.getDate();
+            }
+
+            // Adjust for negative months
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            // Calculate total days lived
+            const timeDiff = today.getTime() - birth.getTime();
+            const totalDays = Math.floor(timeDiff / (1000 * 3600 * 24));
+            
+            // Calculate total weeks
+            const totalWeeks = Math.floor(totalDays / 7);
+            
+            // Calculate total months
+            const totalMonths = years * 12 + months;
+            
+            // Calculate next birthday
+            let nextBirthday = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+            if (nextBirthday < today) {
+                nextBirthday.setFullYear(today.getFullYear() + 1);
+            }
+            const daysUntilBirthday = Math.ceil((nextBirthday - today) / (1000 * 3600 * 24));
+
+            // Display results
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="result-item">
+                    <span class="result-label">Your Age:</span>
+                    <span class="result-value age-highlight">${years} years, ${months} months, ${days} days</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Days Lived:</span>
+                    <span class="result-value">${totalDays.toLocaleString()} days</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Weeks Lived:</span>
+                    <span class="result-value">${totalWeeks.toLocaleString()} weeks</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Months Lived:</span>
+                    <span class="result-value">${totalMonths} months</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Days Until Next Birthday:</span>
+                    <span class="result-value">${daysUntilBirthday} days</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Born on:</span>
+                    <span class="result-value">${birth.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+            `;
+            
+            resultDiv.classList.add('show');
+            
+            // Show speak button
+            document.getElementById('speakBtn').style.display = 'block';
+            
+            // Auto-speak results after a short delay
+            setTimeout(() => {
+                speakResults();
+            }, 1000);
+        }
+
+        function speakResults() {
+            const birthDate = document.getElementById('birthDate').value;
+            if (!birthDate) return;
+
+            const birth = new Date(birthDate);
+            const today = new Date();
+            
+            // Calculate age
+            let years = today.getFullYear() - birth.getFullYear();
+            let months = today.getMonth() - birth.getMonth();
+            let days = today.getDate() - birth.getDate();
+
+            // Adjust for negative days
+            if (days < 0) {
+                months--;
+                const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += lastMonth.getDate();
+            }
+
+            // Adjust for negative months
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            // Calculate total days lived
+            const timeDiff = today.getTime() - birth.getTime();
+            const totalDays = Math.floor(timeDiff / (1000 * 3600 * 24));
+            
+            // Calculate next birthday
+            let nextBirthday = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+            if (nextBirthday < today) {
+                nextBirthday.setFullYear(today.getFullYear() + 1);
+            }
+            const daysUntilBirthday = Math.ceil((nextBirthday - today) / (1000 * 3600 * 24));
+
+            // Create speech text in Hindi
+            const speechText = `
+                आपकी उम्र की गणना तैयार है! 
+                आपकी वर्तमान उम्र ${years} साल, ${months} महीने, और ${days} दिन है। 
+                आपने इस धरती पर कुल ${totalDays.toLocaleString()} दिन जिए हैं। 
+                आपका अगला जन्मदिन ${daysUntilBirthday} दिनों में है। 
+                आप ${birth.toLocaleDateString('hi-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} को पैदा हुए थे।
+            `;
+
+            // Check if speech synthesis is supported
+            if ('speechSynthesis' in window) {
+                // Stop any ongoing speech
+                speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(speechText);
+                utterance.lang = 'hi-IN'; // Set language to Hindi
+                utterance.rate = 0.8; // Slightly slower for better Hindi pronunciation
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                
+                const speakBtn = document.getElementById('speakBtn');
+                
+                utterance.onstart = () => {
+                    speakBtn.textContent = '🔇 बोलना बंद करें';
+                    speakBtn.classList.add('speaking');
+                };
+                
+                utterance.onend = () => {
+                    speakBtn.textContent = '🔊 हिंदी में सुनें';
+                    speakBtn.classList.remove('speaking');
+                };
+                
+                utterance.onerror = () => {
+                    speakBtn.textContent = '🔊 हिंदी में सुनें';
+                    speakBtn.classList.remove('speaking');
+                    alert('आवाज़ की सुविधा उपलब्ध नहीं है या कोई त्रुटि हुई है।');
+                };
+
+                // Check if already speaking
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                    speakBtn.textContent = '🔊 हिंदी में सुनें';
+                    speakBtn.classList.remove('speaking');
+                } else {
+                    speechSynthesis.speak(utterance);
+                }
+            } else {
+                alert('आपके ब्राउज़र में आवाज़ की सुविधा उपलब्ध नहीं है।');
+            }
+        }
+
+        // Add some interactivity to the date input
+        document.getElementById('birthDate').addEventListener('change', function() {
+            this.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+
+        // Add enter key support
+        document.getElementById('birthDate').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateAge();
+            }
+        });
+
+        // Set max date to today
+        document.getElementById('birthDate').max = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>प्रतिशत कैलकुलेटर</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="SHIV.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 15px;
+    }
+    .calculator {
+      background: white;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      color: #333;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .result {
+      margin-top: 15px;
+      font-size: 20px;
+      color: #222;
+      font-weight: bold;
+    }
+    .history {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .history h3 {
+      font-size: 18px;
+      color: #333;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+    .history-item {
+      font-size: 16px;
+      margin: 5px 0;
+      padding: 8px;
+      background-color: #f3f3f3;
+      border-radius: 8px;
+    }
+    .action-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .action-buttons button {
+      flex: 1;
+      font-size: 14px;
+      padding: 10px;
+      background-color: #007bff;
+    }
+    .action-buttons button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h2>प्रतिशत कैलकुलेटर</h2>
+    <h1>By Dr. SHIV KUMAR</h1>
+    <input type="number" id="obtained" placeholder="प्राप्त अंक दर्ज करें">
+    <input type="number" id="total" placeholder="कुल अंक दर्ज करें">
+    <button onclick="calculatePercentage()">Calculate</button>
+    <div class="result" id="result"></div>
+
+    <div class="action-buttons">
+      <button onclick="clearHistory()" style="background-color: #e74c3c;">Clear History</button>
+      <button onclick="downloadPDF()">Download PDF</button>
+    </div>
+
+    <div class="history" id="history">
+      <h3>इतिहास</h3>
+    </div>
+  </div>
+
+  <script>
+    function calculatePercentage() {
+      const obtained = parseFloat(document.getElementById('obtained').value);
+      const total = parseFloat(document.getElementById('total').value);
+      const resultDiv = document.getElementById('result');
+      const historyDiv = document.getElementById('history');
+
+      if (isNaN(obtained) || isNaN(total) || total <= 0) {
+        resultDiv.textContent = "कृपया मान्य संख्याएँ दर्ज करें।";
+        resultDiv.style.color = "red";
+        return;
+      }
+
+      const percentage = (obtained / total) * 100;
+      const formatted = `${percentage.toFixed(2)}%`;
+      resultDiv.style.color = "#222";
+      resultDiv.textContent = `प्रतिशत: ${formatted}`;
+
+      // Add to history
+      const historyItem = document.createElement("div");
+      historyItem.className = "history-item";
+      historyItem.textContent = `प्राप्त: ${obtained}, कुल: ${total} → ${formatted}`;
+      historyDiv.appendChild(historyItem);
+    }
+
+    function clearHistory() {
+      const historyDiv = document.getElementById('history');
+      historyDiv.innerHTML = "<h3>इतिहास</h3>";
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const historyItems = document.querySelectorAll('.history-item');
+      if (historyItems.length === 0) {
+        alert("कोई इतिहास नहीं है जिसे PDF में बदला जाए।");
+        return;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("प्रतिशत कैलकुलेटर - इतिहास", 20, 20);
+
+      doc.setFont("helvetica", "normal");
+      let y = 30;
+      historyItems.forEach((item, index) => {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(`${index + 1}. ${item.textContent}`, 20, y);
+        y += 10;
+      });
+
+      doc.save("percentage-history.pdf");
+    }
+  </script>
+</body>
+</html>
+

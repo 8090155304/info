@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<title>विद्यालय जन्म प्रमाणपत्र</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="SHIV.png">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #fff;
+  }
+  .certificate {
+    width: 800px;
+    border: 2px solid #000;
+    padding: 40px;
+    margin: 20px auto;
+    position: relative;
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .logo img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+  }
+  .school-name {
+    text-align: center;
+    font-size: 26px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+ }
+  .school-namea {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+
+  }
+  .title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 20px 0;
+    text-decoration: underline;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  td {
+    padding: 8px;
+    vertical-align: top;
+  }
+  .label {
+    font-weight: bold;
+    width: 280px;
+  }
+  input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px dotted #000;
+    font-size: 14px;
+    font-family: inherit;
+    background: transparent;
+    outline: none;
+  }
+  .footer {
+    margin-top: 40px;
+    font-size: 18px;
+    font-style: italic;
+    text-align: center;
+  }
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 60px;
+    padding: 0 30px;
+  }
+  .sign-box {
+    text-align: center;
+    width: 30%;
+  }
+  .student-photo {
+    width: 120px;
+    height: 140px;
+    border: 1px solid #000;
+    background: #f0f0f0;
+    text-align: center;
+    font-size: 12px;
+    margin: auto;
+  }
+  .print-btn, .logo-btn, .photo-btn {
+    margin: 10px 5px;
+    padding: 8px 15px;
+    background: green;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  .logo-btn { background: #007BFF; }
+  .photo-btn { background: #FF5733; }
+  @media print {
+    .print-btn, .logo-btn, .photo-btn, #logoInput, #photoInput { display: none; }
+    input { border: none; }
+    body { margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+  <button class="print-btn" onclick="window.print()">🖨 प्रिंट</button>
+  <input type="file" id="logoInput" accept="image/*" style="display:none;">
+  <button class="logo-btn" onclick="document.getElementById('logoInput').click()">📷 लोगो बदलें</button>
+  <input type="file" id="photoInput" accept="image/*" style="display:none;">
+  <button class="photo-btn" onclick="document.getElementById('photoInput').click()">🖼 फोटो लगाएँ</button>
+
+  <div class="certificate">
+    <div class="logo"><img id="schoolLogo" src="" alt="School Logo"></div>
+    <div class="school-name"><input type="text" value="श्री दुर्गे माँ बाल गोविन्द इण्टर कालेज " style="font-size:26px;font-weight:bold;text-align:center;"></div>
+    <div class="school-namea "><input type="text" value="अचली खेड़ा मोहनलालगंज लखनऊ " style="font-size:14px;font-weight:bold;text-align:center;"></div>
+
+    <div class="title">जन्म प्रमाणपत्र / BIRTH CERTIFICATE</div>
+
+    <table>
+      <tr><td class="label">SR नंबर / SR NO.:</td><td><input type="text"></td></tr>
+      <tr><td class="label">विद्यार्थी का नाम / STUDENT NAME:</td><td><input type="text"></td></tr>
+      <tr><td class="label">पिता का नाम / FATHER'S NAME:</td><td><input type="text"></td></tr>
+      <tr><td class="label">माता का नाम / MOTHER'S NAME:</td><td><input type="text"></td></tr>
+      <tr><td class="label">जन्म तिथि / DATE OF BIRTH:</td><td><input type="text"></td></tr>
+      <tr><td class="label">लिंग / SEX:</td><td><input type="text"></td></tr>
+      <tr><td class="label">जन्म स्थान / PLACE OF BIRTH:</td><td><input type="text"></td></tr>
+      <tr><td class="label">विद्यालय का पता / SCHOOL ADDRESS:</td> <td><input type="text"></td></tr>
+      <tr><td class="label">प्रमाणपत्र जारी करने की तिथि / DATE OF ISSUE:</td><td><input type="text"></td></tr>
+    </table>
+
+    <div class="signatures">
+      <div class="sign-box">कक्षा अध्यापक  / Class Teacher</div>
+      <div class="sign-box">
+        <div class="student-photo" id="studentPhoto">Student Photo</div>
+      </div>
+      <div class="sign-box">
+        प्रधानाचार्य के हस्ताक्षर / Principal Signature <br>
+        <input type="text" value="">
+      </div>
+    </div>
+
+    <div class="footer">
+      "यह प्रमाणपत्र विद्यालय के अभिलेखों के आधार पर जारी किया गया है"<br>
+      (This certificate is issued on the basis of school records)
+    </div>
+  </div>
+
+<script>
+  // Logo change
+  document.getElementById('logoInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        document.getElementById('schoolLogo').src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Student Photo change
+  document.getElementById('photoInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const photo = document.getElementById('studentPhoto');
+        photo.innerHTML = `<img src="${event.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
+</body>
+</html>

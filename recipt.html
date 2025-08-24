@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Receipt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="SHIV.png">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .receipt-container { display: flex; gap: 20px; }
+    .receipt {
+      border: 2px solid #000; padding: 15px; width: 48%; 
+      border-radius: 8px; background: #fdfdfd;
+    }
+    .header { display: flex; align-items: center; gap: 10px; }
+    .header img { width: 60px; height: 60px; object-fit: contain; border: 1px solid #ccc; }
+    h2 { margin: 5px 0; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #000; padding: 6px; text-align: center; font-size: 13px; }
+    .total { text-align: right; font-weight: bold; margin-top: 10px; }
+    .btn { margin: 15px 5px; padding: 8px 15px; background: #1976d2; color: #fff;
+           border: none; border-radius: 5px; cursor: pointer; }
+    .btn:hover { background: #125a9e; }
+    .copy-label { text-align: center; font-weight: bold; margin-top: 5px; }
+    input[type="number"], input[type="text"] {
+      width: 100%; border: none; background: transparent; text-align: center;
+    }
+    .discount-box { margin-top: 10px; text-align: right; font-size: 14px; }
+    .discount-box input { width: 60px; text-align: right; }
+    .student-info { font-size: 14px; margin-top: 8px; }
+    .student-info span { display: inline-block; min-width: 120px; }
+  </style>
+</head>
+<body>
+
+  <input type="file" id="logoUpload" accept="image/*"> 
+  <button class="btn" onclick="addItem()">➕ Add Item</button>
+  <button class="btn" onclick="printReceipts()">🖨 Print Receipt</button>
+  
+  <div class="receipt-container">
+    <!-- Office Copy -->
+    <div class="receipt" id="customerCopy">
+      <div class="copy-label">Office Copy</div>
+      <div class="header">
+        <img id="logo" src="" alt="Logo">
+        <div id="officeInfo1" contenteditable="true"><b>श्री दुर्गे माँ बाल गोविन्द इण्टर कालेज</b><br>Address : अचली खेड़ा मोहनलालगंज लखनऊ <br>Phone: 8090155304<br> Student/Reg:....................  Fee of Month : </div>
+      </div>
+      <h2>RECEIPT</h2>
+      <div class="customer">
+        Student Name: <span id="studentName1" contenteditable="true">Student Name</span><br>
+        Date: <span id="date1" contenteditable="true">20-08-2025</span>
+      </div>
+      <div class="student-info">
+        Class: <span id="class1" contenteditable="true">10</span>  
+        Section: <span id="section1" contenteditable="true">A</span>  
+        Roll No: <span id="roll1" contenteditable="true">15</span><br>
+        Fee of month: <span id="roll1" contenteditable="true">January</span><br>
+        Class Teacher: <span id="teacher1" contenteditable="true">Mr./Mrs.: </span>
+      </div>
+
+      <table id="itemTable1">
+        <thead>
+          <tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="text" value="Tuition Fee" oninput="syncTables()"></td>
+            <td><input type="number" value="1" oninput="updateTotals()"></td>
+            <td><input type="number" value="2000" oninput="updateTotals()"></td>
+            <td class="lineTotal">2000</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="discount-box">
+        Discount: <input type="number" id="discount1" value="0" oninput="updateTotals()"> %  
+      </div>
+      <div class="total">Total: <span id="grandTotal1">2000</span></div>
+      <div class="total">Payable: <span id="finalTotal1">2000</span></div>
+    </div>
+
+    <!-- Customer Copy -->
+    <div class="receipt" id="officeCopy">
+      <div class="copy-label">Customer Copy</div>
+      <div class="header">
+        <img id="logo2" src="" alt="Logo">
+        <div id="officeInfo2"><b>श्री दुर्गे माँ बाल गोविन्द इण्टर कालेज</b><br>Address : अचली खेड़ा मोहनलालगंज लखनऊ <br>Phone: 8090155304<br> Student/Reg: ..................  Fee of Month : </div>
+      </div>
+      <h2>RECEIPT</h2>
+      <div class="customer">
+        Student Name: <span id="studentName2">Student Name</span><br>
+        Date: <span id="date2">20-08-2025</span>
+      </div>
+      <div class="student-info">
+        Class: <span id="class2">10</span>  
+        Section: <span id="section2">A</span>  
+        Roll No: <span id="roll2">15</span><br>
+        Month of Fee: <span id="Month">January </span><br>
+        Class Teacher: <span id="teacher2">Mr./Mrs.</span>
+      </div>
+
+      <table id="itemTable2">
+        <thead>
+          <tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="discount-box">
+        Discount: <input type="number" id="discount2" value="0" readonly> %  
+      </div>
+      <div class="total">Total: <span id="grandTotal2">2000</span></div>
+      <div class="total">Payable: <span id="finalTotal2">2000</span></div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Content Sync ----
+    function syncContent(id1, id2) {
+      const el1 = document.getElementById(id1);
+      const el2 = document.getElementById(id2);
+      el1.addEventListener("input", () => { el2.innerText = el1.innerText; });
+    }
+
+    syncContent("officeInfo1", "officeInfo2");
+    syncContent("studentName1", "studentName2");
+    syncContent("date1", "date2");
+    syncContent("class1", "class2");
+    syncContent("section1", "section2");
+    syncContent("roll1", "roll2");
+    syncContent("teacher1", "teacher2");
+
+    // ---- Logo Sync ----
+    document.getElementById("logoUpload").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = evt => {
+          document.getElementById("logo").src = evt.target.result;
+          document.getElementById("logo2").src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // ---- Add Item (sync) ----
+    function addItem() {
+      const t1 = document.getElementById("itemTable1").getElementsByTagName("tbody")[0];
+      const newRow = t1.insertRow();
+      newRow.innerHTML = `
+        <td><input type="text" value="New Item" oninput="syncTables()"></td>
+        <td><input type="number" value="1" oninput="updateTotals()"></td>
+        <td><input type="number" value="0" oninput="updateTotals()"></td>
+        <td class="lineTotal">0</td>
+      `;
+      syncTables();
+    }
+
+    // ---- Sync Tables ----
+    function syncTables() {
+      const t1 = document.getElementById("itemTable1").getElementsByTagName("tbody")[0];
+      const t2 = document.getElementById("itemTable2").getElementsByTagName("tbody")[0];
+      t2.innerHTML = "";
+
+      Array.from(t1.rows).forEach(r => {
+        const row = t2.insertRow();
+        row.innerHTML = r.innerHTML;
+
+        row.cells[0].children[0].value = r.cells[0].children[0].value;
+        row.cells[1].children[0].value = r.cells[1].children[0].value;
+        row.cells[2].children[0].value = r.cells[2].children[0].value;
+        row.cells[3].innerText = r.cells[3].innerText;
+
+        Array.from(row.querySelectorAll("input")).forEach(inp => inp.setAttribute("readonly", true));
+      });
+
+      document.getElementById("discount2").value = document.getElementById("discount1").value;
+      updateTable("itemTable2", "grandTotal2", "discount2", "finalTotal2");
+    }
+
+    // ---- Update Totals ----
+    function updateTotals() {
+      updateTable("itemTable1", "grandTotal1", "discount1", "finalTotal1");
+      syncTables(); // just one call here (no recursion loop now)
+    }
+
+    function updateTable(tableId, totalId, discountId, finalId) {
+      const table = document.getElementById(tableId);
+      const rows = table.getElementsByTagName("tbody")[0].rows;
+      let grandTotal = 0;
+      for (let r of rows) {
+        const qty = parseFloat(r.cells[1].children[0].value) || 0;
+        const price = parseFloat(r.cells[2].children[0].value) || 0;
+        const lineTotal = qty * price;
+        r.querySelector(".lineTotal").innerText = lineTotal.toFixed(2);
+        grandTotal += lineTotal;
+      }
+      document.getElementById(totalId).innerText = grandTotal.toFixed(2);
+
+      const discount = parseFloat(document.getElementById(discountId).value) || 0;
+      const discountAmount = (grandTotal * discount) / 100;
+      const finalTotal = grandTotal - discountAmount;
+      document.getElementById(finalId).innerText = finalTotal.toFixed(2);
+    }
+
+    // ---- Print ----
+    function printReceipts() { window.print(); }
+
+    // Initial sync
+    syncTables();
+  </script>
+</body>
+</html>
