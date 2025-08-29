@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shivbot</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Floating Chat Button */
+    .chat-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    /* Chat Container (hidden by default) */
+    .chat-container {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 300px;
+      max-height: 400px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      display: none; /* Initially hidden */
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+
+    .chat-header {
+      background: #128c7e;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .chat-box {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    .chat-input {
+      padding: 8px;
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .chat-input button {
+      margin-left: 5px;
+      padding: 8px 12px;
+      background: #25d366;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Chat Button -->
+  <button class="chat-btn" onclick="toggleChat()">💬</button>
+
+  <!-- Chatbot -->
+  <div class="chat-container" id="chatBox">
+    <header class="chat-header">
+      <h2>🤖 Shivai</h2>
+    </header>
+    
+    <div class="chat-box" id="chat-box"></div>
+    
+    <div class="chat-input">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button id="send-btn">➤</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+  <script>
+    function toggleChat() {
+      let chatBox = document.getElementById("chatBox");
+      if (chatBox.style.display === "block") {
+        chatBox.style.display = "none";
+      } else {
+        chatBox.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>

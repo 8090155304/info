@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shivbot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Chatbot Button and Popup Start -->
+
+<div id="chatbotPopup" style="display:none;position:fixed;bottom:80px;right:30px;z-index:10000;box-shadow:0 6px 24px rgba(0,0,0,0.15);background:#fff;border-radius:12px;overflow:hidden;">
+  <iframe src="popup.html" width="350" height="500" style="border:none;"></iframe>
+</div>
+<script>
+document.getElementById('chatbotBtn').onclick = function() {
+  var popup = document.getElementById('chatbotPopup');
+  popup.style.display = (popup.style.display === 'none') ? 'block' : 'none';
+};
+</script>
+<!-- Chatbot Button and Popup End -->
+
+  <div class="chat-container">
+    <header class="chat-header">
+      <h2>🤖Shivai</h2>
+    </header>
+    
+    <div class="chat-box" id="chat-box"></div>
+    
+    <div class="chat-input">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button id="send-btn">➤</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
