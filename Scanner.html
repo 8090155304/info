@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <title>Universal Image Metadata Scanner — Shiv</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/exifreader@4.22.0/dist/exif-reader.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.4/piexif.min.js"></script>
+  <style>
+    body{font-family: Inter, Arial, Helvetica, sans-serif;background:#f7fbff;padding:18px;color:#111}
+    h1{margin:6px 0 8px;font-size:20px}
+    .wrap{max-width:980px;margin:0 auto}
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    input[type=file]{padding:8px}
+    img.preview{max-width:260px;border-radius:8px;box-shadow:0 6px 18px rgba(2,24,68,0.06)}
+    .info{background:#fff;padding:14px;border-radius:10px;margin-top:12px;box-shadow:0 6px 18px rgba(2,24,68,0.05)}
+    pre{white-space:pre-wrap;word-break:break-word;font-size:13px}
+    .field{margin:6px 0}
+    .badge{display:inline-block;background:#eef6ff;padding:6px 8px;border-radius:999px;font-size:12px;margin-right:6px}
+    button{padding:6px 12px;border:none;border-radius:6px;cursor:pointer;background:#2563eb;color:#fff;font-size:14px}
+    button:hover{background:#1e4ed8}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Universal Image Metadata Scanner</h1>
+    <div>छवि किसी भी फॉर्मेट की हो — JPEG, PNG, WEBP, TIFF आदि — यह कोशिश करेगा पूरा उपलब्ध मेटाडेटा निकालने की। जहाँ जानकारी नहीं मिलेगी वहाँ <strong>n?a</strong> दिखेगा।</div>
+
+    <div class="controls">
+      <input id="fileInput" type="file" accept="image/*" />
+      <label class="badge">Supports: JPEG, PNG, WEBP, TIFF, GIF (limited)</label>
+      <button id="exportCSV">Export CSV</button>
+      <button id="exportJSON">Export JSON</button>
+    </div>
+
+    <div id="previewBox" style="margin-top:12px;display:flex;gap:14px;align-items:flex-start">
+      <div id="imgPreview"></div>
+      <div id="metaInfo" class="info"></div>
+    </div>
+
+    <h3 style="margin-top:14px">Full Raw Metadata (JSON)</h3>
+    <div class="info"><pre id="rawJson">—</pre></div>
+  </div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const metaInfo = document.getElementById('metaInfo');
+const rawJson = document.getElementById('rawJson');
+const imgPreview = document.getElementById('imgPreview');
+let lastResult = null; // store last metadata result
+
+function showField(label, value){
+  if(!value) value = 'n?a';
+  return `<div class="field"><strong>${label}:</strong> ${value}</div>`;
+}
+
+fileInput.addEventListener('change', async (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+
+  imgPreview.innerHTML = '';
+  const img = document.createElement('img');
+  img.className = 'preview';
+  img.src = URL.createObjectURL(file);
+  img.onload = ()=> URL.revokeObjectURL(img.src);
+  imgPreview.appendChild(img);
+
+  const fileName = file.name || 'n?a';
+  const fileSizeKB = (file.size/1024).toFixed(2) + ' KB';
+  const fileType = file.type || 'n?a';
+  const lastModified = file.lastModified ? (new Date(file.lastModified)).toLocaleString() : 'n?a';
+
+  const ab = await file.arrayBuffer();
+  let exif = {};
+  let xmp = null;
+  let piexifData = null;
+
+  try{ exif = ExifReader.load(ab, {expanded: true}); }catch(err){ exif = {}; }
+  try{
+    const text = new TextDecoder().decode(ab);
+    const xmpStart = text.indexOf('<x:xmpmeta');
+    const xmpEnd = text.indexOf('</x:xmpmeta>');
+    if(xmpStart !== -1 && xmpEnd !== -1){
+      xmp = text.substring(xmpStart, xmpEnd+12);
+    }
+  }catch(err){}
+  try{
+    if(file.type === 'image/jpeg'){
+      const bstr = new TextDecoder('latin1').decode(ab);
+      piexifData = piexif.load(bstr);
+    }
+  }catch(err){}
+
+  function pickTag(obj, possiblePaths){
+    for(const p of possiblePaths){
+      const parts = p.split('.');
+      let cur = obj;
+      let ok = true;
+      for(const part of parts){
+        if(!cur || !(part in cur)) { ok = false; break; }
+        cur = cur[part];
+      }
+      if(ok && cur && ('description' in cur || 'value' in cur)){
+        return (cur.description || cur.value);
+      }
+      if(ok && (typeof cur === 'string' || typeof cur === 'number')) return cur;
+    }
+    return null;
+  }
+
+  const createdCandidates = ['Exif.SubIFD.DateTimeOriginal','Exif.Image.DateTime','IFD0.DateTime','XMP.xmp.CreateDate'];
+  const modifiedCandidates = ['Exif.Image.DateTime','Exif.SubIFD.ModifyDate','XMP.xmp.ModifyDate'];
+  const softwareCandidates = ['Exif.Image.Software','IFD0.Software','XMP.xmp.SoftwareAgent','XMP.xmp.CreatorTool'];
+  const artistCandidates = ['Exif.Image.Artist','IFD0.Artist','XMP.dc.creator'];
+
+  const createdOn = pickTag(exif, createdCandidates);
+  const modifiedOn = pickTag(exif, modifiedCandidates);
+  const softwareTag = pickTag(exif, softwareCandidates);
+  const artistTag = pickTag(exif, artistCandidates);
+
+  const history = [];
+  if(modifiedOn){ history.push({when: modifiedOn, software: softwareTag || 'n?a'}); }
+
+  let html = '';
+  html += showField('File Name', fileName);
+  html += showField('Size', fileSizeKB);
+  html += showField('MIME Type', fileType);
+  html += showField('Last Modified (filesystem)', lastModified);
+  html += '<hr>';
+  html += showField('File Created On (metadata)', createdOn || 'n?a');
+  html += showField('Software (metadata)', softwareTag || 'n?a');
+  html += showField('Author/Artist', artistTag || 'n?a');
+  if(history.length){
+    html += '<div class="field"><strong>Edit history:</strong><ul>';
+    history.forEach(h=>{ html += `<li>${h.when} — ${h.software}</li>`; });
+    html += '</ul></div>';
+  } else {
+    html += showField('Edit history','n?a');
+  }
+
+  metaInfo.innerHTML = html;
+  const resultObj = {file:{name:fileName,size:file.size,type:fileType,lastModified:file.lastModified},createdOn,modifiedOn,software:softwareTag,artist:artistTag,history,exif,xmp,piexif:piexifData};
+  rawJson.textContent = JSON.stringify(resultObj,null,2);
+  lastResult = resultObj;
+});
+
+// Export buttons
+function downloadFile(filename, content){
+  const blob = new Blob([content], {type: 'text/plain'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+document.getElementById('exportJSON').addEventListener('click', ()=>{
+  if(!lastResult){ alert('पहले कोई image scan करें।'); return; }
+  downloadFile('metadata.json', JSON.stringify(lastResult,null,2));
+});
+
+document.getElementById('exportCSV').addEventListener('click', ()=>{
+  if(!lastResult){ alert('पहले कोई image scan करें।'); return; }
+  const rows = [];
+  rows.push(['File Name','Size','Type','Last Modified','Created On','Modified On','Software','Artist']);
+  rows.push([
+    lastResult.file.name,
+    lastResult.file.size,
+    lastResult.file.type,
+    new Date(lastResult.file.lastModified).toLocaleString(),
+    lastResult.createdOn||'n?a',
+    lastResult.modifiedOn||'n?a',
+    lastResult.software||'n?a',
+    lastResult.artist||'n?a'
+  ]);
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadFile('metadata.csv', csv);
+});
+</script>
+</body>
+</html>
