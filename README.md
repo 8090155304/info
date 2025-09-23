@@ -52,4 +52,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-✨ *Made with dedication by Shiv Kumar*
+✨ *Made with dedication by Dr.Shiv Kumar*
