@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Shiv Computer</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="SHIV.png">
   <style>
     body {
@@ -34,6 +34,7 @@
       text-decoration: none;
       font-weight: bold;
       padding: 5px 10px;
+      transition: all 0.3s ease;
     }
 
     nav ul li a:hover {
@@ -119,49 +120,36 @@
       <a href="https://pfms.nic.in/static/NewLayoutCommonContent.aspx?RequestPagename=static/KnowYourPayment_new.aspx">भुगतान स्थिति</a>
     </div>
   </main>
-</body>
-</html>
-
-  </main>
 
   <footer>
     <div class="footer-container">
       <p>&copy; 2025 Shiv Computer. All rights reserved.</p>
       <p>📍 27,Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
       <a aria-label="Chat on WhatsApp" 
-   href="https://wa.me/918090155304?text=Hello%20Shiv!" 
-   class="whatsapp-btn">
-  <img alt="WhatsApp" src="wlogo.png" />
-  <span>WhatsApp</span>
-</a>
+         href="https://wa.me/918090155304?text=Hello%20Shiv!" 
+         class="whatsapp-btn">
+        <img alt="WhatsApp" src="wlogo.png" />
+        <span>WhatsApp</span>
+      </a>
 
-<style>
-  .whatsapp-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    color: white; /* Default text color white */
-    font-weight: bold;
-    font-size: 16px;
-    transition: transform 0.3s ease, color 0.3s ease;
-  }
+      <style>
+        .whatsapp-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+          color: white; 
+          font-weight: bold;
+          font-size: 16px;
+          transition: transform 0.3s ease, color 0.3s ease;
+        }
 
-  .whatsapp-btn img {
-    width: 8mm;   /* Logo width 8mm */
-    height: 8mm;  /* Logo height 8mm */
-    transition: transform 0.3s ease;
-  }
-
-  .whatsapp-btn:hover {
-    transform: scale(1.1);  /* Zoom-in effect */
-    color: #25D366; /* WhatsApp green on hover */
-  }
-
-  .whatsapp-btn:hover img {
-    transform: rotate(10deg) scale(1.2); /* Icon rotate + zoom */
-  }
-</style>
+        .whatsapp-btn img {
+          width: 8mm;
+          height: 8mm;
+          transition: transform 0.3s ease;
+        }
+      </style>
 
     </div>
   </footer>
@@ -181,16 +169,33 @@
     }
   </style>
 
+  <!-- 🔥 Glow Hover Effects -->
+  <style>
+    nav ul li a:hover {
+      background-color: #ff0000;
+      border-radius: 9px;
+      box-shadow: 0 0 10px #ff0000, 0 0 20px #ff3333, 0 0 40px #ff6666;
+      color: #fff;
+    }
+
+    .social-links a:hover {
+      background: #facade;
+      color: #123524;
+      box-shadow: 0 0 10px #0072ff, 0 0 20px #3399ff, 0 0 40px #66ccff;
+      transform: scale(1.05);
+    }
+
+    .whatsapp-btn:hover {
+      transform: scale(1.1);
+      color: #25D366;
+      text-shadow: 0 0 10px #25D366, 0 0 20px #25D366;
+    }
+
+    .whatsapp-btn:hover img {
+      transform: rotate(10deg) scale(1.2);
+      filter: drop-shadow(0 0 10px #25D366);
+    }
+  </style>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
