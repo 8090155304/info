@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सूरजमुखी - माउस फॉलो</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #87CEEB 0%, #98D8C8 50%, #90EE90 100%);
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .sunflower {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            left: 50%;
+            top: 50%;
+            transform-origin: 50% 80%;
+            transition: transform 0.3s ease-out;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+            background: none;
+            cursor: pointer;
+        }
+
+        .petal {
+            position: absolute;
+            width: 50px;
+            height: 70px;
+            pointer-events: none;
+            animation: fall var(--fall-duration) ease-out forwards;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            transform-style: preserve-3d;
+        }
+        
+        .petal::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FFD700 0%, #FFC700 40%, #FFB000 60%, #FFA500 100%);
+            border-radius: 50% 50% 20% 20% / 70% 70% 30% 30%;
+            box-shadow: inset -2px -2px 8px rgba(0,0,0,0.1),
+                        inset 2px 2px 8px rgba(255,255,255,0.4);
+        }
+        
+        .petal::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 40%;
+            background: linear-gradient(to bottom, rgba(139,69,19,0.3), transparent);
+            left: 50%;
+            top: 20%;
+            transform: translateX(-50%);
+        }
+
+        .leaf {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            pointer-events: none;
+            animation: fall var(--fall-duration) ease-out forwards;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            transform-style: preserve-3d;
+        }
+        
+        .leaf::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #228B22 0%, #32CD32 30%, #2E8B57 70%, #006400 100%);
+            border-radius: 50% 0% 50% 0%;
+            box-shadow: inset -2px -2px 8px rgba(0,0,0,0.2),
+                        inset 2px 2px 8px rgba(255,255,255,0.3);
+        }
+        
+        .leaf::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 70%;
+            background: linear-gradient(to bottom, rgba(139,69,19,0.4), transparent);
+            left: 50%;
+            top: 10%;
+            transform: translateX(-50%);
+        }
+
+        .wither {
+            animation: wither 2s ease-out forwards;
+        }
+
+        @keyframes wither {
+            0% {
+                filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)) grayscale(0) brightness(1);
+                transform: translate(-50%, -50%) rotate(var(--current-rotation)) scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 5px 10px rgba(0,0,0,0.2)) grayscale(0.5) brightness(0.7);
+                transform: translate(-50%, -50%) rotate(var(--current-rotation)) scale(0.9);
+            }
+            100% {
+                filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1)) grayscale(1) brightness(0.5);
+                transform: translate(-50%, 100vh) rotate(calc(var(--current-rotation) + 180deg)) scale(0.6);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fall {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--fall-x), var(--fall-y)) rotateX(var(--fall-rotateX)) rotateZ(var(--fall-rotate)) scale(0.6);
+            }
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            25% { transform: translate(-50%, -50%) rotate(-5deg); }
+            75% { transform: translate(-50%, -50%) rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="Sunflower.png" 
+             class="sunflower" 
+             id="sunflower" 
+             alt="सूरजमुखी का फूल">
+    </div>
+    <div class="info">
+        🌻 माउस को घुमाएं और देखें सूरजमुखी को फॉलो करते हुए!<br>
+        💐 फूल पर क्लिक करें और पंखुड़ियाँ झड़ते देखें! 💐
+    </div>
+
+    <script>
+        const sunflower = document.getElementById('sunflower');
+        const container = document.querySelector('.container');
+        let currentRotation = 0;
+
+        // ऑडियो कॉन्टेक्ट बनाएं (झड़ने की आवाज के लिए)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // बहुत हल्की और मधुर पंखुड़ी की आवाज
+        function playPetalSound() {
+            const now = audioContext.currentTime;
+            
+            // बहुत soft घंटी जैसी आवाज
+            [1, 2].forEach((harmonic, index) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600 * harmonic, now);
+                osc.frequency.exponentialRampToValueAtTime(400 * harmonic, now + 0.4);
+                
+                gain.gain.setValueAtTime(0.015 / (index + 1), now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.start(now);
+                osc.stop(now + 0.4);
+            });
+        }
+        
+        // बहुत हल्की हवा की आवाज
+        function playWindSound() {
+            const now = audioContext.currentTime;
+            const bufferSize = audioContext.sampleRate * 1;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // बहुत soft नॉइज़
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() - 0.5) * 0.05;
+            }
+            
+            const noise = audioContext.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter1 = audioContext.createBiquadFilter();
+            filter1.type = 'lowpass';
+            filter1.frequency.setValueAtTime(600, now);
+            filter1.Q.value = 0.5;
+            
+            const filter2 = audioContext.createBiquadFilter();
+            filter2.type = 'highpass';
+            filter2.frequency.setValueAtTime(200, now);
+            
+            const gainNode = audioContext.createGain();
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.02, now + 0.2);
+            gainNode.gain.linearRampToValueAtTime(0.02, now + 0.6);
+            gainNode.gain.linearRampToValueAtTime(0.0001, now + 1);
+            
+            noise.connect(filter1);
+            filter1.connect(filter2);
+            filter2.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            noise.start(now);
+            noise.stop(now + 1);
+        }
+        
+        // बहुत धीमी मुरझाने की आवाज
+        function playWitherSound() {
+            const now = audioContext.currentTime;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(120, now + 1.5);
+            
+            gain.gain.setValueAtTime(0.025, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            osc.start(now);
+            osc.stop(now + 1.5);
+        }
+        
+        // बहुत हल्की पत्तियों की आवाज
+        function playLeafSound() {
+            const now = audioContext.currentTime;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, now);
+            osc.frequency.exponentialRampToValueAtTime(300, now + 0.3);
+            
+            gain.gain.setValueAtTime(0.01, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.left + containerRect.width / 2;
+            const centerY = containerRect.top + containerRect.height / 2;
+
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+
+            const angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+            const degrees = angle * (180 / Math.PI) + 90;
+            currentRotation = degrees;
+
+            sunflower.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            const containerRect = container.getBoundingClientRect();
+            const centerX = containerRect.left + containerRect.width / 2;
+            const centerY = containerRect.top + containerRect.height / 2;
+
+            const touchX = touch.clientX;
+            const touchY = touch.clientY;
+
+            const angle = Math.atan2(touchY - centerY, touchX - centerX);
+            const degrees = angle * (180 / Math.PI) + 90;
+            currentRotation = degrees;
+
+            sunflower.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
+        });
+
+        // पंखुड़ियाँ झड़ने का फंक्शन
+        function createPetals() {
+            const rect = sunflower.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            // फूल को हिलाएं
+            sunflower.classList.add('shake');
+            setTimeout(() => {
+                sunflower.classList.remove('shake');
+            }, 500);
+
+            // हवा की आवाज बजाएं
+            playWindSound();
+
+            // 12-16 पंखुड़ियाँ बनाएं
+            const petalCount = Math.floor(Math.random() * 5) + 12;
+            
+            for (let i = 0; i < petalCount; i++) {
+                setTimeout(() => {
+                    const petal = document.createElement('div');
+                    petal.className = 'petal';
+                    
+                    // पंखुड़ी की शुरुआती पोजीशन
+                    const angle = (Math.PI * 2 * i) / petalCount + (Math.random() - 0.5) * 0.3;
+                    const radius = 60 + Math.random() * 20;
+                    const startX = centerX + Math.cos(angle) * radius;
+                    const startY = centerY + Math.sin(angle) * radius;
+                    
+                    petal.style.left = startX + 'px';
+                    petal.style.top = startY + 'px';
+                    
+                    // वास्तविक गिरावट - नीचे की ओर ज्यादा, बगल में कम
+                    const horizontalDrift = (Math.random() - 0.5) * 150; // -75 से +75 बगल में
+                    const verticalFall = 400 + Math.random() * 200; // 400-600 नीचे
+                    const fallX = horizontalDrift;
+                    const fallY = verticalFall;
+                    
+                    // हिलते हुए गिरना - कम rotation
+                    const fallRotate = (Math.random() - 0.5) * 360; // -180 से 180 डिग्री
+                    const fallRotateX = Math.random() * 180; // आगे-पीछे झुकना
+                    
+                    // गिरने की अलग-अलग स्पीड
+                    const fallDuration = 2 + Math.random() * 1.5; // 2-3.5 सेकंड
+                    
+                    petal.style.setProperty('--fall-x', fallX + 'px');
+                    petal.style.setProperty('--fall-y', fallY + 'px');
+                    petal.style.setProperty('--fall-rotate', fallRotate + 'deg');
+                    petal.style.setProperty('--fall-rotateX', fallRotateX + 'deg');
+                    petal.style.setProperty('--fall-duration', fallDuration + 's');
+                    
+                    document.body.appendChild(petal);
+                    
+                    // पंखुड़ी झड़ने की आवाज
+                    playPetalSound();
+                    
+                    // एनिमेशन खत्म होने पर पंखुड़ी हटाएं
+                    setTimeout(() => {
+                        petal.remove();
+                    }, fallDuration * 1000 + 500);
+                }, i * 50); // हर पंखुड़ी थोड़ी देरी से झड़े
+            }
+            
+            // 3 सेकंड बाद पत्तियां गिरने लगें
+            setTimeout(() => {
+                createLeaves(centerX, centerY);
+            }, 3000);
+            
+            // 5 सेकंड बाद फूल मुरझा कर गिरे
+            setTimeout(() => {
+                witherFlower();
+            }, 5000);
+        }
+        
+        // पत्तियाँ गिरने का फंक्शन
+        function createLeaves(centerX, centerY) {
+            playWindSound();
+            
+            const leafCount = 4 + Math.floor(Math.random() * 3); // 4-6 पत्तियां
+            
+            for (let i = 0; i < leafCount; i++) {
+                setTimeout(() => {
+                    const leaf = document.createElement('div');
+                    leaf.className = 'leaf';
+                    
+                    // पत्तियों की शुरुआती पोजीशन (नीचे की तरफ)
+                    const angle = Math.PI / 2 + (Math.random() - 0.5) * 1;
+                    const radius = 80 + Math.random() * 40;
+                    const startX = centerX + Math.cos(angle) * radius;
+                    const startY = centerY + Math.sin(angle) * radius;
+                    
+                    leaf.style.left = startX + 'px';
+                    leaf.style.top = startY + 'px';
+                    
+                    // पत्तियां भी नीचे गिरें
+                    const horizontalDrift = (Math.random() - 0.5) * 200;
+                    const verticalFall = 350 + Math.random() * 150;
+                    const fallRotate = (Math.random() - 0.5) * 360;
+                    const fallRotateX = Math.random() * 180;
+                    const fallDuration = 2.5 + Math.random() * 1;
+                    
+                    leaf.style.setProperty('--fall-x', horizontalDrift + 'px');
+                    leaf.style.setProperty('--fall-y', verticalFall + 'px');
+                    leaf.style.setProperty('--fall-rotate', fallRotate + 'deg');
+                    leaf.style.setProperty('--fall-rotateX', fallRotateX + 'deg');
+                    leaf.style.setProperty('--fall-duration', fallDuration + 's');
+                    
+                    document.body.appendChild(leaf);
+                    
+                    playLeafSound();
+                    
+                    setTimeout(() => {
+                        leaf.remove();
+                    }, fallDuration * 1000 + 500);
+                }, i * 100);
+            }
+        }
+        
+        // फूल मुरझाने का फंक्शन
+        function witherFlower() {
+            playWitherSound();
+            sunflower.style.setProperty('--current-rotation', currentRotation + 'deg');
+            sunflower.classList.add('wither');
+            sunflower.style.pointerEvents = 'none';
+            
+            // 2 सेकंड बाद फूल को रीसेट करें
+            setTimeout(() => {
+                sunflower.classList.remove('wither');
+                sunflower.style.pointerEvents = 'auto';
+                sunflower.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+                sunflower.style.opacity = '1';
+                sunflower.style.filter = 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))';
+            }, 2500);
+        }
+
+        // क्लिक और टच इवेंट
+        sunflower.addEventListener('click', createPetals);
+        sunflower.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            createPetals();
+        });
+    </script>
+</body>
+</html>
