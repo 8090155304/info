@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Entry</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="icon" type="image/png" href="SHIV.png">
+    
+    <script src="https://raw.githack.com/js-wac/jsPDF-Devanagari-Font/main/NotoSansDevanagari.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        
+        /* Form Field Layout (3 Columns) */
+        .form-fields { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+        .form-group { flex: 1 1 30%; min-width: 250px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+
+        /* Buttons and Export Area */
+        .action-area { display: flex; gap: 10px; margin-top: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .action-area button { padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
+        
+        /* Button Styles (अपरिवर्तित) */
+        #saveBtn { background-color: #28a745; color: white; } 
+        #saveBtn:hover { background-color: #1e7e34; }
+        #clearFormBtn { background-color: #f0ad4e; color: white; } 
+        #clearFormBtn:hover { background-color: #ec971f; }
+        #printBtn { background-color: #007bff; color: white; }
+        #printBtn:hover { background-color: #0056b3; }
+        #pdfBtn { background-color: #dc3545; color: white; } 
+        #pdfBtn:hover { background-color: #c82333; }
+        #excelBtn { background-color: #ffc107; color: #333; } 
+        #excelBtn:hover { background-color: #e0a800; }
+        #resetBtn { background-color: #6c757d; color: white; } 
+        #resetBtn:hover { background-color: #5a6268; }
+
+        /* Table Style */
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        
+        /* Print Styles */
+        @media print {
+            .hide-on-print { display: none; }
+            .container { box-shadow: none; padding: 0; margin: 0; max-width: none; background: white; }
+            table { margin-top: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="hide-on-print">
+        <h2>1. नया रिकॉर्ड एंटर करें</h2>
+        
+        <form id="recordForm">
+            <div class="form-fields">
+                <div class="form-group"><label for="name">नाम:</label><input type="text" id="name" required></div>
+                <div class="form-group"><label for="fatherName">पिता का नाम:</label><input type="text" id="fatherName" required></div>
+                <div class="form-group"><label for="motherName">माता का नाम:</label><input type="text" id="motherName" required></div>
+                <div class="form-group"><label for="mobile">मोबाइल नंबर:</label><input type="text" id="mobile" required></div>
+                <div class="form-group"><label for="address">पता:</label><input type="text" id="address" required></div>
+                <div class="form-group"><label for="class">कक्षा:</label><input type="text" id="class" required></div>
+                <div class="form-group"><label for="pen">PEN:</label><input type="text" id="pen" required></div>
+            </div>
+
+            <div class="action-area">
+                <button type="submit" id="saveBtn">डेटा सेव करें</button>
+                <button type="button" id="clearFormBtn">फ़ॉर्म क्लियर करें 🧹</button> 
+            </div>
+        </form>
+
+        <hr style="margin: 30px 0;">
+
+        <h2>2. सेव किया हुआ डेटा</h2>
+
+        <div class="action-area">
+            <button id="printBtn">प्रिंट करें 🖨️</button>
+            <button id="pdfBtn">PDF फ़ाइल बनाएँ 📄</button>
+            <button id="excelBtn">Excel फ़ाइल बनाएँ (CSV) 📊</button>
+            <button id="resetBtn">लोकल डेटा डिलीट करें 🗑️</button>
+        </div>
+    </div>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>नाम</th>
+                <th>पिता का नाम</th>
+                <th>माता का नाम</th>
+                <th>मोबाइल नंबर</th>
+                <th>पता</th>
+                <th>कक्षा</th>
+                <th>PEN</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const form = document.getElementById('recordForm');
+    const dataTable = document.getElementById('dataTable');
+    const dataTableBody = dataTable.querySelector('tbody');
+    const storageKey = 'threeColDataRecords';
+
+    // --- बटन इवेंट लिसनर ---
+    document.getElementById('printBtn').addEventListener('click', printTable);
+    document.getElementById('pdfBtn').addEventListener('click', exportPDF);
+    document.getElementById('excelBtn').addEventListener('click', exportCSV);
+    document.getElementById('resetBtn').addEventListener('click', resetData);
+    document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+    form.addEventListener('submit', handleFormSubmit);
+
+    // --- मुख्य फंक्शन ---
+
+    function loadAndDisplayData() {
+        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
+        dataTableBody.innerHTML = ''; 
+
+        records.forEach(record => {
+            const row = dataTableBody.insertRow();
+            row.insertCell().textContent = record.name;
+            row.insertCell().textContent = record.fatherName;
+            row.insertCell().textContent = record.motherName;
+            row.insertCell().textContent = record.mobile;
+            row.insertCell().textContent = record.address;
+            row.insertCell().textContent = record.class;
+            row.insertCell().textContent = record.pen;
+        });
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault(); 
+        
+        const newRecord = {
+            name: document.getElementById('name').value,
+            fatherName: document.getElementById('fatherName').value,
+            motherName: document.getElementById('motherName').value,
+            mobile: document.getElementById('mobile').value,
+            address: document.getElementById('address').value,
+            class: document.getElementById('class').value,
+            pen: document.getElementById('pen').value
+        };
+
+        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
+        records.push(newRecord);
+        localStorage.setItem(storageKey, JSON.stringify(records));
+        
+        form.reset();
+        loadAndDisplayData();
+        alert("रिकॉर्ड लोकल स्टोरेज में सेव हो गया! 💾");
+    }
+    
+    function clearForm() {
+        form.reset();
+        alert("फ़ॉर्म फ़ील्ड्स क्लियर कर दिए गए हैं।");
+    }
+
+    function resetData() {
+        const confirmReset = confirm("क्या आप वाकई लोकल स्टोरेज से सभी रिकॉर्ड हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।");
+        if (confirmReset) {
+            localStorage.removeItem(storageKey);
+            loadAndDisplayData(); 
+            alert("सभी रिकॉर्ड सफलतापूर्वक डिलीट कर दिए गए हैं।");
+        }
+    }
+
+    function printTable() {
+        window.print(); 
+    }
+
+    // 6. PDF एक्सपोर्ट फंक्शन (हिंदी फ़ॉन्ट फिक्स के साथ अपडेट किया गया)
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'pt', 'a4'); // 'l' for landscape mode
+
+        // फ़ॉन्ट सेट करें जो हमने ऊपर जोड़ा है (Noto Sans Devanagari)
+        doc.setFont('NotoSansDevanagari', 'normal');
+
+        doc.autoTable({ 
+            html: '#dataTable',
+            startY: 40,
+            headStyles: { fillColor: [0, 123, 255], font: 'NotoSansDevanagari' }, // Header फ़ॉन्ट सेट करें
+            styles: { font: 'NotoSansDevanagari', halign: 'left', fontSize: 8 }, // Body फ़ॉन्ट सेट करें
+            didDrawPage: function(data) {
+                // शीर्षक जोड़ते समय भी फ़ॉन्ट सेट करना न भूलें
+                doc.setFont('NotoSansDevanagari', 'normal');
+                doc.text("सेव किए गए रिकॉर्ड्स का डेटा", 40, 30);
+            }
+        });
+        
+        doc.save('Student_Records_PDF.pdf');
+    }
+
+    // 7. Excel (CSV) एक्सपोर्ट फंक्शन (हिंदी फ़ॉन्ट फिक्स के साथ)
+    function exportCSV() {
+        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
+        if (records.length === 0) {
+            alert("डाउनलोड करने के लिए कोई डेटा नहीं है!");
+            return;
+        }
+
+        const headers = ["नाम", "पिता का नाम", "माता का नाम", "मोबाइल नंबर", "पता", "कक्षा", "PEN"];
+        
+        let csv = headers.join(',') + '\n';
+        
+        records.forEach(record => {
+            const row = [
+                record.name,
+                record.fatherName,
+                record.motherName,
+                record.mobile,
+                record.address,
+                record.class,
+                record.pen
+            ].map(item => {
+                let cleanItem = item.replace(/"/g, '""'); 
+                return `"${cleanItem}"`; 
+            }).join(','); 
+            
+            csv += row + '\n';
+        });
+
+        // हिंदी फ़ॉन्ट के लिए फिक्स: UTF-8 BOM जोड़ना
+        const BOM = "\uFEFF"; 
+        const finalCSV = BOM + csv;
+
+        const blob = new Blob([finalCSV], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', 'Student_Records_Excel.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    window.onload = loadAndDisplayData;
+</script>
+
+</body>
+</html>
