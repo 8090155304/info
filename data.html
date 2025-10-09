@@ -254,7 +254,8 @@
                 <th>पता</th>
                 <th>कक्षा</th>
                 <th>PEN</th>
-                <th>एक्शन</th> </tr>
+                <th>एक्शन</th> 
+            </tr>
         </thead>
         <tbody>
             </tbody>
@@ -555,24 +556,38 @@
         alert("फ़ॉर्म फ़ील्ड्स क्लियर कर दिए गए हैं।");
     }
 
+    // ***** यह फंक्शन पासवर्ड चेक के साथ अपडेट किया गया है *****
     function resetData() {
-        const confirmReset = confirm("क्या आप वाकई IndexedDB से सभी रिकॉर्ड हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।");
-        if (confirmReset) {
-            try {
-                const request = indexedDB.deleteDatabase(DB_NAME);
-                request.onsuccess = () => {
-                    db = null; 
-                    loadAndDisplayData(); 
-                    alert("सभी रिकॉर्ड सफलतापूर्वक डिलीट कर दिए गए हैं।");
-                };
-                request.onerror = (event) => {
-                    alert(`डेटाबेस डिलीट करने में त्रुटि: ${event.target.error}`);
-                };
-            } catch(error) {
-                 alert(`डेटाबेस डिलीट करने में त्रुटि: ${error}`);
+        const password = prompt("डेटा डिलीट करने के लिए पासवर्ड डालें:");
+        const requiredPassword = '851556'; // आपका निर्धारित पासवर्ड
+        
+        if (password === requiredPassword) {
+            const confirmReset = confirm("पासवर्ड सही है। क्या आप वाकई IndexedDB से सभी रिकॉर्ड हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।");
+            
+            if (confirmReset) {
+                try {
+                    const request = indexedDB.deleteDatabase(DB_NAME);
+                    request.onsuccess = () => {
+                        db = null; 
+                        loadAndDisplayData(); 
+                        alert("सभी रिकॉर्ड सफलतापूर्वक डिलीट कर दिए गए हैं।");
+                    };
+                    request.onerror = (event) => {
+                        alert(`डेटाबेस डिलीट करने में त्रुटि: ${event.target.error}`);
+                    };
+                } catch(error) {
+                     alert(`डेटाबेस त्रुटि: ${error}`);
+                }
+            } else {
+                alert("डेटा डिलीट करने की प्रक्रिया रद्द कर दी गई।");
             }
+        } else if (password !== null) {
+            alert("पासवर्ड गलत है। डेटा डिलीट नहीं किया गया।");
+        } else {
+            alert("डेटा डिलीट करने की प्रक्रिया रद्द कर दी गई।");
         }
     }
+    // *******************************************************
     
     // --- Export/Print Functions (Unchanged) ---
     
