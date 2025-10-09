@@ -8,23 +8,37 @@
     
     <script src="https://raw.githack.com/js-wac/jsPDF-Devanagari-Font/main/NotoSansDevanagari.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         
-        /* Form Field Layout (3 Columns) */
+        /* Form and Action Area styles (अपरिवर्तित) */
         .form-fields { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
-        .form-group { flex: 1 1 30%; min-width: 250px; }
+        .form-group { flex: 1 1 23%; min-width: 200px; } 
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-
-        /* Buttons and Export Area */
-        .action-area { display: flex; gap: 10px; margin-top: 20px; margin-bottom: 20px; flex-wrap: wrap; }
-        .action-area button { padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         
-        /* Button Styles (अपरिवर्तित) */
-        #saveBtn { background-color: #28a745; color: white; } 
-        #saveBtn:hover { background-color: #1e7e34; }
+        #photo { padding: 5px; }
+
+        .action-area { display: flex; gap: 10px; margin-top: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .action-area button { 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s; 
+        }
+        
+        .action-area button:hover {
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        }
+
+        #saveBtn, #updateBtn { background-color: #28a745; color: white; } /* Save/Update Button */
+        #saveBtn:hover, #updateBtn:hover { background-color: #1e7e34; }
         #clearFormBtn { background-color: #f0ad4e; color: white; } 
         #clearFormBtn:hover { background-color: #ec971f; }
         #printBtn { background-color: #007bff; color: white; }
@@ -35,59 +49,204 @@
         #excelBtn:hover { background-color: #e0a800; }
         #resetBtn { background-color: #6c757d; color: white; } 
         #resetBtn:hover { background-color: #5a6268; }
+        
+        #printIDCardBtn { background-color: #3f51b5; color: white; }
+        #printIDCardBtn:hover { background-color: #303f9f; }
+        
+        /* Edit Button Style */
+        .edit-btn { 
+            background-color: #f0ad4e; 
+            color: white; 
+            padding: 5px 10px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .edit-btn:hover { background-color: #ec971f; }
+
+        .filter-area { margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
+        .filter-area label { font-weight: bold; color: #333; }
+        .filter-area select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; }
+
 
         /* Table Style */
         table { width: 100%; border-collapse: collapse; margin-top: 30px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background-color: #007bff; color: white; }
         
-        /* Print Styles */
+        #dataTable th:nth-child(2), #dataTable td:nth-child(2) { width: 4%; text-align: center; } 
+        #dataTable th:nth-child(1), #dataTable td:nth-child(1) { width: 4%; text-align: center; } 
+        #dataTable th:last-child, #dataTable td:last-child { width: 5%; text-align: center; } /* Edit Column Width */
+        
+        .photo-column img {
+            width: 50px; 
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        /* --- ID Card Print Area Styles (Previous Optimization) --- */
+        .id-card-print-container {
+            display: none; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 9999;
+            padding: 15px; 
+            box-sizing: border-box;
+        }
+        .id-card {
+            width: 185px; 
+            height: 308px; /* 3 रो को पूरे पेज पर फिट करने के लिए अधिकतम ऊँचाई */
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            padding: 8px; 
+            margin: 5px; 
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+            float: left; 
+            font-size: 9px; 
+            box-sizing: border-box;
+            background: #f0f8ff;
+            text-align: left; 
+        }
+        /* ... (rest of the card styles are the same) ... */
+        .id-card h3 {
+            text-align: center;
+            margin: 5px 0 8px 0; 
+            color: #007bff;
+            border-bottom: 1px dashed #ccc;
+            font-size: 13px; 
+        }
+        .card-photo {
+            width: 70px; 
+            height: 90px; 
+            border: 1px solid #ccc;
+            overflow: hidden;
+            margin: 0 auto 8px auto; 
+        }
+        .card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card-details-text p {
+            margin: 2px 0;
+            line-height: 1.1;
+            padding-left: 3px; 
+        }
+        .card-details-text strong {
+            display: inline-block;
+            width: 60px; 
+        }
+        .barcode-area {
+            text-align: center;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px dashed #ddd;
+            width: 100%; 
+        }
+        .barcode-area svg {
+            width: 100%; 
+            height: 35px;
+            display: block; 
+        }
+        .barcode-id-text {
+            font-size: 8px;
+            margin: 0;
+            font-weight: bold;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        /* --- Print Styles (4 कॉलम, 3 रो, न्यूनतम मार्जिन) --- */
         @media print {
-            .hide-on-print { display: none; }
-            .container { box-shadow: none; padding: 0; margin: 0; max-width: none; background: white; }
-            table { margin-top: 0 !important; }
+            body > *:not(.id-card-print-container) { 
+                display: none !important; 
+            }
+            
+            .id-card-print-container {
+                display: grid !important; 
+                grid-template-columns: repeat(4, 1fr); 
+                grid-auto-rows: 308px;
+                gap: 2px;
+                position: static;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                height: auto;
+                background: white;
+            }
+            
+            @page {
+                size: A4 portrait; 
+                margin: 0.1cm;
+            }
+
+            .id-card {
+                width: 100%; 
+                height: 100%; 
+                margin: 0;
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container hide-on-print">
     
-    <div class="hide-on-print">
-        <h2>1. नया रिकॉर्ड एंटर करें</h2>
-        
-        <form id="recordForm">
-            <div class="form-fields">
-                <div class="form-group"><label for="name">नाम:</label><input type="text" id="name" required></div>
-                <div class="form-group"><label for="fatherName">पिता का नाम:</label><input type="text" id="fatherName" required></div>
-                <div class="form-group"><label for="motherName">माता का नाम:</label><input type="text" id="motherName" required></div>
-                <div class="form-group"><label for="mobile">मोबाइल नंबर:</label><input type="text" id="mobile" required></div>
-                <div class="form-group"><label for="address">पता:</label><input type="text" id="address" required></div>
-                <div class="form-group"><label for="class">कक्षा:</label><input type="text" id="class" required></div>
-                <div class="form-group"><label for="pen">PEN:</label><input type="text" id="pen" required></div>
-            </div>
+    <h2>1. नया रिकॉर्ड एंटर करें / एडिट करें</h2>
+    
+    <form id="recordForm">
+        <input type="hidden" id="recordId" value=""> 
 
-            <div class="action-area">
-                <button type="submit" id="saveBtn">डेटा सेव करें</button>
-                <button type="button" id="clearFormBtn">फ़ॉर्म क्लियर करें 🧹</button> 
-            </div>
-        </form>
-
-        <hr style="margin: 30px 0;">
-
-        <h2>2. सेव किया हुआ डेटा</h2>
+        <div class="form-fields">
+            <div class="form-group"><label for="name">नाम:</label><input type="text" id="name" required></div>
+            <div class="form-group"><label for="fatherName">पिता का नाम:</label><input type="text" id="fatherName" required></div>
+            <div class="form-group"><label for="motherName">माता का नाम:</label><input type="text" id="motherName" required></div>
+            <div class="form-group"><label for="mobile">मोबाइल नंबर:</label><input type="text" id="mobile" required></div>
+            <div class="form-group"><label for="address">पता:</label><input type="text" id="address" required></div>
+            <div class="form-group"><label for="class">कक्षा:</label><input type="text" id="class" required></div>
+            <div class="form-group"><label for="pen">PEN:</label><input type="text" id="pen" required></div>
+            <div class="form-group"><label for="photo">फोटो अटैच करें (वैकल्पिक):</label><input type="file" id="photo" accept="image/*"></div>
+        </div>
 
         <div class="action-area">
-            <button id="printBtn">प्रिंट करें 🖨️</button>
-            <button id="pdfBtn">PDF फ़ाइल बनाएँ 📄</button>
-            <button id="excelBtn">Excel फ़ाइल बनाएँ (CSV) 📊</button>
-            <button id="resetBtn">लोकल डेटा डिलीट करें 🗑️</button>
+            <button type="submit" id="saveBtn">डेटा सेव करें 💾</button> 
+            <button type="button" id="updateBtn" style="display:none;">डेटा अपडेट करें ✅</button> 
+            <button type="button" id="clearFormBtn">फ़ॉर्म क्लियर करें 🧹</button> 
         </div>
+    </form>
+
+    <hr style="margin: 30px 0;">
+
+    <h2>2. सेव किया हुआ डेटा</h2>
+
+    <div class="filter-area">
+        <label for="classFilter">क्लास द्वारा फ़िल्टर करें:</label>
+        <select id="classFilter">
+            <option value="all">सभी क्लास</option>
+        </select>
+    </div>
+
+    <div class="action-area">
+        <button id="printIDCardBtn">चुना हुआ ID कार्ड प्रिंट करें 🪪</button>
+        <button id="printBtn">पूरा टेबल प्रिंट करें 🖨️</button>
+        <button id="pdfBtn">PDF फ़ाइल बनाएँ 📄</button>
+        <button id="excelBtn">Excel फ़ाइल बनाएँ (CSV) 📊</button>
+        <button id="resetBtn">सारा डेटा डिलीट करें 🗑️</button>
     </div>
 
     <table id="dataTable">
         <thead>
             <tr>
+                <th>क्र. सं.</th> 
+                <th>चुनें</th>
+                <th>फोटो</th>
                 <th>नाम</th>
                 <th>पिता का नाम</th>
                 <th>माता का नाम</th>
@@ -95,35 +254,156 @@
                 <th>पता</th>
                 <th>कक्षा</th>
                 <th>PEN</th>
-            </tr>
+                <th>एक्शन</th> </tr>
         </thead>
         <tbody>
             </tbody>
     </table>
+    <p id="loadingStatus" style="text-align: center; color: #007bff; display: none;">डेटा लोड हो रहा है... कृपया प्रतीक्षा करें।</p>
 </div>
 
+<div class="id-card-print-container" id="idCardPrintContainer">
+    </div>
+
 <script>
+    const DB_NAME = 'StudentDataDB';
+    const STORE_NAME = 'records';
+    let db; 
+    let editingRecord = null; // To store the ID of the record being edited
+
     const form = document.getElementById('recordForm');
-    const dataTable = document.getElementById('dataTable');
-    const dataTableBody = dataTable.querySelector('tbody');
-    const storageKey = 'threeColDataRecords';
+    const dataTableBody = document.getElementById('dataTable').querySelector('tbody');
+    const classFilter = document.getElementById('classFilter');
+    const loadingStatus = document.getElementById('loadingStatus');
+    const idCardPrintContainer = document.getElementById('idCardPrintContainer');
+    const recordIdInput = document.getElementById('recordId');
+    const saveBtn = document.getElementById('saveBtn');
+    const updateBtn = document.getElementById('updateBtn');
 
-    // --- बटन इवेंट लिसनर ---
-    document.getElementById('printBtn').addEventListener('click', printTable);
-    document.getElementById('pdfBtn').addEventListener('click', exportPDF);
-    document.getElementById('excelBtn').addEventListener('click', exportCSV);
-    document.getElementById('resetBtn').addEventListener('click', resetData);
-    document.getElementById('clearFormBtn').addEventListener('click', clearForm);
-    form.addEventListener('submit', handleFormSubmit);
+    // --- IndexedDB Setup ---
 
-    // --- मुख्य फंक्शन ---
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            if (db) {
+                resolve(db);
+                return;
+            }
+            
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onerror = (event) => {
+                console.error("IndexedDB Error:", event.target.error);
+                reject("IndexedDB खोलने में त्रुटि हुई।");
+            };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(db);
+            };
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            };
+        });
+    }
 
-    function loadAndDisplayData() {
-        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
+    function getStore(mode) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const dbInstance = await openDB();
+                const transaction = dbInstance.transaction(STORE_NAME, mode);
+                transaction.onerror = (event) => reject(event.target.error);
+                resolve(transaction.objectStore(STORE_NAME));
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    async function getAllRecordsFromDB() {
+        try {
+            const store = await getStore('readonly');
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            return [];
+        }
+    }
+    
+    async function getRecordById(id) {
+        try {
+            const store = await getStore('readonly');
+            return new Promise((resolve, reject) => {
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error("Fetch by ID Error:", error);
+            return null;
+        }
+    }
+
+
+    // --- डेटा डिस्प्ले और फॉर्म हैंडलिंग ---
+
+    function populateClassFilter(records) {
+        const uniqueClasses = [...new Set(records.map(record => record.class))].sort();
+        const currentSelection = classFilter.value; 
+        
+        classFilter.innerHTML = '<option value="all">सभी क्लास</option>'; 
+        
+        uniqueClasses.forEach(className => {
+            if (className) {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                classFilter.appendChild(option);
+            }
+        });
+
+        classFilter.value = currentSelection;
+    }
+
+
+    async function loadAndDisplayData() {
+        loadingStatus.style.display = 'block';
+        const allRecords = await getAllRecordsFromDB();
+        
+        populateClassFilter(allRecords); 
+        
+        const selectedClass = classFilter.value;
+
+        const filteredRecords = allRecords.filter(record => 
+            selectedClass === 'all' || record.class === selectedClass
+        );
+
         dataTableBody.innerHTML = ''; 
 
-        records.forEach(record => {
+        filteredRecords.forEach((record, index) => {
             const row = dataTableBody.insertRow();
+            row.insertCell().textContent = index + 1; 
+
+            const checkboxCell = row.insertCell();
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.classList.add('record-checkbox');
+            checkbox.value = record.id; 
+            checkboxCell.appendChild(checkbox);
+            
+            const photoCell = row.insertCell();
+            photoCell.classList.add('photo-column');
+            if (record.photoBase64) {
+                const img = document.createElement('img');
+                img.src = record.photoBase64;
+                img.alt = "स्टूडेंट फोटो";
+                photoCell.appendChild(img);
+            } else {
+                photoCell.textContent = 'N/A';
+            }
+
             row.insertCell().textContent = record.name;
             row.insertCell().textContent = record.fatherName;
             row.insertCell().textContent = record.motherName;
@@ -131,86 +411,262 @@
             row.insertCell().textContent = record.address;
             row.insertCell().textContent = record.class;
             row.insertCell().textContent = record.pen;
+            
+            // New Action/Edit Column
+            const actionCell = row.insertCell();
+            const editButton = document.createElement('button');
+            editButton.textContent = 'एडिट करें ✏️';
+            editButton.classList.add('edit-btn');
+            editButton.dataset.id = record.id;
+            editButton.onclick = () => loadRecordForEdit(record.id);
+            actionCell.appendChild(editButton);
         });
+
+        loadingStatus.style.display = 'none';
     }
 
-    function handleFormSubmit(event) {
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                resolve(null);
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                alert("चेतावनी: फोटो 2MB से बड़ी है। यह IndexedDB में लोड होने में समय ले सकती है।");
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+    
+    function setFormMode(isEditing) {
+        if (isEditing) {
+            saveBtn.style.display = 'none';
+            updateBtn.style.display = 'inline-block';
+        } else {
+            saveBtn.style.display = 'inline-block';
+            updateBtn.style.display = 'none';
+            recordIdInput.value = ''; // Clear ID for new record
+            editingRecord = null;
+        }
+    }
+    
+    async function loadRecordForEdit(id) {
+        const record = await getRecordById(id);
+        if (record) {
+            document.getElementById('name').value = record.name;
+            document.getElementById('fatherName').value = record.fatherName;
+            document.getElementById('motherName').value = record.motherName;
+            document.getElementById('mobile').value = record.mobile;
+            document.getElementById('address').value = record.address;
+            document.getElementById('class').value = record.class;
+            document.getElementById('pen').value = record.pen;
+            
+            // Store ID and set editing mode
+            recordIdInput.value = record.id;
+            editingRecord = record; // Store the entire record for comparison (optional)
+            setFormMode(true);
+            
+            // Scroll to the top of the form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            alert("रिकॉर्ड नहीं मिला।");
+        }
+    }
+
+    async function saveOrUpdateRecord(event) {
         event.preventDefault(); 
         
-        const newRecord = {
+        const photoFile = document.getElementById('photo').files[0];
+        let photoBase64 = null;
+        
+        if (photoFile) {
+            // New photo uploaded
+            photoBase64 = await fileToBase64(photoFile); 
+        } else if (editingRecord && editingRecord.photoBase64) {
+            // Retain old photo if not uploading new one
+            photoBase64 = editingRecord.photoBase64;
+        }
+
+
+        const newRecordData = {
             name: document.getElementById('name').value,
             fatherName: document.getElementById('fatherName').value,
             motherName: document.getElementById('motherName').value,
             mobile: document.getElementById('mobile').value,
             address: document.getElementById('address').value,
             class: document.getElementById('class').value,
-            pen: document.getElementById('pen').value
+            pen: document.getElementById('pen').value,
+            photoBase64: photoBase64 
         };
-
-        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
-        records.push(newRecord);
-        localStorage.setItem(storageKey, JSON.stringify(records));
         
-        form.reset();
-        loadAndDisplayData();
-        alert("रिकॉर्ड लोकल स्टोरेज में सेव हो गया! 💾");
+        const recordId = recordIdInput.value;
+        const isEditing = recordId !== '';
+
+        if (isEditing) {
+            // Update an existing record
+            newRecordData.id = parseInt(recordId); // ID must be kept for update
+            try {
+                const store = await getStore('readwrite');
+                const request = store.put(newRecordData); // put() updates if ID exists, adds otherwise
+                
+                request.onsuccess = () => {
+                    form.reset();
+                    setFormMode(false); // Switch back to save mode
+                    loadAndDisplayData();
+                    alert("रिकॉर्ड सफलतापूर्वक अपडेट हो गया! ✅");
+                };
+
+                request.onerror = (event) => {
+                    alert(`डेटा अपडेट करने में त्रुटि: ${event.target.error}`);
+                };
+
+            } catch (error) {
+                alert(`डेटाबेस त्रुटि: ${error}`);
+            }
+            
+        } else {
+            // Save a new record
+            try {
+                const store = await getStore('readwrite');
+                const request = store.add(newRecordData);
+                
+                request.onsuccess = () => {
+                    form.reset();
+                    loadAndDisplayData();
+                    alert("रिकॉर्ड IndexedDB में सेव हो गया! 💾");
+                };
+
+                request.onerror = (event) => {
+                    alert(`डेटा सेव करने में त्रुटि: ${event.target.error}`);
+                };
+
+            } catch (error) {
+                alert(`डेटाबेस त्रुटि: ${error}`);
+            }
+        }
     }
     
     function clearForm() {
         form.reset();
+        setFormMode(false); // Ensure it reverts to Save mode
         alert("फ़ॉर्म फ़ील्ड्स क्लियर कर दिए गए हैं।");
     }
 
     function resetData() {
-        const confirmReset = confirm("क्या आप वाकई लोकल स्टोरेज से सभी रिकॉर्ड हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।");
+        const confirmReset = confirm("क्या आप वाकई IndexedDB से सभी रिकॉर्ड हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।");
         if (confirmReset) {
-            localStorage.removeItem(storageKey);
-            loadAndDisplayData(); 
-            alert("सभी रिकॉर्ड सफलतापूर्वक डिलीट कर दिए गए हैं।");
+            try {
+                const request = indexedDB.deleteDatabase(DB_NAME);
+                request.onsuccess = () => {
+                    db = null; 
+                    loadAndDisplayData(); 
+                    alert("सभी रिकॉर्ड सफलतापूर्वक डिलीट कर दिए गए हैं।");
+                };
+                request.onerror = (event) => {
+                    alert(`डेटाबेस डिलीट करने में त्रुटि: ${event.target.error}`);
+                };
+            } catch(error) {
+                 alert(`डेटाबेस डिलीट करने में त्रुटि: ${error}`);
+            }
         }
     }
-
+    
+    // --- Export/Print Functions (Unchanged) ---
+    
     function printTable() {
         window.print(); 
     }
 
-    // 6. PDF एक्सपोर्ट फंक्शन (हिंदी फ़ॉन्ट फिक्स के साथ अपडेट किया गया)
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'pt', 'a4'); // 'l' for landscape mode
+    async function exportPDF() {
+        // PDF एक्सपोर्ट लॉजिक (Unchanged)
+        const allRecords = await getAllRecordsFromDB();
+        const selectedClass = classFilter.value;
+        const filteredRecords = allRecords.filter(record => 
+            selectedClass === 'all' || record.class === selectedClass
+        );
 
-        // फ़ॉन्ट सेट करें जो हमने ऊपर जोड़ा है (Noto Sans Devanagari)
+        if (filteredRecords.length === 0) {
+            alert("PDF बनाने के लिए कोई डेटा नहीं है!");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'pt', 'a4'); 
         doc.setFont('NotoSansDevanagari', 'normal');
 
+        const head = [["क्र. सं.", "फोटो", "नाम", "पिता का नाम", "माता का नाम", "मोबाइल नंबर", "पता", "कक्षा", "PEN"]];
+        
+        const body = filteredRecords.map((record, index) => [
+            index + 1, 
+            '', 
+            record.name,
+            record.fatherName,
+            record.motherName,
+            record.mobile,
+            record.address,
+            record.class,
+            record.pen
+        ]);
+
         doc.autoTable({ 
-            html: '#dataTable',
+            head: head,
+            body: body,
             startY: 40,
-            headStyles: { fillColor: [0, 123, 255], font: 'NotoSansDevanagari' }, // Header फ़ॉन्ट सेट करें
-            styles: { font: 'NotoSansDevanagari', halign: 'left', fontSize: 8 }, // Body फ़ॉन्ट सेट करें
+            headStyles: { fillColor: [0, 123, 255], font: 'NotoSansDevanagari', minCellHeight: 20 }, 
+            styles: { font: 'NotoSansDevanagari', halign: 'left', fontSize: 8, cellPadding: 3, minCellHeight: 30 },
+            columnStyles: {
+                0: { cellWidth: 25 }, 
+                1: { cellWidth: 35, halign: 'center' } 
+            },
+            didDrawCell: function(data) {
+                if (data.section === 'body' && data.column.index === 1 && filteredRecords[data.row.index].photoBase64) {
+                    const photoBase64 = filteredRecords[data.row.index].photoBase64;
+                    const margin = 2;
+                    doc.addImage(
+                        photoBase64, 
+                        'JPEG', 
+                        data.cell.x + margin, 
+                        data.cell.y + margin, 
+                        data.cell.width - (margin * 2), 
+                        data.cell.height - (margin * 2) 
+                    );
+                }
+            },
             didDrawPage: function(data) {
-                // शीर्षक जोड़ते समय भी फ़ॉन्ट सेट करना न भूलें
                 doc.setFont('NotoSansDevanagari', 'normal');
-                doc.text("सेव किए गए रिकॉर्ड्स का डेटा", 40, 30);
+                const titleText = selectedClass === 'all' ? 
+                                  "सेव किए गए सभी रिकॉर्ड्स का डेटा" : 
+                                  `क्लास ${selectedClass} के रिकॉर्ड्स का डेटा`;
+                doc.text(titleText, 40, 30);
             }
         });
         
         doc.save('Student_Records_PDF.pdf');
     }
 
-    // 7. Excel (CSV) एक्सपोर्ट फंक्शन (हिंदी फ़ॉन्ट फिक्स के साथ)
-    function exportCSV() {
-        const records = JSON.parse(localStorage.getItem(storageKey)) || [];
-        if (records.length === 0) {
+    async function exportCSV() {
+        // CSV एक्सपोर्ट लॉजिक (Unchanged)
+        const allRecords = await getAllRecordsFromDB();
+        const selectedClass = classFilter.value;
+        const filteredRecords = allRecords.filter(record => 
+            selectedClass === 'all' || record.class === selectedClass
+        );
+
+        if (filteredRecords.length === 0) {
             alert("डाउनलोड करने के लिए कोई डेटा नहीं है!");
             return;
         }
 
-        const headers = ["नाम", "पिता का नाम", "माता का नाम", "मोबाइल नंबर", "पता", "कक्षा", "PEN"];
+        const headers = ["क्र. सं.", "नाम", "पिता का नाम", "माता का नाम", "मोबाइल नंबर", "पता", "कक्षा", "PEN"];
         
         let csv = headers.join(',') + '\n';
         
-        records.forEach(record => {
+        filteredRecords.forEach((record, index) => {
             const row = [
+                index + 1, 
                 record.name,
                 record.fatherName,
                 record.motherName,
@@ -219,26 +675,125 @@
                 record.class,
                 record.pen
             ].map(item => {
-                let cleanItem = item.replace(/"/g, '""'); 
+                let cleanItem = String(item).replace(/"/g, '""'); 
                 return `"${cleanItem}"`; 
             }).join(','); 
             
             csv += row + '\n';
         });
 
-        // हिंदी फ़ॉन्ट के लिए फिक्स: UTF-8 BOM जोड़ना
         const BOM = "\uFEFF"; 
         const finalCSV = BOM + csv;
+        
+        const filename = selectedClass === 'all' ? 
+                         'Student_Records_All_Classes.csv' : 
+                         `Student_Records_Class_${selectedClass}.csv`;
 
         const blob = new Blob([finalCSV], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         
         link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', 'Student_Records_Excel.csv');
+        link.setAttribute('download', filename);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        alert("Excel/CSV फ़ाइल में फोटो शामिल नहीं होगी।");
     }
+
+
+    // --- ID Card Print Function (Unchanged) ---
+    
+    function generateIDCardHTML(record) {
+        const photoSrc = record.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#ddd"/><text x="50" y="55" font-size="20" text-anchor="middle" fill="#555">No Photo</text></svg>';
+
+        return `
+            <div class="id-card">
+                <h3>श्री दुर्गे माँ बाल गोविन्द इण्टर कालेज </h3>
+                <div class="card-photo">
+                    <img src="${photoSrc}" alt="Student Photo">
+                </div>
+                <div class="card-details-text">
+                    <p><strong>नाम:</strong> ${record.name}</p>
+                    <p><strong>कक्षा:</strong> ${record.class}</p>
+                    <p><strong>पिता का नाम:</strong> ${record.fatherName}</p>
+                    <p><strong>माता का नाम:</strong> ${record.motherName}</p>
+                    <p><strong>मोबाइल:</strong> ${record.mobile}</p>
+                    <p><strong>PEN:</strong> ${record.pen}</p>
+                    <p><strong>पता:</strong> ${record.address}</p>
+                </div>
+                <div class="barcode-area">
+                    <svg id="barcode-${record.id}"></svg>
+                    <p class="barcode-id-text">ID: ${record.id}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    async function printSelectedIDCards() {
+        const selectedCheckboxes = Array.from(document.querySelectorAll('.record-checkbox:checked'));
+        
+        if (selectedCheckboxes.length === 0) {
+            alert("कृपया ID कार्ड प्रिंट करने के लिए कम से कम एक पंक्ति (Checkbox) चुनें।");
+            return;
+        }
+
+        const selectedIds = selectedCheckboxes.map(cb => parseInt(cb.value, 10));
+        const allRecords = await getAllRecordsFromDB();
+        
+        const selectedRecords = allRecords.filter(record => selectedIds.includes(record.id));
+
+        if (selectedRecords.length === 0) {
+            alert("चुने गए रिकॉर्ड्स का डेटाबेस में कोई डेटा नहीं मिला।");
+            return;
+        }
+
+        // 1. HTML जेनरेट करें और DOM में जोड़ें
+        idCardPrintContainer.innerHTML = '';
+        selectedRecords.forEach(record => {
+            idCardPrintContainer.innerHTML += generateIDCardHTML(record);
+        });
+
+        // 2. DOM में HTML जुड़ने के बाद, बारकोड जेनरेट करें (बारकोड केवल ID को एन्कोड करता है)
+        selectedRecords.forEach(record => {
+            const barcodeElement = document.getElementById(`barcode-${record.id}`);
+            if (barcodeElement) {
+                JsBarcode(barcodeElement, String(record.id), {
+                    format: "CODE128", 
+                    displayValue: false, 
+                    margin: 0,
+                    width: 1.5, // बारकोड की चौड़ाई
+                    height: 35, // बारकोड की ऊँचाई
+                    background: "#f0f8ff"
+                });
+            }
+        });
+
+        // 3. प्रिंट ट्रिगर करें।
+        window.print();
+        
+        // 4. प्रिंट के बाद साफ़ करें
+        setTimeout(() => {
+            idCardPrintContainer.innerHTML = '';
+        }, 500); 
+    }
+
+
+    // --- इवेंट लिसनर ---
+    document.getElementById('printIDCardBtn').addEventListener('click', printSelectedIDCards); 
+    document.getElementById('printBtn').addEventListener('click', printTable);
+    document.getElementById('pdfBtn').addEventListener('click', exportPDF);
+    document.getElementById('excelBtn').addEventListener('click', exportCSV);
+    document.getElementById('resetBtn').addEventListener('click', resetData);
+    document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+    
+    // Use a unified function for Save/Update
+    form.addEventListener('submit', saveOrUpdateRecord); 
+    updateBtn.addEventListener('click', saveOrUpdateRecord); // Listen for the Update button too
+    
+    // Clear form listener
+    document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+
+    classFilter.addEventListener('change', loadAndDisplayData); 
 
     window.onload = loadAndDisplayData;
 </script>
