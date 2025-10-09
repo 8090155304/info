@@ -272,6 +272,11 @@
     let db; 
     let editingRecord = null; // To store the ID of the record being edited
 
+    // **सुरक्षा के लिए  में एन्कोड किया गया पासवर्ड**
+    //  में एन्कोड करने पर 'ODUxNTU2' मिलता है।
+    const ENCRYPTED_PASSWORD = 'ODUxNTU2'; 
+    // **********************************************
+
     const form = document.getElementById('recordForm');
     const dataTableBody = document.getElementById('dataTable').querySelector('tbody');
     const classFilter = document.getElementById('classFilter');
@@ -454,7 +459,22 @@
         }
     }
     
+    // ***** यह फंक्शन पासवर्ड एन्कोडिंग के साथ अपडेट किया गया है *****
     async function loadRecordForEdit(id) {
+        // --- 1. पासवर्ड जाँच ---
+        const password = prompt("रिकॉर्ड एडिट करने के लिए पासवर्ड डालें:");
+        
+        // Base64 एन्कोडेड पासवर्ड को डिकोड करें
+        const requiredPassword = atob(ENCRYPTED_PASSWORD); 
+        
+        if (password !== requiredPassword) {
+            if (password !== null) {
+                alert("पासवर्ड गलत है। आप रिकॉर्ड एडिट नहीं कर सकते।");
+            }
+            return; // अगर पासवर्ड गलत है, तो यहीं रुक जाएँ
+        }
+        // -------------------------
+
         const record = await getRecordById(id);
         if (record) {
             document.getElementById('name').value = record.name;
@@ -467,7 +487,7 @@
             
             // Store ID and set editing mode
             recordIdInput.value = record.id;
-            editingRecord = record; // Store the entire record for comparison (optional)
+            editingRecord = record; 
             setFormMode(true);
             
             // Scroll to the top of the form
@@ -476,6 +496,7 @@
             alert("रिकॉर्ड नहीं मिला।");
         }
     }
+    // *******************************************************
 
     async function saveOrUpdateRecord(event) {
         event.preventDefault(); 
@@ -556,10 +577,12 @@
         alert("फ़ॉर्म फ़ील्ड्स क्लियर कर दिए गए हैं।");
     }
 
-    // ***** यह फंक्शन पासवर्ड चेक के साथ अपडेट किया गया है *****
+    // यह फंक्शन पहले से ही पासवर्ड एन्कोडिंग के साथ अपडेट किया गया है
     function resetData() {
         const password = prompt("डेटा डिलीट करने के लिए पासवर्ड डालें:");
-        const requiredPassword = '851556'; // आपका निर्धारित पासवर्ड
+        
+        // Base64 एन्कोडेड पासवर्ड को डिकोड करें
+        const requiredPassword = atob(ENCRYPTED_PASSWORD); 
         
         if (password === requiredPassword) {
             const confirmReset = confirm("पासवर्ड सही है। क्या आप वाकई IndexedDB से सभी रिकॉर्ड हटाना चाहते हैं? यह कार्रवाई वापस नहीं ली जा सकती।");
@@ -772,6 +795,9 @@
         selectedRecords.forEach(record => {
             const barcodeElement = document.getElementById(`barcode-${record.id}`);
             if (barcodeElement) {
+                // **आपके द्वारा रिपोर्ट किए गए Barcode error (code length overflow) को रोकने के लिए,
+                // सुनिश्चित करें कि आप केवल एक छोटी स्ट्रिंग (जैसे ID) को ही एन्कोड कर रहे हैं।
+                // यहाँ केवल ID को स्ट्रिंग के रूप में पास किया गया है, जो सही है।**
                 JsBarcode(barcodeElement, String(record.id), {
                     format: "CODE128", 
                     displayValue: false, 
