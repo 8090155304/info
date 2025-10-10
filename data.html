@@ -33,8 +33,8 @@
         }
         
         .action-area button:hover {
-            transform: translateY(-2px); 
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+            transform: translateY(-9px); 
+            box-shadow: 0 4px 8px rgba(102, 110, 120, 0.2); 
         }
 
         #saveBtn, #updateBtn { background-color: #28a745; color: white; } /* Save/Update Button */
@@ -50,6 +50,17 @@
         #resetBtn { background-color: #6c757d; color: white; } 
         #resetBtn:hover { background-color: #5a6268; }
         
+        /* NEW STYLES for Import/Export/WhatsApp */
+        #whatsappBtn { background-color: #25D366; color: white; } 
+        #whatsappBtn:hover { background-color: #128C7E; }
+
+        #jsonBtn { background-color: #8A2BE2; color: white; } /* JSON Export */
+        #jsonBtn:hover { background-color: #6A1BAA; }
+        
+        #importJsonBtn { background-color: #008080; color: white; } /* JSON Import */
+        #importJsonBtn:hover { background-color: #006666; }
+        /* -------------------------------- */
+
         #printIDCardBtn { background-color: #3f51b5; color: white; }
         #printIDCardBtn:hover { background-color: #303f9f; }
         
@@ -86,10 +97,11 @@
             border-radius: 4px;
         }
 
-        /* --- ID Card Print Area Styles (Previous Optimization) --- */
+        /* --- ID Card Print Area Styles --- */
+        /* Note: Display property is controlled by JS and print media query */
         .id-card-print-container {
-            display: none; 
-            position: absolute;
+            display: none; /* Default state: hidden */
+            position: fixed; /* Use fixed for better control during setup */
             top: 0;
             left: 0;
             width: 100%;
@@ -99,9 +111,10 @@
             padding: 15px; 
             box-sizing: border-box;
         }
+        /* ... (rest of the card styles are the same) ... */
         .id-card {
             width: 185px; 
-            height: 308px; /* 3 रो को पूरे पेज पर फिट करने के लिए अधिकतम ऊँचाई */
+            height: 308px; 
             border: 1px solid #007bff;
             border-radius: 8px;
             padding: 8px; 
@@ -113,7 +126,6 @@
             background: #f0f8ff;
             text-align: left; 
         }
-        /* ... (rest of the card styles are the same) ... */
         .id-card h3 {
             text-align: center;
             margin: 5px 0 8px 0; 
@@ -162,13 +174,14 @@
             text-transform: uppercase;
         }
 
-        /* --- Print Styles (4 कॉलम, 3 रो, न्यूनतम मार्जिन) --- */
+        /* --- Print Styles (Conditional Visibility) --- */
         @media print {
-            body > *:not(.id-card-print-container) { 
-                display: none !important; 
+            /* 1. Print ID Card Mode */
+            /* जब body पर .id-card-mode क्लास होगी, तब सिर्फ़ ID कार्ड कंटेनर दिखेगा */
+            body.id-card-mode .container {
+                display: none !important;
             }
-            
-            .id-card-print-container {
+            body.id-card-mode .id-card-print-container {
                 display: grid !important; 
                 grid-template-columns: repeat(4, 1fr); 
                 grid-auto-rows: 308px;
@@ -180,26 +193,41 @@
                 height: auto;
                 background: white;
             }
-            
-            @page {
-                size: A4 portrait; 
-                margin: 0.1cm;
-            }
-
-            .id-card {
+            body.id-card-mode .id-card {
                 width: 100%; 
                 height: 100%; 
                 margin: 0;
                 page-break-inside: avoid;
+            }
+
+            /* 2. Print Table Mode */
+            /* जब body पर .table-mode क्लास होगी, तब सिर्फ़ .container दिखेगा (जिसमें टेबल है) और बाकी सब hide होगा */
+            body.table-mode .id-card-print-container {
+                display: none !important;
+            }
+            body.table-mode .container {
+                max-width: none !important; /* Print के लिए full width */
+                box-shadow: none !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+            body.table-mode h2, body.table-mode .form-fields, body.table-mode .action-area, body.table-mode .filter-area {
+                display: none !important; /* फ़ॉर्म और बटन छुपाएँ */
+            }
+            body.table-mode table {
+                margin-top: 0 !important;
+            }
+
+            @page {
+                size: A4 portrait; 
+                margin: 0.5cm;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="container hide-on-print">
-    
-    <h2>1. नया रिकॉर्ड एंटर करें / एडिट करें</h2>
+<div class="container"> <h2>1. नया रिकॉर्ड एंटर करें / एडिट करें</h2>
     
     <form id="recordForm">
         <input type="hidden" id="recordId" value=""> 
@@ -221,6 +249,8 @@
             <button type="button" id="clearFormBtn">फ़ॉर्म क्लियर करें 🧹</button> 
         </div>
     </form>
+    
+    <input type="file" id="importFile" accept=".json" style="display: none;">
 
     <hr style="margin: 30px 0;">
 
@@ -238,6 +268,11 @@
         <button id="printBtn">पूरा टेबल प्रिंट करें 🖨️</button>
         <button id="pdfBtn">PDF फ़ाइल बनाएँ 📄</button>
         <button id="excelBtn">Excel फ़ाइल बनाएँ (CSV) 📊</button>
+        
+        <button id="importJsonBtn">डेटा इंपोर्ट करें 📥</button>
+        <button id="jsonBtn">JSON एक्सपोर्ट करें 📤</button>
+        <button id="whatsappBtn">डेटा WhatsApp करें 📱</button> 
+
         <button id="resetBtn">सारा डेटा डिलीट करें 🗑️</button>
     </div>
 
@@ -270,10 +305,9 @@
     const DB_NAME = 'StudentDataDB';
     const STORE_NAME = 'records';
     let db; 
-    let editingRecord = null; // To store the ID of the record being edited
+    let editingRecord = null; 
 
-    // **सुरक्षा के लिए  में एन्कोड किया गया पासवर्ड**
-    //  में एन्कोड करने पर 'ODUxNTU2' मिलता है।
+    // **सुरक्षा के लिए Base64 में एन्कोड किया गया पासवर्ड: 851556**
     const ENCRYPTED_PASSWORD = 'ODUxNTU2'; 
     // **********************************************
 
@@ -285,9 +319,9 @@
     const recordIdInput = document.getElementById('recordId');
     const saveBtn = document.getElementById('saveBtn');
     const updateBtn = document.getElementById('updateBtn');
+    const importFileElement = document.getElementById('importFile');
 
-    // --- IndexedDB Setup ---
-
+    // --- IndexedDB Setup (Unchanged) ---
     function openDB() {
         return new Promise((resolve, reject) => {
             if (db) {
@@ -352,8 +386,7 @@
         }
     }
 
-
-    // --- डेटा डिस्प्ले और फॉर्म हैंडलिंग ---
+    // --- डेटा डिस्प्ले और फॉर्म हैंडलिंग (Unchanged) ---
 
     function populateClassFilter(records) {
         const uniqueClasses = [...new Set(records.map(record => record.class))].sort();
@@ -459,19 +492,17 @@
         }
     }
     
-    // ***** यह फंक्शन पासवर्ड एन्कोडिंग के साथ अपडेट किया गया है *****
+    // ***** पासवर्ड एन्कोडिंग के साथ अपडेटेड फ़ंक्शन (Unchanged) *****
     async function loadRecordForEdit(id) {
         // --- 1. पासवर्ड जाँच ---
         const password = prompt("रिकॉर्ड एडिट करने के लिए पासवर्ड डालें:");
-        
-        // Base64 एन्कोडेड पासवर्ड को डिकोड करें
         const requiredPassword = atob(ENCRYPTED_PASSWORD); 
         
         if (password !== requiredPassword) {
             if (password !== null) {
                 alert("पासवर्ड गलत है। आप रिकॉर्ड एडिट नहीं कर सकते।");
             }
-            return; // अगर पासवर्ड गलत है, तो यहीं रुक जाएँ
+            return; 
         }
         // -------------------------
 
@@ -505,10 +536,8 @@
         let photoBase64 = null;
         
         if (photoFile) {
-            // New photo uploaded
             photoBase64 = await fileToBase64(photoFile); 
         } else if (editingRecord && editingRecord.photoBase64) {
-            // Retain old photo if not uploading new one
             photoBase64 = editingRecord.photoBase64;
         }
 
@@ -528,15 +557,14 @@
         const isEditing = recordId !== '';
 
         if (isEditing) {
-            // Update an existing record
-            newRecordData.id = parseInt(recordId); // ID must be kept for update
+            newRecordData.id = parseInt(recordId); 
             try {
                 const store = await getStore('readwrite');
-                const request = store.put(newRecordData); // put() updates if ID exists, adds otherwise
+                const request = store.put(newRecordData); 
                 
                 request.onsuccess = () => {
                     form.reset();
-                    setFormMode(false); // Switch back to save mode
+                    setFormMode(false); 
                     loadAndDisplayData();
                     alert("रिकॉर्ड सफलतापूर्वक अपडेट हो गया! ✅");
                 };
@@ -550,7 +578,6 @@
             }
             
         } else {
-            // Save a new record
             try {
                 const store = await getStore('readwrite');
                 const request = store.add(newRecordData);
@@ -573,15 +600,14 @@
     
     function clearForm() {
         form.reset();
-        setFormMode(false); // Ensure it reverts to Save mode
+        setFormMode(false); 
         alert("फ़ॉर्म फ़ील्ड्स क्लियर कर दिए गए हैं।");
     }
 
-    // यह फंक्शन पहले से ही पासवर्ड एन्कोडिंग के साथ अपडेट किया गया है
+    // ***** पासवर्ड एन्कोडिंग के साथ अपडेटेड फ़ंक्शन (Unchanged) *****
     function resetData() {
         const password = prompt("डेटा डिलीट करने के लिए पासवर्ड डालें:");
         
-        // Base64 एन्कोडेड पासवर्ड को डिकोड करें
         const requiredPassword = atob(ENCRYPTED_PASSWORD); 
         
         if (password === requiredPassword) {
@@ -612,11 +638,22 @@
     }
     // *******************************************************
     
-    // --- Export/Print Functions (Unchanged) ---
-    
+    // --- Export/Print Functions (UPDATED) ---
+
     function printTable() {
+        // 1. body पर 'table-mode' क्लास जोड़ें
+        document.body.classList.add('table-mode');
+        document.body.classList.remove('id-card-mode'); // Ensure card mode is off
+        
+        // 2. प्रिंट ट्रिगर करें
         window.print(); 
+        
+        // 3. प्रिंट खत्म होने के बाद क्लास हटा दें
+        setTimeout(() => {
+            document.body.classList.remove('table-mode');
+        }, 500);
     }
+
 
     async function exportPDF() {
         // PDF एक्सपोर्ट लॉजिक (Unchanged)
@@ -738,8 +775,127 @@
         alert("Excel/CSV फ़ाइल में फोटो शामिल नहीं होगी।");
     }
 
+    // --- NEW JSON EXPORT FUNCTION (Unchanged) ---
+    async function exportJSON() {
+        const allRecords = await getAllRecordsFromDB();
+        const selectedClass = classFilter.value;
+        const filteredRecords = allRecords.filter(record => 
+            selectedClass === 'all' || record.class === selectedClass
+        );
 
-    // --- ID Card Print Function (Unchanged) ---
+        if (filteredRecords.length === 0) {
+            alert("डाउनलोड करने के लिए कोई डेटा नहीं है!");
+            return;
+        }
+
+        const cleanRecords = filteredRecords.map(record => {
+            const { photoBase64, ...rest } = record;
+            return rest;
+        });
+        
+        const jsonString = JSON.stringify(cleanRecords, null, 2); 
+        
+        const filename = selectedClass === 'all' ? 
+                         'Student_Records_All_Classes_Backup.json' : 
+                         `Student_Records_Class_${selectedClass}_Backup.json`;
+
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const link = document.createElement("a");
+        
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        alert("JSON बैकअप फ़ाइल सफलतापूर्वक डाउनलोड हो गई है।");
+    }
+
+    // --- NEW JSON IMPORT FUNCTION (Unchanged) ---
+    async function importDataFromJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // --- 1. पासवर्ड जाँच ---
+        const password = prompt("डेटा इंपोर्ट करने के लिए पासवर्ड डालें:");
+        const requiredPassword = atob(ENCRYPTED_PASSWORD); 
+        
+        if (password !== requiredPassword) {
+            alert("पासवर्ड गलत है। आप डेटा इंपोर्ट नहीं कर सकते।");
+            importFileElement.value = ''; 
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const jsonContent = JSON.parse(e.target.result);
+                if (!Array.isArray(jsonContent)) {
+                    alert("JSON फ़ाइल का फ़ॉर्मेट गलत है। यह रिकॉर्ड्स की एक Array होनी चाहिए।");
+                    return;
+                }
+                
+                const store = await getStore('readwrite');
+                let importedCount = 0;
+                let errorCount = 0;
+
+                for (const record of jsonContent) {
+                    const { id, ...newRecord } = record; 
+                    
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const request = store.add(newRecord);
+                            request.onsuccess = () => {
+                                importedCount++;
+                                resolve();
+                            };
+                            request.onerror = (event) => {
+                                console.error("Import Error for record:", newRecord, event.target.error);
+                                errorCount++;
+                                resolve(); 
+                            };
+                        });
+                    } catch (err) {
+                        errorCount++;
+                    }
+                }
+                
+                await store.transaction.oncomplete; 
+
+                loadAndDisplayData();
+                alert(`डेटा इंपोर्ट सफल! ✅\nकुल रिकॉर्ड इंपोर्ट किए गए: ${importedCount}\nत्रुटियाँ: ${errorCount}`);
+                
+            } catch (error) {
+                alert(`JSON फ़ाइल को पढ़ने/इंपोर्ट करने में त्रुटि: ${error.message}`);
+            } finally {
+                importFileElement.value = ''; 
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    // --- NEW WHATSAPP FUNCTION (Unchanged) ---
+    async function sendWhatsAppMessage() {
+        const selectedClass = classFilter.value;
+        const allRecords = await getAllRecordsFromDB();
+        
+        const filteredRecords = allRecords.filter(record => 
+            selectedClass === 'all' || record.class === selectedClass
+        );
+
+        let classInfo = selectedClass === 'all' ? "सभी क्लासों" : `क्लास ${selectedClass}`;
+        
+        const message = encodeURIComponent(
+            `नमस्ते, यहाँ ${classInfo} के ${filteredRecords.length} रिकॉर्ड्स का डेटा है। कृपया अटैच की गई PDF या JSON फ़ाइल देखें।`
+        );
+        
+        const phoneNumber = "8090155304"; 
+
+        window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+        
+        alert("एक नई टैब में WhatsApp चैट खुल गई है।\n\n**याद रखें:** आपको PDF/JSON फ़ाइल को मैन्युअल रूप से अटैच करना होगा।");
+    }
+
+    // --- ID Card Print Function (UPDATED) ---
     
     function generateIDCardHTML(record) {
         const photoSrc = record.photoBase64 || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#ddd"/><text x="50" y="55" font-size="20" text-anchor="middle" fill="#555">No Photo</text></svg>';
@@ -791,53 +947,62 @@
             idCardPrintContainer.innerHTML += generateIDCardHTML(record);
         });
 
-        // 2. DOM में HTML जुड़ने के बाद, बारकोड जेनरेट करें (बारकोड केवल ID को एन्कोड करता है)
+        // 2. DOM में HTML जुड़ने के बाद, बारकोड जेनरेट करें
         selectedRecords.forEach(record => {
             const barcodeElement = document.getElementById(`barcode-${record.id}`);
             if (barcodeElement) {
-                // **आपके द्वारा रिपोर्ट किए गए Barcode error (code length overflow) को रोकने के लिए,
-                // सुनिश्चित करें कि आप केवल एक छोटी स्ट्रिंग (जैसे ID) को ही एन्कोड कर रहे हैं।
-                // यहाँ केवल ID को स्ट्रिंग के रूप में पास किया गया है, जो सही है।**
                 JsBarcode(barcodeElement, String(record.id), {
                     format: "CODE128", 
                     displayValue: false, 
                     margin: 0,
-                    width: 1.5, // बारकोड की चौड़ाई
-                    height: 35, // बारकोड की ऊँचाई
+                    width: 1.5, 
+                    height: 35, 
                     background: "#f0f8ff"
                 });
             }
         });
 
-        // 3. प्रिंट ट्रिगर करें।
+        // 3. body पर 'id-card-mode' क्लास जोड़ें
+        document.body.classList.add('id-card-mode');
+        document.body.classList.remove('table-mode'); // Ensure table mode is off
+
+        // 4. प्रिंट ट्रिगर करें।
         window.print();
         
-        // 4. प्रिंट के बाद साफ़ करें
+        // 5. प्रिंट के बाद साफ़ करें और क्लास हटाएँ
         setTimeout(() => {
             idCardPrintContainer.innerHTML = '';
+            document.body.classList.remove('id-card-mode');
         }, 500); 
     }
 
 
     // --- इवेंट लिसनर ---
     document.getElementById('printIDCardBtn').addEventListener('click', printSelectedIDCards); 
-    document.getElementById('printBtn').addEventListener('click', printTable);
+    document.getElementById('printBtn').addEventListener('click', printTable); /* <--- Fixed! */
     document.getElementById('pdfBtn').addEventListener('click', exportPDF);
     document.getElementById('excelBtn').addEventListener('click', exportCSV);
     document.getElementById('resetBtn').addEventListener('click', resetData);
     document.getElementById('clearFormBtn').addEventListener('click', clearForm);
     
-    // Use a unified function for Save/Update
-    form.addEventListener('submit', saveOrUpdateRecord); 
-    updateBtn.addEventListener('click', saveOrUpdateRecord); // Listen for the Update button too
+    // NEW LISTENERS (Unchanged)
+    document.getElementById('whatsappBtn').addEventListener('click', sendWhatsAppMessage); 
+    document.getElementById('jsonBtn').addEventListener('click', exportJSON);
     
-    // Clear form listener
+    document.getElementById('importJsonBtn').addEventListener('click', () => {
+        importFileElement.click();
+    });
+
+    importFileElement.addEventListener('change', importDataFromJSON); 
+    
+    form.addEventListener('submit', saveOrUpdateRecord); 
+    updateBtn.addEventListener('click', saveOrUpdateRecord); 
+    
     document.getElementById('clearFormBtn').addEventListener('click', clearForm);
 
     classFilter.addEventListener('change', loadAndDisplayData); 
 
     window.onload = loadAndDisplayData;
 </script>
-
 </body>
 </html>
