@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>स्टाइलिश UPI QR कोड जेनरेटर</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    
+    <style>
+        /* सामान्य स्टाइलिंग और फॉन्ट */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        /* मुख्य कंटेनर (Card) स्टाइलिंग */
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transition: transform 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            color: #1e3c72; /* गहरा नीला */
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        /* इनपुट और लेबल स्टाइलिंग */
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"], 
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, 
+        input[type="number"]:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        /* बटन स्टाइलिंग */
+        button {
+            background-color: #28a745; /* गहरा हरा */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.1s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* QR कोड कंटेनर और एनीमेशन */
+        #qrcode-container {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 15px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            /* QR कोड के लिए एनिमेटेड स्टाइल */
+            opacity: 0; /* शुरू में छिपा हुआ */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* QR कोड जेनरेट होने के बाद दिखने के लिए क्लास */
+        #qrcode-container.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>UPI QR कोड जेनरेटर</h1>
+
+        <label for="upiId">आपका UPI ID (VPA)</label>
+        <input type="text" id="upiId" value="yourupiid@bank" placeholder="उदाहरण: mobile@ybl" required>
+
+        <label for="amount">राशि (₹ में, वैकल्पिक)</label>
+        <input type="number" id="amount" value="0.00" placeholder="0.00">
+
+        <button onclick="generateQrCode()">QR कोड जेनरेट करें</button>
+
+        <div id="qrcode-container">
+            <div id="qrcode"></div>
+        </div>
+    </div>
+
+    <script>
+        // एक ग्लोबल वेरिएबल ताकि QRCode ऑब्जेक्ट को ट्रैक किया जा सके
+        let qrCodeInstance = null;
+
+        function generateQrCode() {
+            const vpa = document.getElementById('upiId').value.trim();
+            let amount = document.getElementById('amount').value.trim();
+            const payeeName = "Your%20Name"; // इसे अपनी ज़रूरत के अनुसार बदलें
+
+            if (!vpa) {
+                alert("कृपया अपना UPI ID दर्ज करें!");
+                return;
+            }
+
+            // सुनिश्चित करें कि राशि दो दशमलव स्थानों (two decimal places) तक हो
+            if (amount && parseFloat(amount) > 0) {
+                amount = parseFloat(amount).toFixed(2);
+            } else {
+                amount = ""; // यदि राशि 0 है, तो लिंक में शामिल न करें (स्टैटिक QR)
+            }
+            
+            // UPI लिंक URI बनाएं (ध्यान दें: am= parameter खाली राशि के लिए omit किया गया है)
+            let upiLink = `upi://pay?pa=${vpa}&pn=${payeeName}&cu=INR`;
+            if (amount) {
+                upiLink += `&am=${amount}`;
+            }
+
+            const qrContainer = document.getElementById('qrcode');
+            const qrContainerDiv = document.getElementById('qrcode-container');
+            
+            // 1. एनीमेशन के लिए पुरानी QR छवि को फ़ेड आउट करें
+            qrContainerDiv.classList.remove('show');
+
+            setTimeout(() => {
+                // 2. कंटेनर को खाली करें
+                qrContainer.innerHTML = '';
+                qrCodeInstance = null;
+
+                // 3. qrcode.js का उपयोग करके नया QR कोड जेनरेट करें
+                qrCodeInstance = new QRCode(qrContainer, {
+                    text: upiLink,
+                    width: 256,
+                    height: 256,
+                    colorDark : "#1e3c72", /* गहरे रंग का QR कोड */
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+
+                // 4. नया QR कोड जेनरेट होने के बाद, उसे फ़ेड इन करें
+                // एक छोटे से विलंब (delay) के बाद 'show' क्लास जोड़ें
+                setTimeout(() => {
+                    qrContainerDiv.classList.add('show');
+                }, 100); 
+
+                console.log("Generated UPI Link: " + upiLink);
+            }, 500); // 500ms का विलंब CSS ट्रांज़िशन के बराबर
+
+        }
+
+        // पेज लोड होने पर डिफ़ॉल्ट कोड जेनरेट करें
+        window.onload = generateQrCode;
+    </script>
+
+</body>
+</html>
