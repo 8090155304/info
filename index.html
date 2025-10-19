@@ -69,9 +69,111 @@
     .footer-container p {
       margin: 5px 0;
     }
+    
+    /* WhatsApp Button Styling */
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    .whatsapp-btn img {
+      width: 8mm;
+      height: 8mm;
+      transition: transform 0.3s ease;
+    }
+
+    .whatsapp-btn:hover {
+      transform: scale(1.1);
+      color: #25D366;
+    }
+
+    .whatsapp-btn:hover img {
+      transform: rotate(10deg) scale(1.2);
+    }
+
+    /* ****************************************************** */
+    /* ** WELCOME POPUP CSS ** */
+    /* ****************************************************** */
+    #welcomePopup {
+        position: fixed; 
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        animation: fadeIn 0.5s;
+    }
+
+    .popup-content {
+        background-color: white;
+        color: #000;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        max-width: 90%;
+        width: 350px;
+        animation: slideDown 0.5s ease-out;
+    }
+
+    .popup-content h2 {
+        color: #0072ff;
+        margin-top: 0;
+        border-bottom: 2px solid #0072ff;
+        padding-bottom: 10px;
+    }
+
+    .popup-content p {
+        margin-bottom: 20px;
+    }
+
+    #closePopup {
+        padding: 10px 25px;
+        cursor: pointer;
+        background-color: #0072ff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    #closePopup:hover {
+        background-color: #0056b3;
+    }
+
+    /* CSS Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
+
+    <div id="welcomePopup">
+        <div class="popup-content">
+            <h2>Welcome to Shiv Computer!</h2>
+            <p>हम आपको अपनी वेबसाइट पर देखकर बहुत खुश हैं। बेहतर अनुभव के लिए हमारे कोर्सेस चेक करें।</p>
+            <button id="closePopup">शुरू करें (Continue)</button>
+        </div>
+    </div>
+
 
   <header>
     <img src="logo.png" alt="Logo" class="logo">
@@ -92,13 +194,11 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <main>
     <h2>Welcome to Shiv Computer</h2>
     <p>Your go-to place for practical computer education.</p>
   </main>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-container">
       <p>&copy; 2025 Shiv Computer. All rights reserved.</p>
@@ -109,37 +209,30 @@
   <img alt="WhatsApp" src="wlogo.png" />
   <span>WhatsApp</span>
 </a>
-
-<style>
-  .whatsapp-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    color: white; /* Default text color white */
-    font-weight: bold;
-    font-size: 16px;
-    transition: transform 0.3s ease, color 0.3s ease;
-  }
-
-  .whatsapp-btn img {
-    width: 8mm;   /* Logo width 8mm */
-    height: 8mm;  /* Logo height 8mm */
-    transition: transform 0.3s ease;
-  }
-
-  .whatsapp-btn:hover {
-    transform: scale(1.1);  /* Zoom-in effect */
-    color: #25D366; /* WhatsApp green on hover */
-  }
-
-  .whatsapp-btn:hover img {
-    transform: rotate(10deg) scale(1.2); /* Icon rotate + zoom */
-  }
-</style>
-
     </div>
   </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const popup = document.getElementById('welcomePopup');
+        const closeButton = document.getElementById('closePopup');
+
+        // Pop-up को बंद करने का फ़ंक्शन
+        closeButton.addEventListener('click', function() {
+            // Pop-up को धीरे-धीरे गायब करने के लिए opacity को 0 करें
+            popup.style.opacity = '0'; 
+            
+            // 500ms (0.5s) के बाद Pop-up को पूरी तरह से हटा दें (display: none)
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 500); 
+        });
+        
+        // क्योंकि हमने कोई 'localStorage' चेक नहीं जोड़ा है, Pop-up हर बार दिखेगा।
+        // शुरुआत में, Pop-up तुरंत दिखाने के लिए display: flex सेट करें
+        popup.style.display = 'flex';
+    });
+  </script>
 
 </body>
 </html>
