@@ -3,22 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Exam System</title>
+    <title>Online Exam System - Complete</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        }
-        .pulse { 
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
-        }
-        @keyframes pulse { 
-            0%, 100% { opacity: 1; } 
-            50% { opacity: 0.5; } 
-        }
-        video { 
-            transform: scaleX(-1); 
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        video { transform: scaleX(-1); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -33,11 +24,9 @@
                 </div>
                 <h1 class="text-2xl font-bold text-gray-800">ऑनलाइन परीक्षा</h1>
             </div>
-            <div id="userInfo" class="hidden items-center gap-4">
+            <div id="userInfo" style="display:none;" class="flex items-center gap-4">
                 <span id="userName" class="text-gray-700 font-medium"></span>
-                <button onclick="logout()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
-                    Logout
-                </button>
+                <button onclick="logout()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Logout</button>
             </div>
         </div>
     </div>
@@ -52,81 +41,180 @@
                     </svg>
                 </div>
                 <h2 class="text-3xl font-bold text-gray-800">Login करें</h2>
-                <p class="text-gray-600 mt-2">अपना Mobile Number और Date of Birth दर्ज करें</p>
+                <p class="text-gray-600 mt-2">Student या Admin के रूप में Login करें</p>
             </div>
 
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">Mobile Number</label>
-                    <input type="tel" id="mobileInput" placeholder="10 अंकों का Mobile Number" maxlength="10" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">Date of Birth</label>
-                    <input type="date" id="dobInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                </div>
-                <button onclick="handleLogin()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition mt-6">
-                    Login करें
-                </button>
+            <div class="flex mb-6 bg-gray-100 p-1 rounded-lg">
+                <button onclick="switchLoginTab('student')" id="studentTab" class="flex-1 py-2 px-4 rounded-md bg-white text-indigo-600 font-medium transition">Student</button>
+                <button onclick="switchLoginTab('admin')" id="adminTab" class="flex-1 py-2 px-4 rounded-md text-gray-600 font-medium transition">Admin</button>
             </div>
 
-            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                <p class="text-sm text-gray-700 font-medium mb-2">Demo Credentials:</p>
-                <p class="text-xs text-gray-600">Mobile: 9876543210</p>
-                <p class="text-xs text-gray-600">DOB: 2000-01-15</p>
+            <div id="studentLoginForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Mobile Number</label>
+                        <input type="tel" id="mobileInput" placeholder="10 अंकों का Mobile Number" maxlength="10" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Date of Birth</label>
+                        <input type="date" id="dobInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button onclick="handleLogin()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition mt-6">Student Login</button>
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-gray-700 font-medium mb-2">Demo Student:</p>
+                        <p class="text-xs text-gray-600">Mobile: 9876543210</p>
+                        <p class="text-xs text-gray-600">DOB: 2000-01-15</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminLoginForm" style="display:none;">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Admin Username</label>
+                        <input type="text" id="adminUsername" placeholder="Username दर्ज करें" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Admin Password</label>
+                        <input type="password" id="adminPassword" placeholder="Password दर्ज करें" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <button onclick="handleAdminLogin()" class="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition mt-6">Admin Login</button>
+                    <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                        <p class="text-sm text-gray-700 font-medium mb-2">Demo Admin:</p>
+                        <p class="text-xs text-gray-600">Username: admin</p>
+                        <p class="text-xs text-gray-600">Password: admin#123</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="instructionsView" class="hidden max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <div id="adminView" style="display:none;">
+            <div class="mb-6 flex gap-4 flex-wrap">
+                <button onclick="showAdminTab('results')" id="resultsTabBtn" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">Results</button>
+                <button onclick="showAdminTab('users')" id="usersTabBtn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Users</button>
+                <button onclick="showAdminTab('questions')" id="questionsTabBtn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Questions</button>
+            </div>
+
+            <div id="resultsTab" class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">सभी परीक्षा Results</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <p class="text-gray-600 text-sm">कुल Students</p>
+                        <p id="totalStudents" class="text-3xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <p class="text-gray-600 text-sm">Exams Complete</p>
+                        <p id="completedExams" class="text-3xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <p class="text-gray-600 text-sm">Average Score</p>
+                        <p id="avgScore" class="text-3xl font-bold text-purple-600">0%</p>
+                    </div>
+                    <div class="p-4 bg-orange-50 rounded-lg">
+                        <p class="text-gray-600 text-sm">Total Violations</p>
+                        <p id="totalViolationsAdmin" class="text-3xl font-bold text-orange-600">0</p>
+                    </div>
+                </div>
+                <button onclick="clearAllResults()" class="mb-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Clear All Results</button>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">#</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mobile</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Score</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">%</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Violations</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Time</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">कोई result नहीं</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="usersTab" style="display:none;" class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Students Management</h2>
+                <div class="mb-6 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">नया Student Add करें</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" id="newUserName" placeholder="Student का नाम" class="px-4 py-2 border rounded-lg">
+                        <input type="tel" id="newUserMobile" placeholder="Mobile (10 digits)" maxlength="10" class="px-4 py-2 border rounded-lg">
+                        <input type="date" id="newUserDob" class="px-4 py-2 border rounded-lg">
+                    </div>
+                    <button onclick="addNewUser()" class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Add Student</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">#</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mobile</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">DOB</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="questionsTab" style="display:none;" class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Questions Management</h2>
+                <div class="mb-6 p-6 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">नया Question Add करें</h3>
+                    <input type="text" id="newQuestion" placeholder="प्रश्न लिखें" class="w-full px-4 py-2 border rounded-lg mb-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <input type="text" id="newOption1" placeholder="Option 1" class="px-4 py-2 border rounded-lg">
+                        <input type="text" id="newOption2" placeholder="Option 2" class="px-4 py-2 border rounded-lg">
+                        <input type="text" id="newOption3" placeholder="Option 3" class="px-4 py-2 border rounded-lg">
+                        <input type="text" id="newOption4" placeholder="Option 4" class="px-4 py-2 border rounded-lg">
+                    </div>
+                    <select id="correctOption" class="w-full px-4 py-2 border rounded-lg mb-3">
+                        <option value="">सही उत्तर चुनें</option>
+                        <option value="0">Option 1</option>
+                        <option value="1">Option 2</option>
+                        <option value="2">Option 3</option>
+                        <option value="3">Option 4</option>
+                    </select>
+                    <button onclick="addNewQuestion()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Add Question</button>
+                </div>
+                <div id="questionsList" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <div id="instructionsView" style="display:none;" class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
             <h2 class="text-3xl font-bold text-gray-800 mb-6">परीक्षा निर्देश</h2>
-            
             <div class="space-y-4 mb-8">
                 <div class="flex items-start gap-3 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <svg class="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                     </svg>
                     <div>
                         <p class="font-semibold text-gray-800">Camera Monitoring</p>
-                        <p class="text-gray-600 text-sm">पूरी परीक्षा के दौरान आपका camera ON रहेगा और आपकी निगरानी की जाएगी।</p>
+                        <p class="text-gray-600 text-sm">पूरी परीक्षा के दौरान camera ON रहेगा।</p>
                     </div>
                 </div>
-
                 <div class="flex items-start gap-3 p-4 bg-red-50 border-l-4 border-red-400 rounded">
-                    <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                     </svg>
                     <div>
-                        <p class="font-semibold text-gray-800">Tab/Window Switch</p>
-                        <p class="text-gray-600 text-sm">Tab या Window बदलने पर उल्लंघन दर्ज होगा। 4 बार उल्लंघन पर परीक्षा स्वतः समाप्त हो जाएगी।</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-3 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
-                    <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div>
-                        <p class="font-semibold text-gray-800">समय सीमा</p>
-                        <p class="text-gray-600 text-sm">परीक्षा की अवधि 60 मिनट है। समय समाप्त होने पर परीक्षा स्वतः submit हो जाएगी।</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-3 p-4 bg-green-50 border-l-4 border-green-400 rounded">
-                    <svg class="w-6 h-6 text-green-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <div>
-                        <p class="font-semibold text-gray-800">प्रश्न</p>
-                        <p class="text-gray-600 text-sm">कुल 5 प्रश्न हैं। प्रत्येक प्रश्न के लिए एक सही उत्तर चुनें।</p>
+                        <p class="font-semibold text-gray-800">Tab Switch</p>
+                        <p class="text-gray-600 text-sm">4 violations पर exam समाप्त।</p>
                     </div>
                 </div>
             </div>
-
-            <button onclick="startExam()" class="w-full py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition">
-                परीक्षा शुरू करें
-            </button>
+            <button onclick="startExam()" class="w-full py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition">परीक्षा शुरू करें</button>
         </div>
 
-        <div id="examView" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div id="examView" style="display:none;" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
                 <div class="flex justify-between items-center mb-6 pb-4 border-b">
                     <div class="flex items-center gap-2">
@@ -137,50 +225,38 @@
                     </div>
                     <span id="questionCounter" class="text-gray-600 font-medium">प्रश्न 1 / 5</span>
                 </div>
-
                 <div id="questionArea" class="mb-6"></div>
-
                 <div class="flex justify-between items-center pt-4 border-t">
-                    <button onclick="prevQuestion()" id="prevBtn" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">
-                        पिछला
-                    </button>
-                    <button onclick="nextQuestion()" id="nextBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
-                        अगला
-                    </button>
-                    <button onclick="submitExam()" id="submitBtn" class="hidden px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">
-                        Submit करें
-                    </button>
+                    <button onclick="prevQuestion()" id="prevBtn" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">पिछला</button>
+                    <button onclick="nextQuestion()" id="nextBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">अगला</button>
+                    <button onclick="submitExam()" id="submitBtn" style="display:none;" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">Submit</button>
                 </div>
             </div>
-
             <div class="space-y-6">
                 <div class="bg-white rounded-xl shadow-lg p-4">
                     <div class="flex items-center gap-2 mb-3">
                         <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                         </svg>
-                        <h3 class="font-semibold text-gray-800">Camera Monitoring</h3>
+                        <h3 class="font-semibold text-gray-800">Camera</h3>
                         <span class="ml-auto w-3 h-3 bg-red-600 rounded-full pulse"></span>
                     </div>
                     <video id="videoFeed" autoplay muted class="w-full rounded-lg bg-gray-900"></video>
                 </div>
-
                 <div class="bg-white rounded-xl shadow-lg p-4">
                     <h3 class="font-semibold text-gray-800 mb-3">उल्लंघन (<span id="violationCount">0</span>)</h3>
                     <div id="violationsList" class="space-y-2 max-h-48 overflow-y-auto">
                         <p class="text-sm text-gray-500">कोई उल्लंघन नहीं</p>
                     </div>
                 </div>
-
                 <div class="bg-white rounded-xl shadow-lg p-4">
-                    <h3 class="font-semibold text-gray-800 mb-3">प्रश्न Navigator</h3>
+                    <h3 class="font-semibold text-gray-800 mb-3">Navigator</h3>
                     <div id="questionNav" class="grid grid-cols-5 gap-2"></div>
                 </div>
             </div>
         </div>
 
-        <div id="resultView" class="hidden max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+        <div id="resultView" style="display:none;" class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
             <div class="text-center mb-8">
                 <div class="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,11 +265,10 @@
                 </div>
                 <h2 class="text-3xl font-bold text-gray-800">परीक्षा पूर्ण!</h2>
             </div>
-
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="p-4 bg-blue-50 rounded-lg text-center">
                     <p class="text-gray-600 text-sm">कुल प्रश्न</p>
-                    <p class="text-3xl font-bold text-blue-600">5</p>
+                    <p id="totalQuestionsResult" class="text-3xl font-bold text-blue-600">5</p>
                 </div>
                 <div class="p-4 bg-green-50 rounded-lg text-center">
                     <p class="text-gray-600 text-sm">सही उत्तर</p>
@@ -208,21 +283,12 @@
                     <p id="totalViolations" class="text-3xl font-bold text-red-600">0</p>
                 </div>
             </div>
-
-            <button onclick="logout()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">
-                नई परीक्षा के लिए Logout करें
-            </button>
+            <button onclick="logout()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">Logout</button>
         </div>
-
     </div>
 
     <script>
-        var users = [
-            { mobile: '9876543210', dob: '2000-01-15', name: 'Shiv Kumar' },
-            { mobile: '8765432109', dob: '1999-05-20', name: 'Priya Singh' }
-        ];
-
-        var questions = [
+        var defaultQuestions = [
             { q: "भारत की राजधानी क्या है?", options: ["मुंबई", "दिल्ली", "कोलकाता", "चेन्नई"], correct: 1 },
             { q: "2 + 2 का मान क्या है?", options: ["3", "4", "5", "6"], correct: 1 },
             { q: "सूर्य किस दिशा से उगता है?", options: ["पश्चिम", "उत्तर", "पूर्व", "दक्षिण"], correct: 2 },
@@ -230,31 +296,297 @@
             { q: "एक किलोमीटर में कितने मीटर होते हैं?", options: ["100", "500", "1000", "10000"], correct: 2 }
         ];
 
+        var defaultUsers = [
+            { mobile: '9876543210', dob: '2000-01-15', name: 'Rahul Kumar' },
+            { mobile: '8765432109', dob: '1999-05-20', name: 'Priya Singh' }
+        ];
+
+        if (!localStorage.getItem('examQuestions')) {
+            localStorage.setItem('examQuestions', JSON.stringify(defaultQuestions));
+        }
+        if (!localStorage.getItem('examUsers')) {
+            localStorage.setItem('examUsers', JSON.stringify(defaultUsers));
+        }
+
+        var questions = JSON.parse(localStorage.getItem('examQuestions'));
+        var users = JSON.parse(localStorage.getItem('examUsers'));
+        var adminCredentials = { username: 'admin', password: 'admin123' };
         var currentUser = null;
+        var isAdmin = false;
         var currentQuestion = 0;
         var answers = {};
         var violations = [];
         var timeRemaining = 3600;
+        var examStartTime = null;
         var timerInterval = null;
         var cameraStream = null;
+
+        function switchLoginTab(tab) {
+            if (tab === 'student') {
+                document.getElementById('studentTab').className = 'flex-1 py-2 px-4 rounded-md bg-white text-indigo-600 font-medium transition';
+                document.getElementById('adminTab').className = 'flex-1 py-2 px-4 rounded-md text-gray-600 font-medium transition';
+                document.getElementById('studentLoginForm').style.display = 'block';
+                document.getElementById('adminLoginForm').style.display = 'none';
+            } else {
+                document.getElementById('adminTab').className = 'flex-1 py-2 px-4 rounded-md bg-white text-green-600 font-medium transition';
+                document.getElementById('studentTab').className = 'flex-1 py-2 px-4 rounded-md text-gray-600 font-medium transition';
+                document.getElementById('adminLoginForm').style.display = 'block';
+                document.getElementById('studentLoginForm').style.display = 'none';
+            }
+        }
 
         function handleLogin() {
             var mobile = document.getElementById('mobileInput').value;
             var dob = document.getElementById('dobInput').value;
-            var user = users.find(function(u) { return u.mobile === mobile && u.dob === dob; });
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            questions = JSON.parse(localStorage.getItem('examQuestions'));
             
+            var user = users.find(function(u) { return u.mobile === mobile && u.dob === dob; });
             if (user) {
                 currentUser = user;
+                isAdmin = false;
                 document.getElementById('userName').textContent = user.name;
-                document.getElementById('userInfo').classList.remove('hidden');
-                document.getElementById('userInfo').classList.add('flex');
+                document.getElementById('userInfo').style.display = 'flex';
                 showView('instructionsView');
             } else {
-                alert('गलत Mobile Number या Date of Birth। कृपया पुनः प्रयास करें।');
+                alert('गलत Mobile Number या DOB।');
+            }
+        }
+
+        function handleAdminLogin() {
+            var username = document.getElementById('adminUsername').value;
+            var password = document.getElementById('adminPassword').value;
+            if (username === adminCredentials.username && password === adminCredentials.password) {
+                isAdmin = true;
+                currentUser = { name: 'Admin' };
+                document.getElementById('userName').textContent = 'Admin';
+                document.getElementById('userInfo').style.display = 'flex';
+                loadAdminDashboard();
+                showView('adminView');
+            } else {
+                alert('गलत Admin credentials।');
+            }
+        }
+
+        function showView(viewId) {
+            var views = ['loginView', 'adminView', 'instructionsView', 'examView', 'resultView'];
+            for (var i = 0; i < views.length; i++) {
+                document.getElementById(views[i]).style.display = 'none';
+            }
+            document.getElementById(viewId).style.display = 'block';
+        }
+
+        function showAdminTab(tab) {
+            document.getElementById('resultsTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
+            document.getElementById('usersTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
+            document.getElementById('questionsTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
+            
+            document.getElementById('resultsTab').style.display = 'none';
+            document.getElementById('usersTab').style.display = 'none';
+            document.getElementById('questionsTab').style.display = 'none';
+            
+            if (tab === 'results') {
+                document.getElementById('resultsTabBtn').className = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
+                document.getElementById('resultsTab').style.display = 'block';
+                loadResults();
+            } else if (tab === 'users') {
+                document.getElementById('usersTabBtn').className = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
+                document.getElementById('usersTab').style.display = 'block';
+                loadUsers();
+            } else if (tab === 'questions') {
+                document.getElementById('questionsTabBtn').className = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
+                document.getElementById('questionsTab').style.display = 'block';
+                loadQuestions();
+            }
+        }
+
+        function loadAdminDashboard() {
+            loadResults();
+        }
+
+        function loadResults() {
+            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            
+            document.getElementById('totalStudents').textContent = users.length;
+            document.getElementById('completedExams').textContent = results.length;
+            
+            if (results.length > 0) {
+                var totalScore = 0;
+                var totalViolations = 0;
+                
+                for (var i = 0; i < results.length; i++) {
+                    totalScore += results[i].percentage;
+                    totalViolations += results[i].violations;
+                }
+                
+                document.getElementById('avgScore').textContent = Math.round(totalScore / results.length) + '%';
+                document.getElementById('totalViolationsAdmin').textContent = totalViolations;
+                
+                var tbody = document.getElementById('resultsTableBody');
+                tbody.innerHTML = '';
+                
+                for (var i = 0; i < results.length; i++) {
+                    var result = results[i];
+                    var statusClass = result.percentage >= 60 ? 'text-green-600' : 'text-red-600';
+                    var statusText = result.percentage >= 60 ? 'Pass' : 'Fail';
+                    
+                    tbody.innerHTML += '<tr class="hover:bg-gray-50">' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + (i + 1) + '</td>' +
+                        '<td class="px-4 py-3 text-sm font-medium text-gray-900">' + result.name + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.mobile + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.score + '/' + result.total + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.percentage + '%</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.violations + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.timeTaken + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.date + '</td>' +
+                        '<td class="px-4 py-3 text-sm font-semibold ' + statusClass + '">' + statusText + '</td>' +
+                        '</tr>';
+                }
+            } else {
+                document.getElementById('avgScore').textContent = '0%';
+                document.getElementById('totalViolationsAdmin').textContent = '0';
+            }
+        }
+
+        function clearAllResults() {
+            if (confirm('क्या आप सभी results delete करना चाहते हैं?')) {
+                localStorage.setItem('examResults', '[]');
+                loadResults();
+                alert('सभी results delete हो गए।');
+            }
+        }
+
+        function loadUsers() {
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            var tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            for (var i = 0; i < users.length; i++) {
+                var user = users[i];
+                tbody.innerHTML += '<tr class="hover:bg-gray-50">' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + (i + 1) + '</td>' +
+                    '<td class="px-4 py-3 text-sm font-medium text-gray-900">' + user.name + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + user.mobile + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + user.dob + '</td>' +
+                    '<td class="px-4 py-3 text-sm"><button onclick="deleteUser(' + i + ')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition">Delete</button></td>' +
+                    '</tr>';
+            }
+        }
+
+        function addNewUser() {
+            var name = document.getElementById('newUserName').value.trim();
+            var mobile = document.getElementById('newUserMobile').value.trim();
+            var dob = document.getElementById('newUserDob').value;
+            
+            if (!name || !mobile || !dob) {
+                alert('सभी fields भरें।');
+                return;
+            }
+            
+            if (mobile.length !== 10) {
+                alert('Mobile number 10 digits का होना चाहिए।');
+                return;
+            }
+            
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            var exists = users.find(function(u) { return u.mobile === mobile; });
+            
+            if (exists) {
+                alert('यह mobile number पहले से registered है।');
+                return;
+            }
+            
+            users.push({ name: name, mobile: mobile, dob: dob });
+            localStorage.setItem('examUsers', JSON.stringify(users));
+            
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserMobile').value = '';
+            document.getElementById('newUserDob').value = '';
+            
+            loadUsers();
+            alert('Student successfully add हो गया!');
+        }
+
+        function deleteUser(index) {
+            if (confirm('क्या आप इस student को delete करना चाहते हैं?')) {
+                users = JSON.parse(localStorage.getItem('examUsers'));
+                users.splice(index, 1);
+                localStorage.setItem('examUsers', JSON.stringify(users));
+                loadUsers();
+                alert('Student delete हो गया।');
+            }
+        }
+
+        function loadQuestions() {
+            questions = JSON.parse(localStorage.getItem('examQuestions'));
+            var list = document.getElementById('questionsList');
+            list.innerHTML = '';
+            
+            for (var i = 0; i < questions.length; i++) {
+                var q = questions[i];
+                var optionsHtml = '';
+                for (var j = 0; j < q.options.length; j++) {
+                    var icon = j === q.correct ? '✓' : '✗';
+                    var color = j === q.correct ? 'text-green-600' : 'text-gray-600';
+                    optionsHtml += '<p class="text-sm ' + color + '">' + icon + ' ' + q.options[j] + '</p>';
+                }
+                
+                list.innerHTML += '<div class="p-4 border rounded-lg bg-gray-50">' +
+                    '<div class="flex justify-between items-start mb-2">' +
+                    '<h4 class="font-semibold text-gray-800">Q' + (i + 1) + ': ' + q.q + '</h4>' +
+                    '<button onclick="deleteQuestion(' + i + ')" class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition">Delete</button>' +
+                    '</div>' +
+                    '<div class="ml-4">' + optionsHtml + '</div>' +
+                    '</div>';
+            }
+        }
+
+        function addNewQuestion() {
+            var q = document.getElementById('newQuestion').value.trim();
+            var opt1 = document.getElementById('newOption1').value.trim();
+            var opt2 = document.getElementById('newOption2').value.trim();
+            var opt3 = document.getElementById('newOption3').value.trim();
+            var opt4 = document.getElementById('newOption4').value.trim();
+            var correct = document.getElementById('correctOption').value;
+            
+            if (!q || !opt1 || !opt2 || !opt3 || !opt4 || correct === '') {
+                alert('सभी fields भरें और सही उत्तर चुनें।');
+                return;
+            }
+            
+            questions = JSON.parse(localStorage.getItem('examQuestions'));
+            questions.push({
+                q: q,
+                options: [opt1, opt2, opt3, opt4],
+                correct: parseInt(correct)
+            });
+            localStorage.setItem('examQuestions', JSON.stringify(questions));
+            
+            document.getElementById('newQuestion').value = '';
+            document.getElementById('newOption1').value = '';
+            document.getElementById('newOption2').value = '';
+            document.getElementById('newOption3').value = '';
+            document.getElementById('newOption4').value = '';
+            document.getElementById('correctOption').value = '';
+            
+            loadQuestions();
+            alert('Question successfully add हो गया!');
+        }
+
+        function deleteQuestion(index) {
+            if (confirm('क्या आप इस question को delete करना चाहते हैं?')) {
+                questions = JSON.parse(localStorage.getItem('examQuestions'));
+                questions.splice(index, 1);
+                localStorage.setItem('examQuestions', JSON.stringify(questions));
+                loadQuestions();
+                alert('Question delete हो गया।');
             }
         }
 
         function startExam() {
+            questions = JSON.parse(localStorage.getItem('examQuestions'));
+            examStartTime = new Date();
             navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                 .then(function(stream) {
                     cameraStream = stream;
@@ -266,7 +598,7 @@
                     renderQuestionNav();
                 })
                 .catch(function(err) {
-                    alert('Camera access आवश्यक है। कृपया camera permission दें।');
+                    alert('Camera permission देना आवश्यक है।');
                 });
         }
 
@@ -285,13 +617,13 @@
 
         function setupTabDetection() {
             document.addEventListener('visibilitychange', function() {
-                if (document.hidden) {
+                if (document.hidden && !isAdmin) {
                     addViolation('Tab/Window बदला गया');
                     if (violations.length >= 4) {
-                        alert('अधिकतम उल्लंघन सीमा पार। परीक्षा समाप्त हो रही है।');
+                        alert('अधिकतम violations। Exam submit हो रही है।');
                         submitExam();
                     } else if (violations.length === 3) {
-                        alert('चेतावनी: 3 उल्लंघन हो चुके हैं। अगली बार परीक्षा स्वतः समाप्त हो जाएगी।');
+                        alert('चेतावनी: 3 violations हो चुके हैं।');
                     }
                 }
             });
@@ -304,7 +636,7 @@
             var list = document.getElementById('violationsList');
             if (violations.length === 1) list.innerHTML = '';
             
-            list.innerHTML += '<div class="p-2 bg-red-50 rounded text-sm"><p class="text-red-700 font-medium">' + message + ' (' + violations.length + ' बार)</p><p class="text-red-600 text-xs">' + timestamp + '</p></div>';
+            list.innerHTML += '<div class="p-2 bg-red-50 rounded text-sm"><p class="text-red-700 font-medium">' + message + ' (' + violations.length + ')</p><p class="text-red-600 text-xs">' + timestamp + '</p></div>';
             document.getElementById('violationCount').textContent = violations.length;
         }
 
@@ -328,11 +660,11 @@
             document.getElementById('prevBtn').disabled = currentQuestion === 0;
             
             if (currentQuestion === questions.length - 1) {
-                document.getElementById('nextBtn').classList.add('hidden');
-                document.getElementById('submitBtn').classList.remove('hidden');
+                document.getElementById('nextBtn').style.display = 'none';
+                document.getElementById('submitBtn').style.display = 'block';
             } else {
-                document.getElementById('nextBtn').classList.remove('hidden');
-                document.getElementById('submitBtn').classList.add('hidden');
+                document.getElementById('nextBtn').style.display = 'block';
+                document.getElementById('submitBtn').style.display = 'none';
             }
         }
 
@@ -395,8 +727,31 @@
                 }
             }
 
+            var percentage = Math.round((score / questions.length) * 100);
+            var examEndTime = new Date();
+            var timeTaken = Math.floor((examEndTime - examStartTime) / 1000);
+            var mins = Math.floor(timeTaken / 60);
+            var secs = timeTaken % 60;
+            var timeTakenStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+            var result = {
+                name: currentUser.name,
+                mobile: currentUser.mobile,
+                score: score,
+                total: questions.length,
+                percentage: percentage,
+                violations: violations.length,
+                timeTaken: timeTakenStr,
+                date: new Date().toLocaleString('hi-IN')
+            };
+
+            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
+            results.push(result);
+            localStorage.setItem('examResults', JSON.stringify(results));
+
+            document.getElementById('totalQuestionsResult').textContent = questions.length;
             document.getElementById('correctAnswers').textContent = score;
-            document.getElementById('percentage').textContent = Math.round((score / questions.length) * 100) + '%';
+            document.getElementById('percentage').textContent = percentage + '%';
             document.getElementById('totalViolations').textContent = violations.length;
 
             showView('resultView');
@@ -411,6 +766,7 @@
             clearInterval(timerInterval);
             
             currentUser = null;
+            isAdmin = false;
             currentQuestion = 0;
             answers = {};
             violations = [];
@@ -418,20 +774,13 @@
             
             document.getElementById('mobileInput').value = '';
             document.getElementById('dobInput').value = '';
-            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('userInfo').style.display = 'none';
             
             showView('loginView');
         }
-
-        function showView(viewId) {
-            var views = ['loginView', 'instructionsView', 'examView', 'resultView'];
-            for (var i = 0; i < views.length; i++) {
-                document.getElementById(views[i]).classList.add('hidden');
-            }
-            document.getElementById(viewId).classList.remove('hidden');
-        }
     </script>
-
 </body>
-
-</html>
+</html>old hover:bg-gray-300 transition';
+            document.getElementById('usersTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semib
