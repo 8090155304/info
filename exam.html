@@ -10,7 +10,94 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        video { transform: scaleX(-1); }
+        /* Camera feed mirroring */
+        video { transform: scaleX(-1); } 
+        /* Modal for Report Card */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Allows scrolling on the main page if modal is open */
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: #000;
+            text-decoration: none;
+        }
+        
+        /* ****************************************************************** */
+        /* ********* PRINT STYLES - FIXING OPEN SCREENSHOT ISSUE ********** */
+        /* ****************************************************************** */
+        @media print {
+            body {
+                background-color: white !important; /* Ensure white background */
+                -webkit-print-color-adjust: exact; /* For background colors/images to print */
+                print-color-adjust: exact;
+            }
+            body > *:not(.modal) {
+                display: none !important; /* Hide everything outside the modal forcefully */
+            }
+            .modal {
+                display: block !important; /* Make modal the main block */
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: auto; /* Content defines height */
+                overflow: visible; /* No scrollbar on the modal itself */
+                background-color: white; /* Ensure modal itself is white */
+                margin: 0;
+                padding: 0;
+                align-items: flex-start; /* Reset flex alignment */
+                justify-content: flex-start; /* Reset flex alignment */
+            }
+            .modal-content {
+                width: 100%;
+                max-width: 100%;
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                border: none;
+                max-height: none !important; /* Remove max height constraint */
+                overflow-y: visible !important; /* Remove scrollbar */
+            }
+            /* Remove scrollbar from the report card content container */
+            .report-card-container {
+                border: none !important;
+                max-height: none !important; 
+                overflow-y: visible !important;
+                padding: 20px; /* Re-add some padding if needed, or keep it 0 */
+            }
+            /* Hide all controls */
+            .modal-content button, .close-btn, .print-button {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -20,307 +107,382 @@
             <div class="flex items-center gap-3">
                 <div class="bg-indigo-600 p-2 rounded-lg">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.492 9.576 5 8.25 5c-2.43 0-4.402 1.546-4.952 3.619l-2.094 8.65A1 1 0 00.104 18.5h23.792a1 1 0 00.95-1.231l-2.094-8.65C20.152 6.546 18.18 5 15.75 5c-1.326 0-2.582.492-3.75 1.253z"/>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-800">ऑनलाइन परीक्षा  | Shiv Computer | For Help +91 8090155304</h1>
+                <h1 class="text-2xl font-bold text-gray-800 hidden sm:block">ऑनलाइन परीक्षा</h1>
             </div>
-            <div id="userInfo" style="display:none;" class="flex items-center gap-4">
-                <span id="userName" class="text-gray-700 font-medium"></span>
+
+            <div id="userInfo" class="flex items-center gap-4 hidden">
+                <span class="text-gray-700 font-medium">नमस्ते, <span id="userName" class="text-indigo-600"></span></span>
                 <button onclick="logout()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Logout</button>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto p-8">
         
-        <div id="loginView" class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
-            <div class="text-center mb-8">
-                <div class="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                </div>
-                <h2 class="text-3xl font-bold text-gray-800">Login करें</h2>
-                <p class="text-gray-600 mt-2">Student या Admin के रूप में Login करें</p>
+        <div id="loginView" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+            <h2 class="text-3xl font-bold text-center text-indigo-700 mb-6">Login</h2>
+            
+            <div class="flex bg-gray-100 p-1 rounded-lg mb-6">
+                <button id="studentTab" onclick="switchLoginTab('student')" class="flex-1 py-2 px-4 rounded-md bg-white text-indigo-600 font-medium transition">Student</button>
+                <button id="adminTab" onclick="switchLoginTab('admin')" class="flex-1 py-2 px-4 rounded-md text-gray-600 font-medium transition">Admin</button>
             </div>
 
-            <div class="flex mb-6 bg-gray-100 p-1 rounded-lg">
-                <button onclick="switchLoginTab('student')" id="studentTab" class="flex-1 py-2 px-4 rounded-md bg-white text-indigo-600 font-medium transition">Student</button>
-                <button onclick="switchLoginTab('admin')" id="adminTab" class="flex-1 py-2 px-4 rounded-md text-gray-600 font-medium transition">Admin</button>
-            </div>
+            <form id="studentLoginForm" onsubmit="event.preventDefault(); handleLogin()" class="space-y-4">
+                <input type="tel" id="mobileInput" placeholder="Mobile Number" maxlength="10" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                <input type="date" id="dobInput" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                <button type="submit" class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">Login करें</button>
+            </form>
 
-            <div id="studentLoginForm">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Mobile Number</label>
-                        <input type="tel" id="mobileInput" placeholder="10 अंकों का Mobile Number" maxlength="10" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Date of Birth</label>
-                        <input type="date" id="dobInput" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <button onclick="handleLogin()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition mt-6">Student Login</button>
-                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <p class="text-sm text-gray-700 font-medium mb-2">Demo Student:</p>
-                        <p class="text-xs text-gray-600">Mobile: 9876543210</p>
-                        <p class="text-xs text-gray-600">DOB: 2000-01-15</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="adminLoginForm" style="display:none;">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Admin Username</label>
-                        <input type="text" id="adminUsername" placeholder="Username दर्ज करें" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">Admin Password</label>
-                        <input type="password" id="adminPassword" placeholder="Password दर्ज करें" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                    </div>
-                    <button onclick="handleAdminLogin()" class="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition mt-6">Admin Login</button>
-                    <div class="mt-6 p-4 bg-green-50 rounded-lg">
-                        <p class="text-sm text-gray-700 font-medium mb-2">Demo Admin:</p>
-                        <p class="text-xs text-gray-600">Username: admin</p>
-                        <p class="text-xs text-gray-600">Password: Admin#123</p>
-                    </div>
-                </div>
-            </div>
+            <form id="adminLoginForm" onsubmit="event.preventDefault(); handleAdminLogin()" class="space-y-4 hidden">
+                <input type="text" id="adminUsername" placeholder="Username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                <input type="password" id="adminPassword" placeholder="Password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                <button type="submit" class="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-lg shadow-green-200">Admin Login</button>
+            </form>
         </div>
-
-        <div id="adminView" style="display:none;">
-            <div class="mb-6 flex gap-4 flex-wrap">
-                <button onclick="showAdminTab('results')" id="resultsTabBtn" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">Results</button>
-                <button onclick="showAdminTab('users')" id="usersTabBtn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Users</button>
-                <button onclick="showAdminTab('questions')" id="questionsTabBtn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Questions</button>
+        
+        <div id="adminView" class="hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">एडमिन डैशबोर्ड</h2>
+            
+            <div class="flex flex-wrap gap-4 mb-8">
+                <button id="resultsTabBtn" onclick="showAdminTab('results')" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">Results</button>
+                <button id="usersTabBtn" onclick="showAdminTab('users')" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Students Management</button>
+                <button id="subjectsTabBtn" onclick="showAdminTab('subjects')" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Subjects Management</button>
+                <button id="classesTabBtn" onclick="showAdminTab('classes')" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Classes Management</button>
+                <button id="questionsTabBtn" onclick="showAdminTab('questions')" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">Questions Management</button>
             </div>
-
-            <div id="resultsTab" class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">सभी परीक्षा Results</h2>
+            
+            <div id="resultsTab" class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-semibold mb-4 text-indigo-600">सभी परीक्षा Results</h3>
+                
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="p-4 bg-blue-50 rounded-lg">
-                        <p class="text-gray-600 text-sm">कुल Students</p>
-                        <p id="totalStudents" class="text-3xl font-bold text-blue-600">0</p>
-                    </div>
-                    <div class="p-4 bg-green-50 rounded-lg">
-                        <p class="text-gray-600 text-sm">Exams Complete</p>
-                        <p id="completedExams" class="text-3xl font-bold text-green-600">0</p>
-                    </div>
-                    <div class="p-4 bg-purple-50 rounded-lg">
-                        <p class="text-gray-600 text-sm">Average Score</p>
-                        <p id="avgScore" class="text-3xl font-bold text-purple-600">0%</p>
-                    </div>
-                    <div class="p-4 bg-orange-50 rounded-lg">
-                        <p class="text-gray-600 text-sm">Total Violations</p>
-                        <p id="totalViolationsAdmin" class="text-3xl font-bold text-orange-600">0</p>
-                    </div>
+                    <div class="bg-indigo-100 p-4 rounded-lg">Total Students: <span id="totalStudents" class="font-bold">0</span></div>
+                    <div class="bg-indigo-100 p-4 rounded-lg">Completed Exams: <span id="completedExams" class="font-bold">0</span></div>
+                    <div class="bg-indigo-100 p-4 rounded-lg">Avg Score: <span id="avgScore" class="font-bold">0%</span></div>
+                    <div class="bg-indigo-100 p-4 rounded-lg">Total Violations: <span id="totalViolationsAdmin" class="font-bold">0</span></div>
                 </div>
-                <button onclick="clearAllResults()" class="mb-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Clear All Results</button>
+                
+                <button onclick="clearAllResults()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition mb-4">Clear All Results</button>
+
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">#</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mobile</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Class/Subject</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Score</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">%</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Violations</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Time</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                            </tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Report Card</th> </tr>
                         </thead>
-                        <tbody id="resultsTableBody">
-                            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">कोई result नहीं</td></tr>
-                        </tbody>
+                        <tbody id="resultsTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
                     </table>
                 </div>
             </div>
-
-            <div id="usersTab" style="display:none;" class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Students Management</h2>
-                <div class="mb-6 p-6 bg-gray-50 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4">नया Student Add करें</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" id="newUserName" placeholder="Student का नाम" class="px-4 py-2 border rounded-lg">
+            
+            <div id="usersTab" class="bg-white p-6 rounded-xl shadow-lg hidden">
+                <h3 class="text-xl font-semibold mb-4 text-indigo-600">Students Management</h3>
+                
+                <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <h4 class="font-medium mb-3">Add New Student</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <input type="text" id="newUserName" placeholder="Student का नाम" class="px-4 py-2 border rounded-lg col-span-2">
                         <input type="tel" id="newUserMobile" placeholder="Mobile (10 digits)" maxlength="10" class="px-4 py-2 border rounded-lg">
                         <input type="date" id="newUserDob" class="px-4 py-2 border rounded-lg">
+                        <select id="newUserClass" class="px-4 py-2 border rounded-lg">
+                            <option value="">-- Class चुनें --</option>
+                        </select>
                     </div>
-                    <button onclick="addNewUser()" class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Add Student</button>
+                    <button onclick="addNewUser()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Add Student</button>
                 </div>
+
+                <h4 class="font-medium mb-3 mt-6">Registered Students</h4>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">#</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mobile</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">DOB</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Class</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="usersTableBody"></tbody>
+                        <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
                     </table>
                 </div>
             </div>
-
-            <div id="questionsTab" style="display:none;" class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Questions Management</h2>
-                <div class="mb-6 p-6 bg-gray-50 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-4">नया Question Add करें</h3>
-                    <input type="text" id="newQuestion" placeholder="प्रश्न लिखें" class="w-full px-4 py-2 border rounded-lg mb-3">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <input type="text" id="newOption1" placeholder="Option 1" class="px-4 py-2 border rounded-lg">
-                        <input type="text" id="newOption2" placeholder="Option 2" class="px-4 py-2 border rounded-lg">
-                        <input type="text" id="newOption3" placeholder="Option 3" class="px-4 py-2 border rounded-lg">
-                        <input type="text" id="newOption4" placeholder="Option 4" class="px-4 py-2 border rounded-lg">
+            
+            <div id="subjectsTab" class="bg-white p-6 rounded-xl shadow-lg hidden">
+                <h3 class="text-xl font-semibold mb-4 text-indigo-600">Subjects Management</h3>
+                
+                <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <h4 class="font-medium mb-3">Add New Subject</h4>
+                    <div class="flex gap-4">
+                        <input type="text" id="newSubjectName" placeholder="Subject Name (e.g., Science, Hindi)" class="px-4 py-2 border rounded-lg flex-grow">
+                        <button onclick="addNewSubject()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Add Subject</button>
                     </div>
-                    <select id="correctOption" class="w-full px-4 py-2 border rounded-lg mb-3">
-                        <option value="">सही उत्तर चुनें</option>
-                        <option value="0">Option 1</option>
-                        <option value="1">Option 2</option>
-                        <option value="2">Option 3</option>
-                        <option value="3">Option 4</option>
-                    </select>
-                    <button onclick="addNewQuestion()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Add Question</button>
                 </div>
-                <div id="questionsList" class="space-y-4"></div>
+
+                <h4 class="font-medium mb-3 mt-6">Available Subjects</h4>
+                <div id="subjectsList" class="space-y-3">
+                    </div>
+            </div>
+
+            <div id="classesTab" class="bg-white p-6 rounded-xl shadow-lg hidden">
+                <h3 class="text-xl font-semibold mb-4 text-indigo-600">Classes Management (Class & Subject Linking)</h3>
+                
+                <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <h4 class="font-medium mb-3">Add New Class</h4>
+                    <div class="flex gap-4 items-start">
+                        <input type="text" id="newClassName" placeholder="Class Name (e.g., 9th, 10th-A)" class="px-4 py-2 border rounded-lg">
+                        
+                        <div class="flex-grow space-y-2 p-2 border rounded-lg bg-white">
+                            <p class="text-sm font-medium">Select Subjects for this Class:</p>
+                            <div id="subjectsChecklist" class="grid grid-cols-2 gap-2 text-sm">
+                                </div>
+                        </div>
+                        <button onclick="addNewClass()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition self-stretch">Add Class</button>
+                    </div>
+                </div>
+
+                <h4 class="font-medium mb-3 mt-6">Registered Classes</h4>
+                <div id="classesList" class="space-y-3">
+                    </div>
+            </div>
+
+            <div id="questionsTab" class="bg-white p-6 rounded-xl shadow-lg hidden">
+                <h3 class="text-xl font-semibold mb-4 text-indigo-600">Questions Management</h3>
+                
+                <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <h4 class="font-medium mb-3">Add New Question</h4>
+                    <div class="space-y-3">
+                        <textarea id="newQuestion" placeholder="Question Text" rows="2" class="w-full px-4 py-2 border rounded-lg"></textarea>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="newQuestionClass" class="px-4 py-2 border rounded-lg">
+                                <option value="">-- Class चुनें --</option>
+                            </select>
+                            <select id="newQuestionSubject" class="px-4 py-2 border rounded-lg">
+                                <option value="">-- Subject चुनें --</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="newOption1" placeholder="Option 1" class="px-4 py-2 border rounded-lg">
+                            <input type="text" id="newOption2" placeholder="Option 2" class="px-4 py-2 border rounded-lg">
+                            <input type="text" id="newOption3" placeholder="Option 3" class="px-4 py-2 border rounded-lg">
+                            <input type="text" id="newOption4" placeholder="Option 4" class="px-4 py-2 border rounded-lg">
+                        </div>
+                        
+                        <select id="correctOption" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="">-- Correct Option चुनें --</option>
+                            <option value="0">Option 1</option>
+                            <option value="1">Option 2</option>
+                            <option value="2">Option 3</option>
+                            <option value="3">Option 4</option>
+                        </select>
+                        <button onclick="addNewQuestion()" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Add Question</button>
+                    </div>
+                </div>
+
+                <h4 class="font-medium mb-3 mt-6">Available Questions</h4>
+                <div id="questionsList" class="space-y-4">
+                    </div>
+            </div>
+            
+        </div>
+        
+        <div id="instructionsView" class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-2xl border border-gray-100 hidden">
+            <h2 class="text-3xl font-bold text-center text-indigo-700 mb-6">परीक्षा निर्देश</h2>
+            <div class="prose max-w-none text-gray-700 space-y-4 mb-8 p-4 border rounded-lg bg-indigo-50">
+                <p><span class="font-bold text-indigo-600">समय:</span> 60 मिनट</p>
+                <p><span class="font-bold text-indigo-600">प्रश्न:</span> सभी प्रश्न MCQ (Multiple Choice Questions) हैं।</p>
+                <p><span class="font-bold text-red-500">ज़रूरी:</span> परीक्षा के दौरान दूसरी टैब/विंडो पर स्विच न करें। 4 violations के बाद परीक्षा अपने आप submit हो जाएगी।</p>
+                <p><span class="font-bold text-red-500">Camera:</span> आपको परीक्षा शुरू करने के लिए कैमरा की अनुमति (Permission) देनी होगी।</p>
+            </div>
+            
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">परीक्षा के लिए विषय चुनें:</h3>
+            <div id="subjectSelectionArea" class="space-y-4">
+                <p class="text-gray-500">Loading subjects...</p>
             </div>
         </div>
+        
+        <div id="examView" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500">
+                        <p class="text-lg font-medium text-gray-600 mb-2">बाकी समय</p>
+                        <div id="timer" class="text-4xl font-bold text-indigo-700 pulse">60:00</div>
+                        <p id="examSubjectDisplay" class="text-sm font-semibold text-gray-500 mt-2">Subject: --</p>
+                    </div>
 
-        <div id="instructionsView" style="display:none;" class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">परीक्षा निर्देश</h2>
-            <div class="space-y-4 mb-8">
-                <div class="flex items-start gap-3 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                    <div>
-                        <p class="font-semibold text-gray-800">Camera Monitoring</p>
-                        <p class="text-gray-600 text-sm">पूरी परीक्षा के दौरान camera ON रहेगा।</p>
+                    <div class="bg-white p-4 rounded-xl shadow-lg">
+                        <h4 class="font-medium text-gray-700 mb-2">Camera Feed (Proctored)</h4>
+                        <video id="videoFeed" width="100%" height="auto" autoplay muted class="rounded-lg border border-gray-200"></video>
+                        <p class="text-xs text-red-500 mt-2 font-medium">Camera बंद करने पर Violation होगा।</p>
                     </div>
-                </div>
-                <div class="flex items-start gap-3 p-4 bg-red-50 border-l-4 border-red-400 rounded">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                    <div>
-                        <p class="font-semibold text-gray-800">Tab Switch</p>
-                        <p class="text-gray-600 text-sm">4 violations पर exam समाप्त।</p>
-                    </div>
-                </div>
-            </div>
-            <button onclick="startExam()" class="w-full py-4 bg-green-600 text-white rounded-lg font-semibold text-lg hover:bg-green-700 transition">परीक्षा शुरू करें</button>
-        </div>
 
-        <div id="examView" style="display:none;" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
-                <div class="flex justify-between items-center mb-6 pb-4 border-b">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span id="timer" class="text-2xl font-bold text-gray-800">60:00</span>
-                    </div>
-                    <span id="questionCounter" class="text-gray-600 font-medium">प्रश्न 1 / 5</span>
-                </div>
-                <div id="questionArea" class="mb-6"></div>
-                <div class="flex justify-between items-center pt-4 border-t">
-                    <button onclick="prevQuestion()" id="prevBtn" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">पिछला</button>
-                    <button onclick="nextQuestion()" id="nextBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">अगला</button>
-                    <button onclick="submitExam()" id="submitBtn" style="display:none;" class="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition">Submit</button>
-                </div>
-            </div>
-            <div class="space-y-6">
-                <div class="bg-white rounded-xl shadow-lg p-4">
-                    <div class="flex items-center gap-2 mb-3">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <h3 class="font-semibold text-gray-800">Camera</h3>
-                        <span class="ml-auto w-3 h-3 bg-red-600 rounded-full pulse"></span>
-                    </div>
-                    <video id="videoFeed" autoplay muted class="w-full rounded-lg bg-gray-900"></video>
-                </div>
-                <div class="bg-white rounded-xl shadow-lg p-4">
-                    <h3 class="font-semibold text-gray-800 mb-3">उल्लंघन (<span id="violationCount">0</span>)</h3>
-                    <div id="violationsList" class="space-y-2 max-h-48 overflow-y-auto">
-                        <p class="text-sm text-gray-500">कोई उल्लंघन नहीं</p>
+                    <div class="bg-white p-4 rounded-xl shadow-lg border-t-4 border-red-500">
+                        <h4 class="font-medium text-red-700 mb-2">Violations (<span id="violationCount">0</span>)</h4>
+                        <div id="violationsList" class="space-y-2 max-h-40 overflow-y-auto">
+                            <p class="text-gray-500 text-sm">No violations yet.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg p-4">
-                    <h3 class="font-semibold text-gray-800 mb-3">Navigator</h3>
-                    <div id="questionNav" class="grid grid-cols-5 gap-2"></div>
+
+                <div class="lg:col-span-2 bg-white p-8 rounded-xl shadow-2xl space-y-6">
+                    <p id="questionCounter" class="text-lg font-semibold text-indigo-600 mb-4">प्रश्न 1 / 10</p>
+                    <div id="questionArea" class="space-y-4">
+                        </div>
+                    
+                    <div class="flex justify-between pt-6 border-t">
+                        <button id="prevBtn" onclick="prevQuestion()" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition" disabled>Previous</button>
+                        <div class="flex gap-4">
+                            <button id="nextBtn" onclick="nextQuestion()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Next</button>
+                            <button id="submitBtn" onclick="submitExam()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden">Submit Exam</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+                    <h4 class="font-semibold text-gray-800 mb-4">Question Navigation</h4>
+                    <div id="questionNav" class="grid grid-cols-5 gap-3">
+                        </div>
                 </div>
             </div>
         </div>
-
-        <div id="resultView" style="display:none;" class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
-            <div class="text-center mb-8">
-                <div class="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+        
+        <div id="resultView" class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-2xl border border-gray-100 hidden">
+            <h2 class="text-3xl font-bold text-center text-green-700 mb-6">परीक्षा समाप्त!</h2>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
+                    <span class="font-medium text-indigo-700">Total Questions:</span>
+                    <span id="totalQuestionsResult" class="font-bold text-indigo-600 text-xl">0</span>
                 </div>
-                <h2 class="text-3xl font-bold text-gray-800">परीक्षा पूर्ण!</h2>
-            </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="p-4 bg-blue-50 rounded-lg text-center">
-                    <p class="text-gray-600 text-sm">कुल प्रश्न</p>
-                    <p id="totalQuestionsResult" class="text-3xl font-bold text-blue-600">5</p>
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                    <span class="font-medium text-green-700">Correct Answers:</span>
+                    <span id="correctAnswers" class="font-bold text-green-600 text-xl">0</span>
                 </div>
-                <div class="p-4 bg-green-50 rounded-lg text-center">
-                    <p class="text-gray-600 text-sm">सही उत्तर</p>
-                    <p id="correctAnswers" class="text-3xl font-bold text-green-600">0</p>
+                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <span class="font-medium text-blue-700">Percentage:</span>
+                    <span id="percentage" class="font-bold text-blue-600 text-2xl">0%</span>
                 </div>
-                <div class="p-4 bg-purple-50 rounded-lg text-center">
-                    <p class="text-gray-600 text-sm">प्रतिशत</p>
-                    <p id="percentage" class="text-3xl font-bold text-purple-600">0%</p>
-                </div>
-                <div class="p-4 bg-red-50 rounded-lg text-center">
-                    <p class="text-gray-600 text-sm">उल्लंघन</p>
-                    <p id="totalViolations" class="text-3xl font-bold text-red-600">0</p>
+                <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                    <span class="font-medium text-red-700">Total Violations:</span>
+                    <span id="totalViolations" class="font-bold text-red-600 text-xl">0</span>
                 </div>
             </div>
-            <button onclick="logout()" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">Logout</button>
+            
+            <button onclick="logout()" class="w-full mt-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">Go to Login</button>
+        </div>
+    </div>
+    
+    <div id="reportCardModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeReportModal()">&times;</span>
+            <div id="reportCardContent" class="report-card-container p-8 border-4 border-indigo-600 rounded-xl" style="max-height: 80vh; overflow-y: auto;">
+                </div>
+            <button onclick="window.print()" class="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition block mx-auto print-button">
+                Report Card Print करें
+            </button>
         </div>
     </div>
 
     <script>
+        // Default Data (Simplified for this version as per the provided exam.html content)
         var defaultQuestions = [
-            { q: "भारत की राजधानी क्या है?", options: ["मुंबई", "दिल्ली", "कोलकाता", "चेन्नई"], correct: 1 },
-            { q: "2 + 2 का मान क्या है?", options: ["3", "4", "5", "6"], correct: 1 },
-            { q: "सूर्य किस दिशा से उगता है?", options: ["पश्चिम", "उत्तर", "पूर्व", "दक्षिण"], correct: 2 },
-            { q: "भारत का राष्ट्रीय पक्षी कौन सा है?", options: ["कबूतर", "मोर", "तोता", "कौआ"], correct: 1 },
-            { q: "एक किलोमीटर में कितने मीटर होते हैं?", options: ["100", "500", "1000", "10000"], correct: 2 }
+            { q: "भारत की राजधानी क्या है?", options: ["मुंबई", "दिल्ली", "कोलकाता", "चेन्नई"], correct: 1, class: '10th', subject: 'Science' },
+            { q: "2 + 2 का मान क्या है?", options: ["3", "4", "5", "6"], correct: 1, class: '10th', subject: 'Math' },
+            { q: "सूर्य किस दिशा से उगता है?", options: ["पश्चिम", "उत्तर", "पूर्व", "दक्षिण"], correct: 2, class: '9th', subject: 'Science' },
+            { q: "भारत का राष्ट्रीय पक्षी कौन सा है?", options: ["कबूतर", "मोर", "तोता", "कौआ"], correct: 1, class: '9th', subject: 'English' },
+            { q: "एक किलोमीटर में कितने मीटर होते हैं?", options: ["100", "500", "1000", "10000"], correct: 2, class: '10th', subject: 'Science' }
         ];
 
         var defaultUsers = [
-            { mobile: '9876543210', dob: '2000-01-15', name: 'Rahul Kumar' },
-            { mobile: '8765432109', dob: '1999-05-20', name: 'Priya Singh' }
+            { mobile: '9876543210', dob: '2000-01-15', name: 'Rahul Kumar', class: '10th' },
+            { mobile: '8765432109', dob: '1999-05-20', name: 'Priya Singh', class: '9th' }
         ];
 
+        // Setup LocalStorage with defaults if not present
+        if (!localStorage.getItem('examSubjects')) {
+            localStorage.setItem('examSubjects', JSON.stringify(['Math', 'Science', 'English']));
+        }
+        if (!localStorage.getItem('examClasses')) {
+            localStorage.setItem('examClasses', JSON.stringify([
+                { name: '9th', subjects: ['Math', 'Science', 'English'] },
+                { name: '10th', subjects: ['Math', 'Science', 'English'] }
+            ]));
+        }
         if (!localStorage.getItem('examQuestions')) {
             localStorage.setItem('examQuestions', JSON.stringify(defaultQuestions));
         }
         if (!localStorage.getItem('examUsers')) {
             localStorage.setItem('examUsers', JSON.stringify(defaultUsers));
         }
+        // Result ID tracking for report card
+        let results = JSON.parse(localStorage.getItem('examResults') || '[]').map((r, index) => ({...r, id: index}));
+        localStorage.setItem('examResults', JSON.stringify(results));
 
+
+        // Global Variables (Re-fetch from storage to ensure latest data)
+        var subjects = JSON.parse(localStorage.getItem('examSubjects'));
+        var classes = JSON.parse(localStorage.getItem('examClasses'));
         var questions = JSON.parse(localStorage.getItem('examQuestions'));
         var users = JSON.parse(localStorage.getItem('examUsers'));
         var adminCredentials = { username: 'admin', password: 'admin123' };
+        
         var currentUser = null;
         var isAdmin = false;
         var currentQuestion = 0;
         var answers = {};
         var violations = [];
-        var timeRemaining = 3600;
+        var timeRemaining = 3600; // 60 minutes
         var examStartTime = null;
         var timerInterval = null;
         var cameraStream = null;
+        var currentExamSubject = ''; 
+        var currentExamQuestions = []; // To store the filtered and shuffled questions for the current exam
+
+        // --- Helper Functions for Shuffling ---
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function shuffleOptions(question) {
+            let optionsWithIndex = question.options.map((opt, index) => ({ opt, index }));
+            optionsWithIndex = shuffleArray(optionsWithIndex);
+            
+            const newOptions = optionsWithIndex.map(item => item.opt);
+            const newCorrectIndex = optionsWithIndex.findIndex(item => item.index === question.correct);
+            
+            return {
+                q: question.q,
+                options: newOptions,
+                correct: newCorrectIndex,
+                class: question.class,
+                subject: question.subject
+            };
+        }
+
+        // --- View & Login Management ---
 
         function switchLoginTab(tab) {
             if (tab === 'student') {
@@ -340,15 +502,26 @@
             var mobile = document.getElementById('mobileInput').value;
             var dob = document.getElementById('dobInput').value;
             users = JSON.parse(localStorage.getItem('examUsers'));
-            questions = JSON.parse(localStorage.getItem('examQuestions'));
+            classes = JSON.parse(localStorage.getItem('examClasses')); // Ensure classes are loaded
             
             var user = users.find(function(u) { return u.mobile === mobile && u.dob === dob; });
-            if (user) {
+            
+            if (user && user.class) { 
+                const userClass = classes.find(c => c.name === user.class);
+                if (!userClass) {
+                    alert('आपकी Class (' + user.class + ') admin द्वारा system में नहीं पाई गई है। कृपया admin से संपर्क करें।');
+                    return;
+                }
+                
                 currentUser = user;
                 isAdmin = false;
                 document.getElementById('userName').textContent = user.name;
                 document.getElementById('userInfo').style.display = 'flex';
+                
+                loadSubjectSelection(); // Go to subject selection
                 showView('instructionsView');
+            } else if (user) {
+                 alert('आपके लिए कोई Class असाइन नहीं की गई है। कृपया admin से संपर्क करें।');
             } else {
                 alert('गलत Mobile Number या DOB।');
             }
@@ -378,144 +551,223 @@
         }
 
         function showAdminTab(tab) {
-            document.getElementById('resultsTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
-            document.getElementById('usersTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
-            document.getElementById('questionsTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
+            // Reset all buttons and tabs to hidden/default
+            const tabButtons = ['resultsTabBtn', 'usersTabBtn', 'subjectsTabBtn', 'classesTabBtn', 'questionsTabBtn'];
+            const tabViews = ['resultsTab', 'usersTab', 'subjectsTab', 'classesTab', 'questionsTab'];
+
+            tabButtons.forEach(id => {
+                document.getElementById(id).className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition';
+            });
+            tabViews.forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
             
-            document.getElementById('resultsTab').style.display = 'none';
-            document.getElementById('usersTab').style.display = 'none';
-            document.getElementById('questionsTab').style.display = 'none';
-            
+            // Activate selected tab
+            const activeClass = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
+            const activeTabId = tab + 'Tab';
+            const activeBtnId = tab + 'TabBtn';
+
+            if (document.getElementById(activeBtnId)) {
+                document.getElementById(activeBtnId).className = activeClass;
+            }
+            if (document.getElementById(activeTabId)) {
+                document.getElementById(activeTabId).style.display = 'block';
+            }
+
+            // Load specific data for the tab
             if (tab === 'results') {
-                document.getElementById('resultsTabBtn').className = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
-                document.getElementById('resultsTab').style.display = 'block';
                 loadResults();
             } else if (tab === 'users') {
-                document.getElementById('usersTabBtn').className = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
-                document.getElementById('usersTab').style.display = 'block';
                 loadUsers();
+            } else if (tab === 'subjects') {
+                loadSubjects();
+            } else if (tab === 'classes') {
+                loadClasses();
             } else if (tab === 'questions') {
-                document.getElementById('questionsTabBtn').className = 'px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition';
-                document.getElementById('questionsTab').style.display = 'block';
                 loadQuestions();
             }
         }
 
         function loadAdminDashboard() {
-            loadResults();
+            // Initial load to a default tab
+            showAdminTab('results');
         }
 
-        function loadResults() {
-            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
-            users = JSON.parse(localStorage.getItem('examUsers'));
+        // --- Subject Management ---
+
+        function loadSubjects() {
+            subjects = JSON.parse(localStorage.getItem('examSubjects'));
+            var list = document.getElementById('subjectsList');
+            list.innerHTML = '';
+
+            if (subjects.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">कोई Subject नहीं जोड़ा गया है।</p>';
+                return;
+            }
+
+            subjects.forEach((subject, index) => {
+                list.innerHTML += '<div class="flex justify-between items-center p-3 border rounded-lg bg-white">' +
+                    '<span class="font-medium text-gray-800">' + subject + '</span>' +
+                    '<button onclick="deleteSubject(\'' + subject + '\')" class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition">Delete</button>' +
+                    '</div>';
+            });
             
-            document.getElementById('totalStudents').textContent = users.length;
-            document.getElementById('completedExams').textContent = results.length;
+            updateSubjectChecklist();
+        }
+
+        function addNewSubject() {
+            var name = document.getElementById('newSubjectName').value.trim();
+            if (!name) {
+                alert('कृपया Subject का नाम दर्ज करें।');
+                return;
+            }
             
-            if (results.length > 0) {
-                var totalScore = 0;
-                var totalViolations = 0;
+            subjects = JSON.parse(localStorage.getItem('examSubjects'));
+            if (subjects.includes(name)) {
+                alert('यह Subject पहले से मौजूद है।');
+                return;
+            }
+            
+            subjects.push(name);
+            localStorage.setItem('examSubjects', JSON.stringify(subjects));
+            document.getElementById('newSubjectName').value = '';
+            loadSubjects();
+            alert('Subject successfully add हो गया!');
+        }
+
+        function deleteSubject(name) {
+            if (confirm('क्या आप ' + name + ' Subject को delete करना चाहते हैं? इससे सभी Classes से यह Subject हट जाएगा।')) {
+                subjects = JSON.parse(localStorage.getItem('examSubjects'));
+                // Remove subject
+                subjects = subjects.filter(s => s !== name);
+                localStorage.setItem('examSubjects', JSON.stringify(subjects));
+
+                // Remove subject from all classes
+                classes = JSON.parse(localStorage.getItem('examClasses'));
+                classes.forEach(c => {
+                    c.subjects = c.subjects.filter(s => s !== name);
+                });
+                localStorage.setItem('examClasses', JSON.stringify(classes));
                 
-                for (var i = 0; i < results.length; i++) {
-                    totalScore += results[i].percentage;
-                    totalViolations += results[i].violations;
+                loadSubjects();
+                loadClasses();
+                alert('Subject delete हो गया।');
+            }
+        }
+
+        function updateSubjectChecklist() {
+            subjects = JSON.parse(localStorage.getItem('examSubjects'));
+            const checklist = document.getElementById('subjectsChecklist');
+            checklist.innerHTML = '';
+
+            if (subjects.length === 0) {
+                checklist.innerHTML = '<p class="text-red-500 col-span-2">पहले Subjects जोड़ें।</p>';
+                return;
+            }
+
+            subjects.forEach(subject => {
+                checklist.innerHTML += '<label class="flex items-center space-x-2">' +
+                    '<input type="checkbox" name="classSubject" value="' + subject + '" class="w-4 h-4 text-indigo-600 rounded">' +
+                    '<span class="text-gray-700">' + subject + '</span>' +
+                    '</label>';
+            });
+        }
+
+        // --- Class Management ---
+
+        function loadClasses() {
+            classes = JSON.parse(localStorage.getItem('examClasses'));
+            var list = document.getElementById('classesList');
+            list.innerHTML = '';
+            
+            updateClassDropdowns();
+
+            if (classes.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">कोई Class नहीं जोड़ा गया है।</p>';
+                return;
+            }
+
+            classes.forEach((classData, index) => {
+                const subjectList = classData.subjects.join(', ') || 'कोई Subject नहीं';
+                list.innerHTML += '<div class="p-4 border rounded-lg bg-gray-50">' +
+                    '<div class="flex justify-between items-start mb-2">' +
+                    '<h4 class="font-semibold text-gray-800">' + classData.name + '</h4>' +
+                    '<button onclick="deleteClass(\'' + classData.name + '\')" class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition">Delete</button>' +
+                    '</div>' +
+                    '<p class="text-sm text-gray-700"><span class="font-medium">Subjects:</span> ' + subjectList + '</p>' +
+                    '</div>';
+            });
+        }
+
+        function addNewClass() {
+            var className = document.getElementById('newClassName').value.trim();
+            var selectedSubjects = Array.from(document.querySelectorAll('#subjectsChecklist input[name="classSubject"]:checked')).map(cb => cb.value);
+
+            if (!className) {
+                alert('कृपया Class का नाम दर्ज करें।');
+                return;
+            }
+            
+            classes = JSON.parse(localStorage.getItem('examClasses'));
+            if (classes.find(c => c.name === className)) {
+                alert('यह Class पहले से मौजूद है।');
+                return;
+            }
+            
+            classes.push({ name: className, subjects: selectedSubjects });
+            localStorage.setItem('examClasses', JSON.stringify(classes));
+            
+            document.getElementById('newClassName').value = '';
+            document.querySelectorAll('#subjectsChecklist input[name="classSubject"]').forEach(cb => cb.checked = false);
+            
+            loadClasses();
+            alert('Class successfully add हो गई!');
+        }
+
+        function deleteClass(className) {
+            if (confirm('क्या आप ' + className + ' Class को delete करना चाहते हैं? इससे इस Class के सभी Students को Exam देने में समस्या हो सकती है।')) {
+                classes = JSON.parse(localStorage.getItem('examClasses'));
+                classes = classes.filter(c => c.name !== className);
+                localStorage.setItem('examClasses', JSON.stringify(classes));
+                
+                loadClasses();
+                alert('Class delete हो गई।');
+            }
+        }
+
+        // --- Question Management ---
+
+        function updateClassDropdowns() {
+            classes = JSON.parse(localStorage.getItem('examClasses'));
+            
+            const userClassSelect = document.getElementById('newUserClass');
+            const questionClassSelect = document.getElementById('newQuestionClass');
+            
+            userClassSelect.innerHTML = '<option value="">-- Class चुनें --</option>';
+            questionClassSelect.innerHTML = '<option value="">-- Class चुनें --</option>';
+
+            classes.forEach(classData => {
+                userClassSelect.innerHTML += `<option value="${classData.name}">${classData.name}</option>`;
+                questionClassSelect.innerHTML += `<option value="${classData.name}">${classData.name}</option>`;
+            });
+            
+            questionClassSelect.onchange = updateQuestionSubjectDropdown;
+            updateQuestionSubjectDropdown();
+        }
+
+        function updateQuestionSubjectDropdown() {
+            classes = JSON.parse(localStorage.getItem('examClasses'));
+            const classSelected = document.getElementById('newQuestionClass').value;
+            const subjectSelect = document.getElementById('newQuestionSubject');
+            subjectSelect.innerHTML = '<option value="">-- Subject चुनें --</option>';
+            
+            if (classSelected) {
+                const classData = classes.find(c => c.name === classSelected);
+                if (classData && classData.subjects) {
+                    classData.subjects.forEach(subject => {
+                        subjectSelect.innerHTML += `<option value="${subject}">${subject}</option>`;
+                    });
                 }
-                
-                document.getElementById('avgScore').textContent = Math.round(totalScore / results.length) + '%';
-                document.getElementById('totalViolationsAdmin').textContent = totalViolations;
-                
-                var tbody = document.getElementById('resultsTableBody');
-                tbody.innerHTML = '';
-                
-                for (var i = 0; i < results.length; i++) {
-                    var result = results[i];
-                    var statusClass = result.percentage >= 60 ? 'text-green-600' : 'text-red-600';
-                    var statusText = result.percentage >= 60 ? 'Pass' : 'Fail';
-                    
-                    tbody.innerHTML += '<tr class="hover:bg-gray-50">' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + (i + 1) + '</td>' +
-                        '<td class="px-4 py-3 text-sm font-medium text-gray-900">' + result.name + '</td>' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.mobile + '</td>' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.score + '/' + result.total + '</td>' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.percentage + '%</td>' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.violations + '</td>' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.timeTaken + '</td>' +
-                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.date + '</td>' +
-                        '<td class="px-4 py-3 text-sm font-semibold ' + statusClass + '">' + statusText + '</td>' +
-                        '</tr>';
-                }
-            } else {
-                document.getElementById('avgScore').textContent = '0%';
-                document.getElementById('totalViolationsAdmin').textContent = '0';
-            }
-        }
-
-        function clearAllResults() {
-            if (confirm('क्या आप सभी results delete करना चाहते हैं?')) {
-                localStorage.setItem('examResults', '[]');
-                loadResults();
-                alert('सभी results delete हो गए।');
-            }
-        }
-
-        function loadUsers() {
-            users = JSON.parse(localStorage.getItem('examUsers'));
-            var tbody = document.getElementById('usersTableBody');
-            tbody.innerHTML = '';
-            
-            for (var i = 0; i < users.length; i++) {
-                var user = users[i];
-                tbody.innerHTML += '<tr class="hover:bg-gray-50">' +
-                    '<td class="px-4 py-3 text-sm text-gray-700">' + (i + 1) + '</td>' +
-                    '<td class="px-4 py-3 text-sm font-medium text-gray-900">' + user.name + '</td>' +
-                    '<td class="px-4 py-3 text-sm text-gray-700">' + user.mobile + '</td>' +
-                    '<td class="px-4 py-3 text-sm text-gray-700">' + user.dob + '</td>' +
-                    '<td class="px-4 py-3 text-sm"><button onclick="deleteUser(' + i + ')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition">Delete</button></td>' +
-                    '</tr>';
-            }
-        }
-
-        function addNewUser() {
-            var name = document.getElementById('newUserName').value.trim();
-            var mobile = document.getElementById('newUserMobile').value.trim();
-            var dob = document.getElementById('newUserDob').value;
-            
-            if (!name || !mobile || !dob) {
-                alert('सभी fields भरें।');
-                return;
-            }
-            
-            if (mobile.length !== 10) {
-                alert('Mobile number 10 digits का होना चाहिए।');
-                return;
-            }
-            
-            users = JSON.parse(localStorage.getItem('examUsers'));
-            var exists = users.find(function(u) { return u.mobile === mobile; });
-            
-            if (exists) {
-                alert('यह mobile number पहले से registered है।');
-                return;
-            }
-            
-            users.push({ name: name, mobile: mobile, dob: dob });
-            localStorage.setItem('examUsers', JSON.stringify(users));
-            
-            document.getElementById('newUserName').value = '';
-            document.getElementById('newUserMobile').value = '';
-            document.getElementById('newUserDob').value = '';
-            
-            loadUsers();
-            alert('Student successfully add हो गया!');
-        }
-
-        function deleteUser(index) {
-            if (confirm('क्या आप इस student को delete करना चाहते हैं?')) {
-                users = JSON.parse(localStorage.getItem('examUsers'));
-                users.splice(index, 1);
-                localStorage.setItem('examUsers', JSON.stringify(users));
-                loadUsers();
-                alert('Student delete हो गया।');
             }
         }
 
@@ -524,6 +776,13 @@
             var list = document.getElementById('questionsList');
             list.innerHTML = '';
             
+            updateClassDropdowns();
+
+            if (questions.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">कोई Question नहीं जोड़ा गया है।</p>';
+                return;
+            }
+
             for (var i = 0; i < questions.length; i++) {
                 var q = questions[i];
                 var optionsHtml = '';
@@ -538,6 +797,7 @@
                     '<h4 class="font-semibold text-gray-800">Q' + (i + 1) + ': ' + q.q + '</h4>' +
                     '<button onclick="deleteQuestion(' + i + ')" class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition">Delete</button>' +
                     '</div>' +
+                    '<p class="text-xs text-gray-500 mb-2">Class: <span class="font-medium text-gray-700">' + (q.class || 'N/A') + '</span> | Subject: <span class="font-medium text-gray-700">' + (q.subject || 'N/A') + '</span></p>' +
                     '<div class="ml-4">' + optionsHtml + '</div>' +
                     '</div>';
             }
@@ -545,14 +805,16 @@
 
         function addNewQuestion() {
             var q = document.getElementById('newQuestion').value.trim();
+            var qClass = document.getElementById('newQuestionClass').value;
+            var qSubject = document.getElementById('newQuestionSubject').value;
             var opt1 = document.getElementById('newOption1').value.trim();
             var opt2 = document.getElementById('newOption2').value.trim();
             var opt3 = document.getElementById('newOption3').value.trim();
             var opt4 = document.getElementById('newOption4').value.trim();
             var correct = document.getElementById('correctOption').value;
             
-            if (!q || !opt1 || !opt2 || !opt3 || !opt4 || correct === '') {
-                alert('सभी fields भरें और सही उत्तर चुनें।');
+            if (!q || !qClass || !qSubject || !opt1 || !opt2 || !opt3 || !opt4 || correct === '') {
+                alert('सभी fields (Question, Class, Subject, Options, Correct Answer) भरें।');
                 return;
             }
             
@@ -560,7 +822,9 @@
             questions.push({
                 q: q,
                 options: [opt1, opt2, opt3, opt4],
-                correct: parseInt(correct)
+                correct: parseInt(correct),
+                class: qClass,
+                subject: qSubject
             });
             localStorage.setItem('examQuestions', JSON.stringify(questions));
             
@@ -585,8 +849,125 @@
             }
         }
 
-        function startExam() {
+        // --- User Management ---
+
+        function loadUsers() {
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            var tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            
+            updateClassDropdowns();
+            
+            for (var i = 0; i < users.length; i++) {
+                var user = users[i];
+                tbody.innerHTML += '<tr class="hover:bg-gray-50">' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + (i + 1) + '</td>' +
+                    '<td class="px-4 py-3 text-sm font-medium text-gray-900">' + user.name + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + user.mobile + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + user.dob + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-700">' + (user.class || 'N/A') + '</td>' +
+                    '<td class="px-4 py-3 text-sm"><button onclick="deleteUser(' + i + ')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition">Delete</button></td>' +
+                    '</tr>';
+            }
+        }
+
+        function addNewUser() {
+            var name = document.getElementById('newUserName').value.trim();
+            var mobile = document.getElementById('newUserMobile').value.trim();
+            var dob = document.getElementById('newUserDob').value;
+            var userClass = document.getElementById('newUserClass').value;
+            
+            if (!name || !mobile || !dob || !userClass) {
+                alert('सभी fields (Name, Mobile, DOB, Class) भरें।');
+                return;
+            }
+            
+            if (mobile.length !== 10) {
+                alert('Mobile number 10 digits का होना चाहिए।');
+                return;
+            }
+            
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            var exists = users.find(function(u) { return u.mobile === mobile; });
+            
+            if (exists) {
+                alert('यह mobile number पहले से registered है।');
+                return;
+            }
+            
+            users.push({ name: name, mobile: mobile, dob: dob, class: userClass }); 
+            localStorage.setItem('examUsers', JSON.stringify(users));
+            
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserMobile').value = '';
+            document.getElementById('newUserDob').value = '';
+            document.getElementById('newUserClass').value = ''; 
+            
+            loadUsers();
+            alert('Student successfully add हो गया!');
+        }
+
+        function deleteUser(index) {
+            if (confirm('क्या आप इस student को delete करना चाहते हैं?')) {
+                users = JSON.parse(localStorage.getItem('examUsers'));
+                users.splice(index, 1);
+                localStorage.setItem('examUsers', JSON.stringify(users));
+                loadUsers();
+                alert('Student delete हो गया।');
+            }
+        }
+
+        // --- Exam Flow ---
+
+        function loadSubjectSelection() {
+            classes = JSON.parse(localStorage.getItem('examClasses'));
+            const currentClass = currentUser.class;
+            const classData = classes.find(c => c.name === currentClass);
+            const selectionArea = document.getElementById('subjectSelectionArea');
+            selectionArea.innerHTML = '';
+
+            document.getElementById('instructionsView').querySelector('h2').textContent = `${currentClass} Exam Instructions`;
+
+            if (!classData || classData.subjects.length === 0) {
+                selectionArea.innerHTML = `<p class="text-red-500 font-medium">आपकी Class **${currentClass}** के लिए कोई Subject उपलब्ध नहीं है। कृपया Admin से संपर्क करें।</p>`;
+                return;
+            }
+            
+            classData.subjects.forEach(subject => {
+                selectionArea.innerHTML += `
+                    <div class="flex justify-between items-center p-4 border-2 rounded-lg bg-white shadow-md">
+                        <span class="text-xl font-semibold text-gray-800">${subject}</span>
+                        <button onclick="startExam('${subject}')" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            ${subject} Exam शुरू करें
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function startExam(selectedSubject) {
+            currentExamSubject = selectedSubject;
+            
             questions = JSON.parse(localStorage.getItem('examQuestions'));
+            let filteredQuestions = questions.filter(q => 
+                q.class === currentUser.class && q.subject === selectedSubject
+            );
+
+            if (filteredQuestions.length === 0) {
+                alert(`**${currentUser.class}** Class के **${selectedSubject}** Subject के लिए कोई प्रश्न नहीं मिला। कृपया Admin से संपर्क करें।`);
+                return;
+            }
+            
+            let shuffledQuestions = filteredQuestions.map(q => shuffleOptions(q));
+            shuffledQuestions = shuffleArray(shuffledQuestions);
+            
+            currentExamQuestions = shuffledQuestions;
+            currentQuestion = 0;
+            answers = {};
+            violations = [];
+            
+            document.getElementById('examSubjectDisplay').textContent = 'Subject: ' + selectedSubject;
+
             examStartTime = new Date();
             navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                 .then(function(stream) {
@@ -599,11 +980,15 @@
                     renderQuestionNav();
                 })
                 .catch(function(err) {
-                    alert('Camera permission देना आवश्यक है।');
+                    alert('Camera permission देना आवश्यक है। Exam शुरू नहीं हो सकती।');
+                    showView('instructionsView');
                 });
         }
+        
+        // --- Timer and Violation Logic ---
 
         function startTimer() {
+            timeRemaining = 3600;
             timerInterval = setInterval(function() {
                 timeRemaining--;
                 var mins = Math.floor(timeRemaining / 60);
@@ -641,8 +1026,10 @@
             document.getElementById('violationCount').textContent = violations.length;
         }
 
+        // --- Exam Question Navigation and Submission ---
+        
         function renderQuestion() {
-            var q = questions[currentQuestion];
+            var q = currentExamQuestions[currentQuestion];
             var area = document.getElementById('questionArea');
             
             var optionsHtml = '';
@@ -657,10 +1044,10 @@
 
             area.innerHTML = '<h3 class="text-xl font-semibold text-gray-800 mb-4">' + q.q + '</h3><div class="space-y-3">' + optionsHtml + '</div>';
 
-            document.getElementById('questionCounter').textContent = 'प्रश्न ' + (currentQuestion + 1) + ' / ' + questions.length;
+            document.getElementById('questionCounter').textContent = 'प्रश्न ' + (currentQuestion + 1) + ' / ' + currentExamQuestions.length;
             document.getElementById('prevBtn').disabled = currentQuestion === 0;
             
-            if (currentQuestion === questions.length - 1) {
+            if (currentQuestion === currentExamQuestions.length - 1) {
                 document.getElementById('nextBtn').style.display = 'none';
                 document.getElementById('submitBtn').style.display = 'block';
             } else {
@@ -672,7 +1059,7 @@
         function renderQuestionNav() {
             var nav = document.getElementById('questionNav');
             var navHtml = '';
-            for (var i = 0; i < questions.length; i++) {
+            for (var i = 0; i < currentExamQuestions.length; i++) {
                 var buttonClass = '';
                 if (currentQuestion === i) {
                     buttonClass = 'bg-indigo-600 text-white';
@@ -700,7 +1087,7 @@
         }
 
         function nextQuestion() {
-            if (currentQuestion < questions.length - 1) {
+            if (currentQuestion < currentExamQuestions.length - 1) {
                 currentQuestion++;
                 renderQuestion();
                 renderQuestionNav();
@@ -714,6 +1101,10 @@
         }
 
         function submitExam() {
+            if (!confirm('क्या आप परीक्षा जमा (Submit) करना चाहते हैं?')) {
+                return;
+            }
+
             clearInterval(timerInterval);
             if (cameraStream) {
                 cameraStream.getTracks().forEach(function(track) {
@@ -722,35 +1113,39 @@
             }
 
             var score = 0;
-            for (var i = 0; i < questions.length; i++) {
-                if (answers[i] === questions[i].correct) {
+            for (var i = 0; i < currentExamQuestions.length; i++) {
+                if (answers[i] === currentExamQuestions[i].correct) {
                     score++;
                 }
             }
 
-            var percentage = Math.round((score / questions.length) * 100);
+            var percentage = Math.round((score / currentExamQuestions.length) * 100);
             var examEndTime = new Date();
             var timeTaken = Math.floor((examEndTime - examStartTime) / 1000);
             var mins = Math.floor(timeTaken / 60);
             var secs = timeTaken % 60;
             var timeTakenStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
 
+            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
+            
             var result = {
                 name: currentUser.name,
                 mobile: currentUser.mobile,
+                class: currentUser.class,
+                subject: currentExamSubject,
                 score: score,
-                total: questions.length,
+                total: currentExamQuestions.length,
                 percentage: percentage,
                 violations: violations.length,
                 timeTaken: timeTakenStr,
-                date: new Date().toLocaleString('hi-IN')
+                date: new Date().toLocaleString('hi-IN'),
+                id: results.length // Assign a unique ID based on the array length
             };
-
-            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
+            
             results.push(result);
             localStorage.setItem('examResults', JSON.stringify(results));
 
-            document.getElementById('totalQuestionsResult').textContent = questions.length;
+            document.getElementById('totalQuestionsResult').textContent = currentExamQuestions.length;
             document.getElementById('correctAnswers').textContent = score;
             document.getElementById('percentage').textContent = percentage + '%';
             document.getElementById('totalViolations').textContent = violations.length;
@@ -772,6 +1167,8 @@
             answers = {};
             violations = [];
             timeRemaining = 3600;
+            currentExamQuestions = [];
+            currentExamSubject = '';
             
             document.getElementById('mobileInput').value = '';
             document.getElementById('dobInput').value = '';
@@ -781,8 +1178,158 @@
             
             showView('loginView');
         }
+
+        // --- Results Management (Updated for Report Card) ---
+
+        function loadResults() {
+            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
+            users = JSON.parse(localStorage.getItem('examUsers'));
+            
+            document.getElementById('totalStudents').textContent = users.length;
+            document.getElementById('completedExams').textContent = results.length;
+            
+            if (results.length > 0) {
+                var totalScore = 0;
+                var totalViolations = 0;
+                
+                for (var i = 0; i < results.length; i++) {
+                    totalScore += results[i].percentage;
+                    totalViolations += results[i].violations;
+                }
+                
+                document.getElementById('avgScore').textContent = Math.round(totalScore / results.length) + '%';
+                document.getElementById('totalViolationsAdmin').textContent = totalViolations;
+                
+                var tbody = document.getElementById('resultsTableBody');
+                tbody.innerHTML = '';
+                
+                for (var i = 0; i < results.length; i++) {
+                    var result = results[i];
+                    var statusClass = result.percentage >= 60 ? 'text-green-600' : 'text-red-600';
+                    var statusText = result.percentage >= 60 ? 'Pass' : 'Fail';
+                    
+                    tbody.innerHTML += '<tr class="hover:bg-gray-50">' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + (i + 1) + '</td>' +
+                        '<td class="px-4 py-3 text-sm font-medium text-gray-900">' + result.name + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.mobile + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + (result.class || 'N/A') + ' / ' + (result.subject || 'N/A') + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.score + '/' + result.total + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.percentage + '%</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.violations + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.timeTaken + '</td>' +
+                        '<td class="px-4 py-3 text-sm text-gray-700">' + result.date + '</td>' +
+                        '<td class="px-4 py-3 text-sm font-semibold ' + statusClass + '">' + statusText + '</td>' +
+                        // New Report Card Button
+                        '<td class="px-4 py-3 text-sm"><button onclick="viewReportCard(' + i + ')" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-xs">View/Print</button></td>' +
+                        '</tr>';
+                }
+            } else {
+                document.getElementById('avgScore').textContent = '0%';
+                document.getElementById('totalViolationsAdmin').textContent = '0';
+                
+                document.getElementById('resultsTableBody').innerHTML = '<tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">कोई result नहीं</td></tr>';
+            }
+        }
+
+        function clearAllResults() {
+            if (confirm('क्या आप सभी results delete करना चाहते हैं?')) {
+                localStorage.setItem('examResults', '[]');
+                loadResults();
+                alert('सभी results delete हो गए।');
+            }
+        }
+        
+        // --- Report Card Functions (NEW) ---
+
+        function viewReportCard(index) {
+            var results = JSON.parse(localStorage.getItem('examResults') || '[]');
+            const result = results[index];
+
+            if (!result) {
+                alert("Report Card data not found.");
+                return;
+            }
+
+            const statusClass = result.percentage >= 60 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100';
+            const statusText = result.percentage >= 60 ? 'PASS' : 'FAIL';
+            
+            const reportContent = `
+                <div class="text-center mb-8 border-b-4 border-indigo-200 pb-4">
+                    <h1 class="text-4xl font-extrabold text-indigo-800">ONLINE EXAMINATION REPORT CARD</h1>
+                    <p class="text-md text-gray-600 mt-1">Successfully Completed Examination</p>
+                </div>
+                
+                <div class="bg-indigo-50 p-5 rounded-lg shadow-inner mb-6">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-1">${result.name}</h2>
+                    <p class="text-md text-gray-700">Mobile: ${result.mobile}</p>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b-2 border-dashed pb-2 mb-4">Exam Details</h3>
+
+                <div class="grid grid-cols-2 gap-4 text-gray-700 mb-6">
+                    <div class="p-3 bg-white border rounded-lg shadow-sm"><strong>Class:</strong> <span class="font-semibold">${result.class || 'N/A'}</span></div>
+                    <div class="p-3 bg-white border rounded-lg shadow-sm"><strong>Subject:</strong> <span class="font-semibold">${result.subject || 'N/A'}</span></div>
+                    <div class="p-3 bg-white border rounded-lg shadow-sm"><strong>Exam Date:</strong> <span class="font-semibold">${result.date.split(',')[0]}</span></div>
+                    <div class="p-3 bg-white border rounded-lg shadow-sm"><strong>Time Taken:</strong> <span class="font-semibold">${result.timeTaken}</span></div>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 border-b-2 border-dashed pb-2 mb-4">Performance Summary</h3>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <span class="font-medium text-gray-800">Total Questions:</span>
+                        <span class="font-bold text-gray-800 text-xl">${result.total}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-green-50 rounded-lg border border-green-200">
+                        <span class="font-medium text-green-800">Correct Answers:</span>
+                        <span class="font-bold text-green-700 text-xl">${result.score}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-red-50 rounded-lg border border-red-200">
+                        <span class="font-medium text-red-800">Incorrect/Unattempted:</span>
+                        <span class="font-bold text-red-700 text-xl">${result.total - result.score}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <span class="font-medium text-yellow-800">Proctoring Violations:</span>
+                        <span class="font-bold text-yellow-700 text-xl">${result.violations}</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center p-5 mt-6 rounded-xl ${statusClass} shadow-lg">
+                    <span class="text-2xl font-bold">Overall Percentage:</span>
+                    <span class="text-4xl font-extrabold">${result.percentage}%</span>
+                </div>
+                
+                <div class="text-center mt-6">
+                    <p class="text-3xl font-extrabold ${statusClass.includes('green') ? 'text-green-700' : 'text-red-700'} p-3 rounded-lg inline-block border-2 border-current">RESULT: ${statusText}</p>
+                </div>
+
+                <div class="mt-10 pt-4 border-t text-sm text-gray-500 text-center">
+                    <p>System Generated Report | Report ID: ${result.id}</p>
+                </div>
+            `;
+            
+            document.getElementById('reportCardContent').innerHTML = reportContent;
+            document.getElementById('reportCardModal').style.display = 'flex';
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportCardModal').style.display = 'none';
+        }
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load all management data
+            loadSubjects();
+            loadClasses();
+            loadQuestions();
+            loadUsers();
+            
+            // Set initial state for modal
+            document.getElementById('reportCardModal').style.display = 'none';
+
+            switchLoginTab('student'); // Start on student login tab
+        });
+
     </script>
 </body>
-</html>old hover:bg-gray-300 transition';
-            document.getElementById('usersTabBtn').className = 'px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semib
-
+</html>
