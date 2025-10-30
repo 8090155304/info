@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScrollEffact</title>
+    <style>
+        /* === Google Fonts Import (10+ Fonts) === */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&family=Poppins:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Monoton&family=Orbitron:wght@400;700&family=Bebas+Neue&family=Cormorant+Garamond:wght@400;700&family=Rubik+Puddles&display=swap');
+
+        /* === Global Styles === */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121212;
+            font-family: 'Roboto', sans-serif; /* Default body font */
+            color: #eee;
+            position: relative;
+        }
+
+        /* === Scrolling Container (Dynamic Height) === */
+        .pixel-scroll-container {
+            width: 90vw;
+            max-width: 1200px;
+            min-height: 100px; 
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00f7ff;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.6);
+            margin-bottom: 20px;
+            transition: height 0.3s;
+        }
+
+        .pixel-scroll-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* === Blinking Logo === */
+        .blinking-logo {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 24px;
+            color: #ff007f;
+            animation: blink 1s infinite alternate;
+            margin-top: 30px;
+            text-shadow: 0 0 10px rgba(255, 0, 127, 0.8), 0 0 20px rgba(255, 0, 127, 0.6);
+            padding: 10px 20px;
+            border: 1px solid #ff007f;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.3; }
+        }
+
+        /* === Control Panel Styles (Same as before) === */
+        #control-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 320px;
+            padding: 15px;
+            background: rgba(30, 40, 50, 0.98);
+            border: 1px solid #00f7ff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+            color: white;
+            z-index: 1000;
+            font-family: 'Roboto', sans-serif;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        #control-panel h3 { margin-top: 0; border-bottom: 1px solid #00f7ff; padding-bottom: 5px; }
+        #control-panel label { display: block; margin-top: 10px; font-size: 14px; font-weight: bold; color: #00f7ff; }
+        #control-panel textarea { resize: vertical; }
+
+        .line-control-group {
+            border: 1px solid #444;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .line-control-group p {
+            font-size: 12px;
+            color: #fff;
+            margin-top: 0;
+            border-bottom: 1px dashed #666;
+            padding-bottom: 5px;
+        }
+
+        /* Generic input styling */
+        #control-panel input:not([type="color"]),
+        #control-panel select,
+        #control-panel textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #control-panel button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #save-png-button { background-color: #4CAF50 !important; color: white; }
+        #save-gif-button { background-color: #2196F3 !important; color: white; }
+        .status-message { margin-top: 10px; font-size: 12px; color: #ffeb3b; text-align: center; }
+        #pixel-size-value, #font-size-value, #line-spacing-value { float: right; color: #fff; font-weight: normal; }
+    </style>
+</head>
+<body>
+
+    <div class="pixel-scroll-container" id="pixel-container">
+        <canvas class="pixel-scroll-canvas" id="pixel-canvas"></canvas>
+    </div>
+
+    <div class="blinking-logo">SHIV COMPUTER</div>
+
+    <div id="control-panel">
+        <h3>LED Display Setting🛠️</h3>
+        
+        <label for="input-text">Multi-Line Text (Emojis aur Hindi bhi likhein):</label>
+        <textarea id="input-text" rows="5">Welcome to The SHIV COMPUTER ON LED Screen! ✨
+यह लाइन हिंदी में है। 🇮🇳
+https://shivco.netlify.app/ . ➡️</textarea>
+
+        <label for="font-size">Font Size: <span id="font-size-value">60</span></label>
+        <input type="range" id="font-size" min="20" max="150" value="60">
+
+        <label for="pixel-size">Pixel Size: <span id="pixel-size-value">4</span></label>
+        <input type="range" id="pixel-size" min="1" max="15" value="4">
+
+        <label for="line-spacing">Line Spacing (%): <span id="line-spacing-value">120</span></label>
+        <input type="range" id="line-spacing" min="100" max="250" value="120">
+
+        <label for="text-color">Text Color (Global):</label>
+        <input type="color" id="text-color" value="#00ff00">
+        
+        <label for="canvas-bg">Canvas Background Color:</label>
+        <input type="color" id="canvas-bg" value="#000000">
+
+        <label for="font-family">Font Style:</label>
+        <select id="font-family">
+            <option value="'Press Start 2P', cursive">1. Pixelated (Press Start 2P)</option>
+            <option value="'Noto Sans Devanagari', sans-serif">2. Hindi/Clean (Noto Sans)</option>
+            <option value="'Poppins', sans-serif">3. Modern (Poppins)</option>
+            <option value="'Monoton', cursive">4. Outline (Monoton)</option>
+            <option value="'Orbitron', sans-serif">5. Sci-Fi (Orbitron)</option>
+            <option value="'Bebas Neue', sans-serif">6. Bold Condensed (Bebas Neue)</option>
+            <option value="'Cormorant Garamond', serif">7. Elegant (Cormorant)</option>
+            <option value="'Rubik Puddles', cursive">8. Artistic (Rubik Puddles)</option>
+            <option value="'Roboto', sans-serif">9. Default Clean (Roboto)</option>
+            <option value="Arial, sans-serif">10. System Default (Arial)</option>
+        </select>
+        
+        <h4 style="color:#ffeb3b; border-bottom:1px solid #444; padding-top:10px;">Line-Specific Animations</h4>
+        <div id="line-controls-container">
+            </div>
+
+        <button id="save-png-button">Download as PNG 📸</button>
+        <button id="save-gif-button">Download as GIF 🎞️</button>
+        <div id="gif-status" class="status-message"></div>
+    </div>
+
+    
+    <script src="https://unpkg.com/gif.js@0.2.0/gif.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('pixel-container');
+            const canvas = document.getElementById('pixel-canvas');
+            const ctx = canvas.getContext('2d');
+            const controls = {
+                text: document.getElementById('input-text'),
+                pixelSize: document.getElementById('pixel-size'),
+                fontSize: document.getElementById('font-size'),
+                textColor: document.getElementById('text-color'),
+                fontFamily: document.getElementById('font-family'),
+                lineSpacing: document.getElementById('line-spacing'),
+                canvasBg: document.getElementById('canvas-bg'),
+                lineControlsContainer: document.getElementById('line-controls-container'),
+                savePngButton: document.getElementById('save-png-button'),
+                saveGifButton: document.getElementById('save-gif-button'),
+                gifStatus: document.getElementById('gif-status')
+            };
+            const displayValues = {
+                pixelSize: document.getElementById('pixel-size-value'),
+                fontSize: document.getElementById('font-size-value'),
+                lineSpacing: document.getElementById('line-spacing-value')
+            };
+
+            let animationFrameId;
+            let lineData = [];
+
+            // Global Settings
+            let globalSettings = {
+                fontSize: 60,
+                pixelSize: 4,
+                lineSpacingFactor: 1.2,
+                textColor: '#00ff00',
+                canvasBackgroundColor: '#000000',
+                fontFamily: "'Noto Sans Devanagari', sans-serif", // Default Hindi Font set
+                baseScrollSpeed: 2
+            };
+            
+            // Set initial control panel values for new fonts
+            controls.fontFamily.value = globalSettings.fontFamily;
+
+
+            // --- Initialization & Setup ---
+
+            function updateSettingsFromControls() {
+                globalSettings.fontSize = parseInt(controls.fontSize.value);
+                globalSettings.pixelSize = parseInt(controls.pixelSize.value);
+                globalSettings.lineSpacingFactor = parseInt(controls.lineSpacing.value) / 100;
+                globalSettings.textColor = controls.textColor.value;
+                globalSettings.canvasBackgroundColor = controls.canvasBg.value;
+                globalSettings.fontFamily = controls.fontFamily.value;
+
+                displayValues.pixelSize.textContent = globalSettings.pixelSize;
+                displayValues.fontSize.textContent = globalSettings.fontSize;
+                displayValues.lineSpacing.textContent = controls.lineSpacing.value;
+
+                parseAndSetupLines();
+            }
+
+            function parseAndSetupLines() {
+                const textLines = controls.text.value.split('\n').filter(line => line.trim() !== '');
+                const newLineData = [];
+                
+                // Keep existing settings if the line text hasn't changed
+                textLines.forEach((text, index) => {
+                    // Check if the text of this line has changed, or if it's a new line
+                    const existingLine = lineData[index];
+                    
+                    if (existingLine && existingLine.originalText === text) {
+                        // Text is the same, keep existing line data and settings
+                        newLineData.push(existingLine);
+                    } else {
+                        // New line or text changed, create new line object
+                        let newSpeed = globalSettings.baseScrollSpeed;
+                        let newDirection = 'left';
+                        
+                        // If text changed, but line number is same, try to keep previous speed/direction
+                        if (existingLine) {
+                            newSpeed = existingLine.speed;
+                            newDirection = existingLine.direction;
+                        }
+
+                        newLineData.push({
+                            index: index,
+                            text: text,
+                            originalText: text, // Save original text for comparison
+                            scrollX: 0,
+                            speed: newSpeed, 
+                            direction: newDirection,
+                            textWidth: 0,
+                            speedInputId: `speed-${index}`,
+                            directionSelectId: `direction-${index}`
+                        });
+                    }
+                });
+
+                lineData = newLineData;
+                renderLineControls();
+                setCanvasSize(); 
+            }
+            
+            function renderLineControls() {
+                controls.lineControlsContainer.innerHTML = '';
+                
+                lineData.forEach((line, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'line-control-group';
+                    div.innerHTML = `
+                        <p>Line ${index + 1}: "${line.text.substring(0, 30)}${line.text.length > 30 ? '...' : ''}"</p>
+                        <label for="${line.speedInputId}">Scroll Speed (px/frame):</label>
+                        <input type="range" id="${line.speedInputId}" min="0" max="10" value="${line.speed}">
+                        <label for="${line.directionSelectId}">Scroll Direction:</label>
+                        <select id="${line.directionSelectId}">
+                            <option value="left" ${line.direction === 'left' ? 'selected' : ''}>Left</option>
+                            <option value="right" ${line.direction === 'right' ? 'selected' : ''}>Right</option>
+                        </select>
+                    `;
+                    controls.lineControlsContainer.appendChild(div);
+
+                    // Attach event listeners for line-specific controls
+                    document.getElementById(line.speedInputId).addEventListener('input', (e) => {
+                        lineData[index].speed = parseInt(e.target.value);
+                    });
+                    document.getElementById(line.directionSelectId).addEventListener('change', (e) => {
+                        lineData[index].direction = e.target.value;
+                    });
+                });
+            }
+
+            // --- Canvas & Rendering Functions ---
+
+            function setCanvasSize() {
+                const lineHeight = globalSettings.fontSize * globalSettings.lineSpacingFactor;
+                // Add a small buffer at the bottom
+                const totalHeight = lineData.length * lineHeight + (globalSettings.fontSize * 0.2); 
+                
+                container.style.height = `${totalHeight}px`;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                
+                lineData.forEach(line => line.textWidth = 0); // Reset text width for new font/size
+                
+                render();
+            }
+
+            function measureTextWidth(text, font) {
+                const tempCtx = document.createElement('canvas').getContext('2d');
+                tempCtx.font = font;
+                return tempCtx.measureText(text).width;
+            }
+
+            // Reuse temp canvas for efficiency
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            function drawPixelatedText(ctx, tempCtx, lineText, xPos, yPos, textWidth, pSize, textColor, fontSize, fontFamily, textBaseline) {
+                tempCtx.clearRect(0, 0, tempCtx.canvas.width, tempCtx.canvas.height);
+                tempCtx.font = `${fontSize}px ${fontFamily}`;
+                tempCtx.fillStyle = textColor;
+                tempCtx.textBaseline = textBaseline;
+
+                let yPosTemp = 0;
+                if (textBaseline === 'middle') yPosTemp = tempCtx.canvas.height / 2;
+                else if (textBaseline === 'bottom') yPosTemp = tempCtx.canvas.height;
+                else yPosTemp = fontSize;
+
+                tempCtx.fillText(lineText, 0, yPosTemp);
+
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+
+                // Draw the pixels on the main canvas
+                for (let y = 0; y < tempCtx.canvas.height; y += pSize) {
+                    for (let x = 0; x < tempCtx.canvas.width; x += pSize) {
+                        const index = (y * tempCtx.canvas.width + x) * 4;
+                        const alpha = data[index + 3];
+
+                        if (alpha > 128) {
+                            ctx.beginPath();
+                            ctx.arc(xPos + x + pSize / 2, yPos + y + pSize / 2, pSize / 2 * 0.8, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = globalSettings.canvasBackgroundColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = globalSettings.textColor;
+                
+                const lineHeight = globalSettings.fontSize * globalSettings.lineSpacingFactor;
+                const pSize = globalSettings.pixelSize;
+
+                // Loop through all lines
+                lineData.forEach((line, index) => {
+                    const startY = index * lineHeight;
+
+                    if (line.textWidth === 0) {
+                        line.textWidth = measureTextWidth(line.text, `${globalSettings.fontSize}px ${globalSettings.fontFamily}`);
+                    }
+                    
+                    tempCanvas.width = line.textWidth + globalSettings.fontSize;
+                    tempCanvas.height = lineHeight;
+
+                    const xOffset = line.scrollX;
+                    const yOffset = startY;
+
+                    // Draw Scrolling Text (Multiple copies)
+                    for (let i = -1; i * line.textWidth < canvas.width + line.textWidth; i++) {
+                        drawPixelatedText(
+                            ctx, tempCtx, 
+                            line.text, 
+                            xOffset + (i * line.textWidth), 
+                            yOffset, 
+                            line.textWidth, 
+                            pSize, 
+                            globalSettings.textColor, 
+                            globalSettings.fontSize, 
+                            globalSettings.fontFamily, 
+                            'middle' 
+                        );
+                    }
+
+                    // Update Scrolling Position
+                    if (line.direction === 'left') {
+                        line.scrollX -= line.speed;
+                        if (line.scrollX < -line.textWidth) {
+                            line.scrollX += line.textWidth;
+                        }
+                    } else {
+                        line.scrollX += line.speed;
+                        if (line.scrollX > 0) {
+                            line.scrollX -= line.textWidth;
+                        }
+                    }
+                });
+            }
+
+            // Animation loop
+            function animate() {
+                render();
+                animationFrameId = requestAnimationFrame(animate);
+            }
+
+            function stopAnimation() {
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            }
+
+            function startAnimation() {
+                if (!animationFrameId) {
+                    animate();
+                }
+            }
+
+            // --- Event Handlers (General) ---
+
+            controls.text.addEventListener('input', updateSettingsFromControls);
+            controls.pixelSize.addEventListener('input', updateSettingsFromControls);
+            controls.fontSize.addEventListener('input', updateSettingsFromControls);
+            controls.textColor.addEventListener('input', updateSettingsFromControls);
+            controls.fontFamily.addEventListener('change', updateSettingsFromControls);
+            controls.lineSpacing.addEventListener('input', updateSettingsFromControls);
+            controls.canvasBg.addEventListener('input', updateSettingsFromControls);
+            window.addEventListener('resize', setCanvasSize);
+            
+            // --- Save Options ---
+
+            // PNG Save Option 
+            controls.savePngButton.addEventListener('click', () => {
+                stopAnimation();
+                render();
+                const dataURL = canvas.toDataURL("image/png");
+                const a = document.createElement('a');
+                a.href = dataURL;
+                a.download = "multi_line_display.png";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                startAnimation();
+            });
+
+            // GIF Save Option (Optimized Settings)
+            controls.saveGifButton.addEventListener('click', () => {
+                controls.gifStatus.textContent = "Generating GIF... Please wait! (3s, Optimized for Speed)";
+                controls.saveGifButton.disabled = true;
+                stopAnimation();
+
+                const gif = new GIF({
+                    workers: 4, 
+                    quality: 20,
+                    width: canvas.width,
+                    height: canvas.height,
+                    workerScript: 'https://unpkg.com/gif.js@0.2.0/gif.worker.js'
+                });
+
+                const duration = 3; 
+                const framesPerSecond = 15;
+                const totalFrames = duration * framesPerSecond;
+                const frameDelay = 1000 / framesPerSecond; 
+
+                let currentFrame = 0;
+                let originalScrollX = lineData.map(line => line.scrollX); 
+
+                function addFrame() {
+                    if (currentFrame < totalFrames) {
+                        lineData.forEach((line, index) => {
+                             const totalDistance = currentFrame * line.speed;
+                             if (line.direction === 'left') {
+                                 // Modulo operation ensures continuous loop
+                                 line.scrollX = (originalScrollX[index] - totalDistance) % line.textWidth;
+                                 if (line.scrollX > 0) line.scrollX -= line.textWidth; // Handle positive result
+                             } else {
+                                 line.scrollX = (originalScrollX[index] + totalDistance) % line.textWidth;
+                                 if (line.scrollX < -line.textWidth) line.scrollX += line.textWidth; // Handle negative result
+                             }
+                        });
+                        
+                        render(); 
+                        gif.addFrame(ctx, { delay: frameDelay, copy: true }); 
+                        currentFrame++;
+                        
+                        requestAnimationFrame(addFrame); 
+                    } else {
+                        gif.render();
+                    }
+                }
+                
+                // Reset scrollX to original state for GIF capture
+                lineData.forEach((line, index) => line.scrollX = originalScrollX[index]); 
+                addFrame();
+
+                gif.on('finished', (blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "multi_line_display.gif";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    controls.gifStatus.textContent = "GIF Downloaded!";
+                    controls.saveGifButton.disabled = false;
+                    // Reset scroll positions to original state before starting animation
+                    lineData.forEach((line, index) => line.scrollX = originalScrollX[index]); 
+                    startAnimation();
+                });
+
+                gif.on('progress', (p) => {
+                    controls.gifStatus.textContent = `Generating GIF: ${(p * 100).toFixed(0)}%`;
+                });
+
+                gif.on('error', (err) => {
+                    controls.gifStatus.textContent = `GIF Error: ${err}. Try lowering settings.`;
+                    controls.saveGifButton.disabled = false;
+                    startAnimation();
+                });
+            });
+
+
+            // --- Initialization ---
+            updateSettingsFromControls(); // Initial call to setup lines and canvas
+            startAnimation();
+        });
+    </script>
+</body>
+</html>
