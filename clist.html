@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Correction Form</title>
+    <style>
+        /* CSS is kept largely unchanged for visual consistency */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        
+        .school-selector {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ffc107;
+        }
+        
+        .school-selector h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .school-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .school-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 20px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .school-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .school-btn.active {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .school-btn .udise {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .school-btn .name {
+            color: #333;
+            font-size: 0.95em;
+        }
+        
+        .current-school {
+            background: #e7f3ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .current-school strong {
+            color: #667eea;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        small {
+            display: block;
+            margin-top: 5px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+            font-weight: normal;
+        }
+        
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-save:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+        }
+        
+        .btn-print {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-print:hover {
+            background: #138496;
+        }
+        
+        .btn-export {
+            background: #6f42c1;
+            color: white;
+        }
+        
+        .btn-export:hover {
+            background: #5a32a3;
+        }
+        
+        .btn-import {
+            background: #fd7e14;
+            color: white;
+        }
+        
+        .btn-import:hover {
+            background: #e8590c;
+        }
+
+        /* NEW: Delete All Button Style */
+        .btn-delete-all {
+            background: #dc3545;
+            color: white;
+            order: 1; /* Make it appear first or prominent */
+            margin-left: auto; /* Push to the right */
+        }
+        .btn-delete-all:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        
+        .btn-edit {
+            background: #ffc107;
+            color: #000;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        tr:hover {
+            background: #e9ecef;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        .filter-section label {
+            margin-bottom: 0;
+        }
+
+        .filter-section select {
+            width: auto;
+            min-width: 150px;
+            padding: 8px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            .form-section,
+            .button-group,
+            .btn-delete,
+            .btn-edit,
+            .school-selector,
+            .current-school,
+            .filter-section { 
+                display: none !important;
+            }
+            
+            h1 {
+                color: #000;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            .btn-delete-all {
+                margin-left: 0; 
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Student Correction Form</h1>
+        <h4> Correction वाले फील्ड पूरा सही डाटा लिखें यही अपडेट किया जायेगा, जैसे गलत ( शिव को शिव कुमार करना है इस फील्ड में पूरा सही नाम - शिव कुमार लिखें )</h4>
+        
+        <div class="school-selector">
+            <h3>🏫 Select School (UDISE Code)</h3>
+            <div class="school-buttons">
+                <div class="school-btn active" onclick="selectSchool('0*****************2', 'Primary School', event)">
+                    <span class="udise">0..............202</span>
+                    <span class="name">Primary School</span>
+                </div>
+                <div class="school-btn" onclick="selectSchool('0*********************7', 'Primary with Upper Primary School', event)">
+                    <span class="udise">0..............202</span>
+                    <span class="name">Primary with Upper Primary School</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="current-school">
+                <strong>Selected School:</strong> <span id="currentSchoolDisplay">0..............202 - Primary School</span>
+            </div>
+            
+            <form id="studentForm">
+                <div class="form-group">
+                    <label>Serial Number (Auto):</label>
+                    <input type="text" id="serialNumber" readonly style="background: #e9ecef; cursor: not-allowed;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Name *:</label>
+                    <input type="text" id="name" required placeholder="Enter student's name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Date of Birth * (DD/MM/YYYY):</label>
+                    <input type="text" id="dob" required placeholder="DD/MM/YYYY" maxlength="10">
+                </div>
+                
+                <div class="form-group">
+                    <label>Class * (N, L, U or 1-12) - Auto Convert:</label> 
+                    <input type="text" id="class" required placeholder="Type N, L, U, or 1-12">
+                    <small style="color: #666; font-size: 13px;">Kripya short code enter karein: **N** (Nursery), **L** (LKG), **U** (UKG), ya **1** se **12** (Class number)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>Correction:</label>
+                    <input type="text" id="correction" placeholder="Enter correction details (optional)">
+                </div>
+                
+                <div class="form-group">
+                    <label>Verified:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="verified" value="Yes" checked> Yes
+                        </label>
+                        <label>
+                            <input type="radio" name="verified" value="No"> No
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-save">💾 Save Entry</button>
+                    <button type="button" class="btn-clear" onclick="clearForm()">🔄 Clear Form</button>
+                    <button type="button" class="btn-export" onclick="exportData()">📤 Export Data</button>
+                    <button type="button" class="btn-import" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+                    <button type="button" class="btn-print" onclick="window.print()">🖨️ Print Records</button>
+                    <button type="button" class="btn-delete-all" onclick="deleteAllData()">🚨 Delete ALL Data</button> <input type="file" id="importFile" class="file-input" accept=".json" onchange="importData(event)">
+                </div>
+            </form>
+        </div>
+        
+        <div id="recordsSection">
+            <h2 style="color: #667eea; margin-bottom: 15px;">📋 Saved Records</h2>
+            
+            <div class="filter-section no-print">
+                <label for="classFilter">Filter By Class:</label>
+                <select id="classFilter" onchange="filterRecords(this.value)">
+                    <option value="ALL">-- All Classes --</option>
+                </select>
+            </div>
+            
+            <div id="tableContainer"></div>
+        </div>
+    </div>
+    
+    <script>
+        let students = [];
+        let editingIndex = -1;
+        let currentSchool = {
+            udise: '09270500202',
+            name: 'Primary School'
+        };
+        let currentClassFilter = 'ALL'; 
+        
+        // --- Helper Maps ---
+        const classShortToFullMap = {
+            'N': 'Nursery', 'L': 'LKG', 'U': 'UKG',
+            '1': 'Class 1', '2': 'Class 2', '3': 'Class 3', '4': 'Class 4',
+            '5': 'Class 5', '6': 'Class 6', '7': 'Class 7', '8': 'Class 8',
+            '9': 'Class 9', '10': 'Class 10', '11': 'Class 11', '12': 'Class 12'
+        };
+
+        const classFullToShortMap = Object.entries(classShortToFullMap).reduce((acc, [short, full]) => {
+            acc[full.toUpperCase()] = short;
+            return acc;
+        }, {});
+        
+        // --- Utility Functions ---
+
+        function mapShortCodeToFullName(shortCode) {
+            return classShortToFullMap[shortCode] || shortCode;
+        }
+
+        function mapFullNameToShortCode(fullName) {
+            return classFullToShortMap[fullName.toUpperCase()] || fullName;
+        }
+
+        function isValidDate(dateString) {
+            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            const match = dateString.match(regex);
+            
+            if (!match) return false;
+            
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10);
+            const year = parseInt(match[3], 10);
+            
+            const date = new Date(year, month - 1, day);
+            
+            return (
+                date.getFullYear() === year &&
+                date.getMonth() === month - 1 &&
+                date.getDate() === day
+            );
+        }
+        
+        function updateSerialNumber() {
+            const schoolStudents = students.filter(s => s.udise === currentSchool.udise);
+            const nextSerial = editingIndex === -1 ? schoolStudents.length + 1 : students[editingIndex].serialNumber;
+            document.getElementById('serialNumber').value = nextSerial;
+        }
+        
+        function populateClassFilter() {
+            const filterElement = document.getElementById('classFilter');
+            const uniqueClasses = [...new Set(students
+                .filter(s => s.udise === currentSchool.udise)
+                .map(s => s.class)
+            )].sort((a, b) => {
+                if (['N', 'L', 'U'].includes(a) && !['N', 'L', 'U'].includes(b)) return -1;
+                if (!['N', 'L', 'U'].includes(a) && ['N', 'L', 'U'].includes(b)) return 1;
+                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            filterElement.innerHTML = '<option value="ALL">-- All Classes --</option>';
+
+            uniqueClasses.forEach(shortCode => {
+                const fullName = mapShortCodeToFullName(shortCode);
+                const option = document.createElement('option');
+                option.value = shortCode; 
+                option.textContent = fullName; 
+                filterElement.appendChild(option);
+            });
+            
+            filterElement.value = currentClassFilter;
+        }
+
+        function filterRecords(shortCode) {
+            currentClassFilter = shortCode;
+            displayRecords();
+        }
+
+        // --- Core Logic Functions ---
+
+        window.onload = function() {
+            loadData();
+            updateSerialNumber();
+            populateClassFilter(); 
+            displayRecords();
+            document.getElementById('name').focus();
+        };
+        
+        function selectSchool(udise, name, event) {
+            currentSchool = { udise, name };
+            document.getElementById('currentSchoolDisplay').textContent = `${udise} - ${name}`;
+            
+            document.querySelectorAll('.school-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const buttons = document.querySelectorAll('.school-btn');
+             buttons.forEach(btn => {
+                 if(btn.innerHTML.includes(udise)) {
+                     btn.classList.add('active');
+                 }
+             });
+            
+            currentClassFilter = 'ALL'; 
+            
+            loadData();
+            updateSerialNumber();
+            populateClassFilter(); 
+            displayRecords();
+            clearForm();
+            document.getElementById('name').focus();
+        }
+
+        // --- Form Event Listeners (DOB and Class) ---
+
+        document.getElementById('dob').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); 
+            
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2);
+            }
+            if (value.length >= 5) {
+                value = value.slice(0, 5) + '/' + value.slice(5, 9);
+            }
+            
+            e.target.value = value;
+        });
+
+        document.getElementById('class').addEventListener('input', function(e) {
+            let value = e.target.value.toUpperCase().trim();
+            
+            const shortCodeMap = classShortToFullMap;
+            
+            if (value.length <= 2 && shortCodeMap[value]) {
+                e.target.value = shortCodeMap[value];
+            } 
+        });
+
+        document.getElementById('class').addEventListener('blur', function(e) {
+            const value = e.target.value.trim().toUpperCase();
+            const validFullNames = Object.values(classShortToFullMap).map(n => n.toUpperCase());
+
+            if (value && !validFullNames.includes(value)) {
+                alert('Invalid class! Kripya sahi short code enter karein (N/L/U ya 1-12) ya full name।');
+                e.target.value = '';
+            }
+        });
+        
+        document.getElementById('studentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveStudent();
+        });
+        
+        // --- CRUD and Display Functions ---
+
+        function saveStudent() {
+            const name = document.getElementById('name').value.trim();
+            const dob = document.getElementById('dob').value;
+            const studentClassFullName = document.getElementById('class').value.trim();
+            const studentClassShortCode = mapFullNameToShortCode(studentClassFullName); 
+            const correction = document.getElementById('correction').value.trim();
+            const verified = document.querySelector('input[name="verified"]:checked').value;
+            
+            if (!name || !dob || !studentClassFullName) {
+                alert('Kripya sabhi mandatory fields (Name, DOB, Class) fill karein!');
+                return;
+            }
+            
+            if (!isValidDate(dob)) {
+                alert('Kripya sahi date format mein enter karein (DD/MM/YYYY) aur ek valid date ho।');
+                return;
+            }
+            
+            let currentSerialNumber;
+            if (editingIndex === -1) {
+                const schoolStudents = students.filter(s => s.udise === currentSchool.udise);
+                currentSerialNumber = schoolStudents.length + 1;
+            } else {
+                currentSerialNumber = students[editingIndex].serialNumber;
+            }
+
+            const student = {
+                serialNumber: currentSerialNumber,
+                name: name,
+                dob: dob,
+                class: studentClassShortCode, 
+                correction: correction,
+                verified: verified,
+                udise: currentSchool.udise,
+                schoolName: currentSchool.name
+            };
+            
+            if (editingIndex === -1) {
+                student.udise = currentSchool.udise;
+                student.schoolName = currentSchool.name;
+                students.push(student);
+            } else {
+                students[editingIndex] = student;
+                editingIndex = -1;
+            }
+            
+            saveData();
+            loadData();
+            
+            clearForm();
+            populateClassFilter(); 
+            displayRecords();
+            
+            document.getElementById('name').focus();
+            
+            alert('Entry safaltapoorvak save kar li gayi है! ✅');
+        }
+        
+        function clearForm() {
+            document.getElementById('studentForm').reset();
+            document.querySelector('input[name="verified"][value="Yes"]').checked = true;
+            editingIndex = -1;
+            updateSerialNumber();
+        }
+        
+        function displayRecords() {
+            const container = document.getElementById('tableContainer');
+            
+            let schoolStudents = students.filter(s => s.udise === currentSchool.udise);
+
+            if (currentClassFilter !== 'ALL') {
+                 schoolStudents = schoolStudents.filter(s => s.class === currentClassFilter);
+            }
+            
+            if (schoolStudents.length === 0) {
+                container.innerHTML = '<div class="no-data">Is school aur/ya class ke liye koi entry nahi hai।</div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr>';
+            html += '<th>S.No</th>';
+            html += '<th>Name</th>';
+            html += '<th>DOB</th>';
+            html += '<th>Class</th>';
+            html += '<th>Correction</th>';
+            html += '<th>Verified</th>';
+            html += '<th class="no-print">Actions</th>';
+            html += '</tr></thead><tbody>';
+            
+            schoolStudents.forEach((student) => {
+                const actualIndex = students.indexOf(student); 
+                html += '<tr>';
+                html += `<td>${student.serialNumber}</td>`; 
+                html += `<td>${student.name}</td>`;
+                html += `<td>${student.dob}</td>`; 
+                html += `<td>${mapShortCodeToFullName(student.class)}</td>`; 
+                html += `<td>${student.correction || '-'}</td>`;
+                html += `<td>${student.verified}</td>`;
+                html += `<td class="no-print"><div class="action-buttons">`;
+                html += `<button class="btn-edit" onclick="editStudent(${actualIndex})">✏️ Edit</button>`;
+                html += `<button class="btn-delete" onclick="deleteStudent(${actualIndex})">🗑️ Delete</button>`;
+                html += `</div></td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        function editStudent(index) {
+            editingIndex = index;
+            const student = students[index];
+            
+            document.getElementById('name').value = student.name;
+            document.getElementById('dob').value = student.dob;
+            document.getElementById('class').value = mapShortCodeToFullName(student.class); 
+            document.getElementById('correction').value = student.correction;
+            document.querySelector(`input[name="verified"][value="${student.verified}"]`).checked = true;
+            
+            updateSerialNumber();
+            document.getElementById('name').focus(); 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function deleteStudent(index) {
+            if (confirm('Kya aap is entry ko **hamesha ke liye** delete karna chahte hain?')) {
+                const deletedUdise = students[index].udise; 
+                students.splice(index, 1);
+                
+                const schoolStudents = students.filter(s => s.udise === deletedUdise);
+                schoolStudents.forEach((student, i) => {
+                    student.serialNumber = i + 1;
+                });
+                
+                saveData();
+                populateClassFilter(); 
+                displayRecords();
+                updateSerialNumber();
+                alert('Entry safaltapoorvak delete kar di gayi है। Serial numbers update ho gaye hain।');
+            }
+        }
+
+        // NEW: Function to delete all data
+        function deleteAllData() {
+            if (students.length === 0) {
+                alert('Koi data nahi hai delete karne ke liye!');
+                return;
+            }
+            
+            const count = students.length;
+            
+            const firstConfirmation = confirm(`WARNING!🚨\n\nKya aap sach mein **sabhi ${count} records** ko hamesha ke liye delete karna chahte hain?\n\nYeh action undo (undo) nahi ho sakta!`);
+            
+            if (firstConfirmation) {
+                const secondConfirmation = confirm('FINAL WARNING: Delete karne ke liye OK dabayein।');
+                
+                if (secondConfirmation) {
+                    students = []; // Empty the in-memory array
+                    localStorage.removeItem('studentData'); // Remove from local storage
+                    
+                    clearForm();
+                    populateClassFilter(); 
+                    displayRecords();
+                    updateSerialNumber();
+                    document.getElementById('name').focus();
+                    alert(`✅ Safaltapoorvak ${count} records delete kar diye gaye hain।`);
+                } else {
+                    alert('Deletion cancel kar diya gaya।');
+                }
+            } else {
+                alert('Deletion cancel kar diya gaya।');
+            }
+        }
+        
+        // --- Persistence Functions ---
+
+        function saveData() {
+            const data = JSON.stringify(students);
+            localStorage.setItem('studentData', data);
+        }
+        
+        function loadData() {
+            const data = localStorage.getItem('studentData');
+            if (data) {
+                students = JSON.parse(data);
+                
+                 const schools = [...new Set(students.map(s => s.udise))];
+                 schools.forEach(udise => {
+                     const schoolStudents = students.filter(s => s.udise === udise);
+                     schoolStudents.forEach((student, i) => {
+                         student.serialNumber = i + 1;
+                         if(student.class.length > 2) {
+                            student.class = mapFullNameToShortCode(student.class);
+                         }
+                     });
+                 });
+            }
+        }
+        
+        function exportData() {
+            if (students.length === 0) {
+                alert('Koi data nahi hai export karne ke liye!');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(students, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `student_data_UDISE_${currentSchool.udise}_${new Date().getTime()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert('Data safaltapoorvak export ho gaya है! ✅');
+        }
+        
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (!Array.isArray(importedData)) {
+                        alert('File format galat है! Data ek array nahi है।');
+                        return;
+                    }
+                    
+                    const confirmMsg = `Is file mein ${importedData.length} records hain।\n\nKya aap continue karna chahte hain?`;
+                    if (!confirm(confirmMsg)) {
+                        event.target.value = ''; 
+                        return;
+                    }
+                    
+                    const mergeData = confirm('Existing data ke saath **merge** karein (Add to existing)?\n\nOK = Merge\nCancel = Replace (Purana data delete ho jayega)');
+                    
+                    if (mergeData) {
+                        const existingCount = students.length;
+                        
+                        importedData.forEach(student => {
+                            if (!student.udise) {
+                                student.udise = currentSchool.udise;
+                                student.schoolName = currentSchool.name;
+                            }
+                            student.class = mapFullNameToShortCode(student.class); 
+                            students.push(student);
+                        });
+                        
+                        const schools = [...new Set(students.map(s => s.udise))];
+                        schools.forEach(udise => {
+                            const schoolStudents = students.filter(s => s.udise === udise);
+                            schoolStudents.forEach((student, i) => {
+                                student.serialNumber = i + 1;
+                            });
+                        });
+                        
+                        alert(`✅ Safaltapoorvak merge kiya gaya!\n\nPehle: ${existingCount} records\nImport kiye gaye: ${importedData.length} records\nTotal: ${students.length} records`);
+                    } else {
+                        students = importedData;
+                        
+                        const schools = [...new Set(students.map(s => s.udise))];
+                        schools.forEach(udise => {
+                            const schoolStudents = students.filter(s => s.udise === udise);
+                            schoolStudents.forEach((student, i) => {
+                                if (!student.udise) {
+                                    student.udise = udise;
+                                    student.schoolName = students.find(s => s.udise === udise)?.schoolName || 'Unknown School';
+                                }
+                                student.class = mapFullNameToShortCode(student.class); 
+                                student.serialNumber = i + 1;
+                            });
+                        });
+                        
+                        alert(`✅ Data safaltapoorvak replace kiya gaya!\n\nTotal records: ${students.length}`);
+                    }
+                    
+                    saveData();
+                    populateClassFilter(); 
+                    displayRecords();
+                    updateSerialNumber();
+                    document.getElementById('name').focus(); 
+                    
+                } catch (error) {
+                    alert('File import karne mein error! Invalid JSON format.\n\n' + error.message);
+                }
+                
+                event.target.value = '';
+            };
+            
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
