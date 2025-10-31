@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>Picture Maneger</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Load lucide-icons for icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar for professional look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* Darker track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* Gray thumb */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* Lighter hover */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        /* Canvas container for centering and background */
+        #canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1f2937;
+            border-radius: 0.5rem;
+            min-height: 50vh; 
+            max-height: 85vh; 
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            flex-grow: 1; 
+        }
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%; 
+            width: auto;
+            height: auto;
+            border-radius: 0.25rem;
+            transition: filter 0.3s ease-in-out, transform 0.3s ease-in-out;
+            cursor: default; 
+            object-fit: contain; 
+        }
+        /* Custom file input styling */
+        .file-input-label {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .file-input-label:hover {
+            background-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        /* Crop Overlay Styles */
+        #cropOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+        }
+        .crop-area {
+            position: absolute;
+            border: 2px dashed #FFF;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Darkens the surrounding area */
+            cursor: move;
+            pointer-events: auto; /* Enable interaction for the crop box */
+            box-sizing: border-box;
+            border-radius: 2px;
+        }
+        .nav-btn {
+            padding: 0.75rem;
+            background-color: rgba(31, 41, 55, 0.7); /* gray-800 with transparency */
+            color: white;
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+            backdrop-filter: blur(5px);
+            opacity: 0.9;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background-color: rgba(55, 65, 81, 0.9); /* gray-700 with transparency */
+            opacity: 1;
+        }
+        .nav-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="text-center mb-6">
+        <h1 class="text-4xl font-extrabold text-blue-400">SHIV Computer | Pro Image Lab</h1>
+        <p class="text-green-400 mt-2">इमेज एडिटर</p>
+    </header>
+
+    <!-- Main Editor Layout: Control Panel (Left) and Canvas (Right) -->
+    <div class="flex flex-col md:flex-row md:space-x-6 h-full md:min-h-[80vh]">
+
+        <!-- Left Column: Tabbed Control Panel (1/3 width on desktop) -->
+        <div id="tab-controls" class="bg-gray-800 p-6 rounded-xl shadow-2xl mb-6 md:mb-0 md:w-1/3 flex flex-col">
+            
+            <!-- UNDO / REDO Buttons -->
+            <div class="flex justify-start space-x-3 mb-6 pb-4 border-b border-gray-700">
+                <button id="undoBtn" onclick="undo()" disabled class="flex items-center space-x-1 px-4 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg transition duration-200 opacity-50 cursor-not-allowed">
+                    <i data-lucide="undo-2" class="w-5 h-5"></i>
+                    <span>Undo</span>
+                </button>
+                <button id="redoBtn" onclick="redo()" disabled class="flex items-center space-x-1 px-4 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg transition duration-200 opacity-50 cursor-not-allowed">
+                    <span>Redo</span>
+                    <i data-lucide="redo-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Tabs Navigation (This is the "menu" that should not change) -->
+            <div class="flex border-b border-gray-700 space-x-2 md:space-x-4 mb-4">
+                <button class="tab-btn py-2 px-3 md:px-6 text-sm font-medium transition duration-200 focus:outline-none" data-tab="resize">आकार बदलें</button>
+                <button class="tab-btn py-2 px-3 md:px-6 text-sm font-medium transition duration-200 focus:outline-none" data-tab="adjust">रंग/झुकाव</button>
+                <button class="tab-btn py-2 px-3 md:px-6 text-sm font-medium transition duration-200 focus:outline-none" data-tab="crop">क्रॉप करें</button>
+                <button class="tab-btn py-2 px-3 md:px-6 text-sm font-medium transition duration-200 focus:outline-none" data-tab="text">टेक्स्ट इन्सर्ट करें</button>
+                <button class="tab-btn py-2 px-3 md:px-6 text-sm font-medium transition duration-200 focus:outline-none" data-tab="export">निर्यात करें</button>
+            </div>
+
+            <!-- Tab Content (Scrollable) -->
+            <div id="tab-content" class="space-y-6 overflow-y-auto pr-2 flex-grow">
+                
+                <!-- Tab: Resize -->
+                <div id="tab-resize" class="tab-pane hidden space-y-5">
+                    <h3 class="text-xl font-medium text-gray-200">आकार बदलें (पिक्सेल)</h3>
+                    
+                    <!-- Aspect Ratio Lock Toggle -->
+                    <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                        <label for="aspectRatioLock" class="text-sm font-medium text-gray-200 cursor-pointer">आस्पेक्ट अनुपात लॉक करें</label>
+                        <input type="checkbox" id="aspectRatioLock" checked class="form-checkbox h-5 w-5 text-blue-500 rounded border-gray-600 bg-gray-600 focus:ring-blue-500" />
+                    </div>
+                    
+                    <!-- Width Control -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">चौड़ाई (Width) - px</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="widthInput" min="1" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateSize('width', this.value)" />
+                            <input type="range" id="widthSlider" min="1" max="4000" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer range-lg" oninput="updateSize('width', this.value)" />
+                        </div>
+                    </div>
+
+                    <!-- Height Control -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">ऊँचाई (Height) - px</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="heightInput" min="1" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateSize('height', this.value)" />
+                            <input type="range" id="heightSlider" min="1" max="4000" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="updateSize('height', this.value)" />
+                        </div>
+                    </div>
+                    
+                    <!-- Apply Resize Button -->
+                    <button onclick="saveState()" class="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-200 shadow-md mt-4">
+                        आकार लागू करें और सेव करें
+                    </button>
+                </div>
+
+                <!-- Tab: Adjustments / Bend Correction -->
+                <div id="tab-adjust" class="tab-pane hidden space-y-5">
+                    <h3 class="text-xl font-medium text-gray-200">रंग और झुकाव नियंत्रण</h3>
+
+                    <!-- Rotation Control (Bend Correction) -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">झुकाव/सीधा करें (<span id="rotationValue">0</span>°)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="rotationInput" min="-180" max="180" value="0" step="1" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateFilter('rotation', this.value)" />
+                            <input type="range" id="rotationSlider" min="-180" max="180" value="0" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="updateFilter('rotation', this.value)" />
+                        </div>
+                    </div>
+
+                    <!-- Brightness Control -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">चमक (Brightness) (<span id="brightnessValue">100</span>%)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="brightnessInput" min="0" max="200" value="100" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateFilter('brightness', this.value)" />
+                            <input type="range" id="brightnessSlider" min="0" max="200" value="100" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="updateFilter('brightness', this.value)" />
+                        </div>
+                    </div>
+
+                    <!-- Contrast Control -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">कंट्रास्ट (Contrast) (<span id="contrastValue">100</span>%)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="contrastInput" min="0" max="200" value="100" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateFilter('contrast', this.value)" />
+                            <input type="range" id="contrastSlider" min="0" max="200" value="100" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="updateFilter('contrast', this.value)" />
+                        </div>
+                    </div>
+
+                    <!-- Saturation/Color Control -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">रंग/सैचुरेशन (Saturation) (<span id="saturationValue">100</span>%)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="saturationInput" min="0" max="200" value="100" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateFilter('saturation', this.value)" />
+                            <input type="range" id="saturationSlider" min="0" max="200" value="100" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="updateFilter('saturation', this.value)" />
+                        </div>
+                    </div>
+                    
+                    <!-- Apply Filters Button -->
+                    <button onclick="applyRotationAndFilters()" class="w-full py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition duration-200 shadow-md">
+                        फिल्टर और रोटेशन लागू करें
+                    </button>
+
+                    <button onclick="resetFilters()" class="w-full py-2 bg-gray-600 text-gray-200 font-semibold rounded-lg hover:bg-gray-700 transition duration-200">फ़िल्टर रीसेट करें</button>
+                </div>
+
+                <!-- Tab: Crop -->
+                <div id="tab-crop" class="tab-pane hidden space-y-5">
+                    <h3 class="text-xl font-medium text-gray-200">क्रॉप करें (Click & Drag Crop)</h3>
+                    <p class="text-sm text-gray-400">
+                        नीचे इमेज पर क्लिक करें और उस क्षेत्र को खींचें जिसे आप क्रॉप करना चाहते हैं।
+                        क्रॉप क्षेत्र का चयन करने के बाद `क्रॉप लागू करें` बटन दबाएँ।
+                    </p>
+                    <div id="crop-info" class="text-sm text-gray-300 font-mono bg-gray-700 p-3 rounded-md">
+                        <p>क्रॉप चयन: <span id="cropSelection">0 x 0 px</span></p>
+                        <p>स्थिति: (X: <span id="cropX">0</span>, Y: <span id="cropY">0</span>)</p>
+                    </div>
+                    <button onclick="applyCrop()" class="w-full py-3 bg-yellow-500 text-gray-900 font-bold rounded-lg hover:bg-yellow-600 transition duration-200 shadow-md">
+                        क्रॉप लागू करें
+                    </button>
+                </div>
+
+                <!-- Tab: Insert Text (NEW) -->
+                <div id="tab-text" class="tab-pane hidden space-y-5">
+                    <h3 class="text-xl font-medium text-gray-200">टेक्स्ट इन्सर्ट करें</h3>
+                    <p class="text-sm text-gray-400">
+                        टेक्स्ट जोड़ने के लिए सेटिंग्स कॉन्फ़िगर करें, फिर इमेज पर क्लिक करें जहाँ आप टेक्स्ट लगाना चाहते हैं।
+                    </p>
+
+                    <!-- Text Input -->
+                    <div class="space-y-2">
+                        <label for="textInput" class="block text-sm font-medium text-gray-400">टेक्स्ट:</label>
+                        <textarea id="textInput" rows="2" placeholder="यहां टेक्स्ट लिखें..." class="w-full bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+
+                    <!-- Font Size Control -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">फ़ॉन्ट साइज़ (<span id="fontSizeValue">36</span> px)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="fontSizeInput" min="10" max="200" value="36" step="1" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="document.getElementById('fontSizeSlider').value=this.value; document.getElementById('fontSizeValue').textContent=this.value;" />
+                            <input type="range" id="fontSizeSlider" min="10" max="200" value="36" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="document.getElementById('fontSizeInput').value=this.value; document.getElementById('fontSizeValue').textContent=this.value;" />
+                        </div>
+                    </div>
+
+                    <!-- Text Color Control -->
+                    <div class="space-y-2">
+                        <label for="textColorInput" class="block text-sm font-medium text-gray-400">टेक्स्ट का रंग</label>
+                        <div class="flex items-center space-x-3">
+                            <input type="color" id="textColorInput" value="#FFFFFF" class="w-10 h-10 p-1 bg-gray-700 border-gray-600 rounded-lg cursor-pointer" />
+                            <select id="fontFamilyInput" class="flex-grow bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="sans-serif">Sans-serif (Inter)</option>
+                                <option value="serif">Serif (Times New Roman)</option>
+                                <option value="monospace">Monospace (Code)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="addTextBtn" onclick="prepareTextInsertion()" class="w-full py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-200 shadow-md mt-4">
+                        टेक्स्ट जोड़ने के लिए तैयार करें
+                    </button>
+
+                    <button id="finalizeTextBtn" onclick="finalizeTextInsertion()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-200 shadow-md mt-4 hidden" disabled>
+                        टेक्स्ट इन्सर्ट करें और सेव करें
+                    </button>
+                </div>
+                <!-- End Tab: Insert Text -->
+
+                <!-- Tab: Export -->
+                <div id="tab-export" class="tab-pane hidden space-y-5">
+                    <h3 class="text-xl font-medium text-gray-200">निर्यात विकल्प और KB नियंत्रण</h3>
+                    
+                    <!-- KB Target Control (Previous Feature) -->
+                    <div class="space-y-2 pt-4 border-t border-gray-700">
+                        <label class="block text-sm font-medium text-red-400">KB लक्ष्य (Target KB)</label>
+                        <p class="text-xs text-red-500 font-semibold mb-2">वह साइज़ दर्ज करें जिस तक आप कंप्रेस करना चाहते हैं (उदाहरण: 50)</p>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="targetKbInput" min="1" max="10000" placeholder="e.g. 50" class="w-24 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-red-500 focus:border-red-500" />
+                            <span class="text-gray-400 font-medium">KB</span>
+                        </div>
+                        <button onclick="compressToTargetKb()" class="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-200 shadow-md mt-3">
+                            KB लक्ष्य तक कंप्रेस करें
+                        </button>
+                    </div>
+                    
+                    <!-- Separator -->
+                    <div class="border-t border-gray-700 my-4"></div>
+
+                    <!-- JPEG Quality Control (Primary KB/Size Controller) -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-400">JPEG गुणवत्ता (Quality) - (<span id="jpegQualityValue">90</span>%)</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="number" id="jpegQualityInput" min="1" max="100" value="90" class="w-20 bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:ring-blue-500 focus:border-blue-500" oninput="updateJPEGQuality(this.value)" />
+                            <input type="range" id="jpegQualitySlider" min="1" max="100" value="90" step="1" class="flex-grow h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" oninput="updateJPEGQuality(this.value)" />
+                        </div>
+                    </div>
+
+                    <!-- Export Buttons -->
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4">
+                        <button onclick="exportImage('image/jpeg', 'jpg')" class="export-btn bg-green-500 hover:bg-green-600">JPG सेव करें</button>
+                        <button onclick="exportImage('image/png', 'png')" class="export-btn bg-purple-500 hover:bg-purple-600">PNG सेव करें</button>
+                        <button onclick="exportPDF()" class="export-btn bg-red-500 hover:bg-red-600 col-span-2">PDF सेव करें</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload Button (Fixed at the bottom of the left panel) -->
+            <div class="mt-auto pt-6 border-t border-gray-700">
+                <p class="text-xs text-gray-500 mb-2">नेविगेट करने के लिए, कृपया एक फ़ोल्डर की सभी इमेजेज़ एक साथ चुनें।</p>
+                <!-- NOTE: 'multiple' is added here to enable folder browsing simulation -->
+                <label for="fileInput" class="file-input-label w-full flex items-center justify-center px-4 py-3 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition duration-200">
+                    इमेज अपलोड करें (बहु-चयन सक्षम)
+                </label>
+                <input type="file" id="fileInput" accept="image/*" class="hidden" multiple onchange="handleImageUpload(event)">
+            </div>
+        </div>
+
+        <!-- Right Column: Canvas Preview Area and Status (2/3 width on desktop) -->
+        <div class="md:w-2/3 flex flex-col space-y-4">
+            
+            <!-- Canvas Preview Area with Navigation Buttons (New) -->
+            <div id="canvas-container" class="w-full relative flex-grow">
+                
+                <!-- Previous Button -->
+                <button 
+                    id="prevBtn" 
+                    onclick="prevImageInFolder()" 
+                    disabled 
+                    class="nav-btn absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-3 md:p-4"
+                    aria-label="पिछली इमेज">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+
+                <p id="placeholder-text" class="text-gray-400 absolute inset-0 flex items-center justify-center text-xl pointer-events-none">
+                    एडिटिंग शुरू करने के लिए एक इमेज अपलोड करें।
+                </p>
+                <!-- Canvas is where the magic happens -->
+                <canvas id="imageCanvas" class="max-w-full" style="display: none;"></canvas>
+                <!-- Crop Overlay -->
+                <div id="cropOverlay"></div>
+
+                <!-- Next Button -->
+                <button 
+                    id="nextBtn" 
+                    onclick="nextImageInFolder()" 
+                    disabled 
+                    class="nav-btn absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-3 md:p-4"
+                    aria-label="अगली इमेज">
+                    <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Image Metadata / Status -->
+            <div id="metadata-bar" class="bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center text-sm" style="display: none;">
+                <div class="mb-2 md:mb-0">
+                    <span class="font-medium text-gray-400">वर्तमान फ़ाइल:</span> 
+                    <span id="currentFileIndexDisplay" class="text-blue-300">N/A</span>
+                </div>
+                <div class="mb-2 md:mb-0">
+                    <span class="font-medium text-gray-400">मूल साइज़:</span> 
+                    <span id="originalSize" class="text-blue-300">N/A</span>
+                </div>
+                <div class="mb-2 md:mb-0">
+                    <span class="font-medium text-gray-400">वर्तमान आयाम:</span> 
+                    <span id="currentDimensions" class="text-blue-300">N/A</span>
+                </div>
+                <div>
+                    <span class="font-medium text-gray-400">निर्यात KB/MB:</span> 
+                    <span id="exportSize" class="text-blue-300">गणना हो रही है...</span>
+                    <button onclick="calculateExportSize()" class="ml-2 px-2 py-1 bg-gray-700 text-xs rounded-full hover:bg-gray-600 transition duration-200">KB दोबारा गणना करें</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom Modal for Notifications -->
+    <div id="notification-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl max-w-sm w-full text-center space-y-4 border-t-4 border-blue-500">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-100">Notification</h3>
+            <p id="modal-message" class="text-gray-300"></p>
+            <button onclick="hideNotification()" class="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-200">OK</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Imports and Initialization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- MANDATORY FIREBASE SETUP ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+
+        if (firebaseConfig) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug'); // Enable logging
+
+                const authenticate = async () => {
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        console.log("Firebase Auth successful. User ID:", auth.currentUser.uid);
+                    } catch (error) {
+                        console.error("Firebase Auth failed:", error);
+                    }
+                };
+                authenticate();
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
+        // --- END FIREBASE SETUP ---
+    </script>
+
+    <script>
+        // Global state variables
+        let originalImage = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
+        const canvas = document.getElementById('imageCanvas');
+        const ctx = canvas.getContext('2d');
+        const cropOverlay = document.getElementById('cropOverlay');
+        const canvasContainer = document.getElementById('canvas-container');
+        
+        // --- UPDATED GLOBAL STATE FOR FOLDER BROWSING ---
+        let selectedFiles = []; // Array of File objects selected by the user
+        let currentFileIndex = -1; // Index of the currently loaded file
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        // --- END NEW STATE ---
+
+        // --- HISTORY STATE ---
+        let history = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 20; // Limit history size
+        // --- END HISTORY STATE ---
+
+        // Filter state (100% is neutral)
+        let filters = {
+            brightness: 100,
+            contrast: 100,
+            saturation: 100,
+            rotation: 0, // Rotation angle in degrees
+            jpegQuality: 90
+        };
+
+        // Crop state
+        let cropState = {
+            isCropping: false,
+            startX: 0,
+            startY: 0,
+            currentX: 0,
+            currentY: 0,
+            cropBox: null // Reference to the crop div element
+        };
+
+        // --- Text state (NEW) ---
+        let isTextMode = false;
+        let textToDraw = {
+            x: null, // null means not placed yet
+            y: null,
+            text: '',
+            size: 36,
+            color: '#FFFFFF',
+            font: 'sans-serif'
+        };
+        // --- End Text state ---
+        
+        let aspectRatio = 1;
+        let currentTab = 'resize';
+
+        // --- History Management Functions ---
+
+        /** Updates the disabled state of the Undo/Redo buttons. */
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+
+            const canUndo = historyIndex > 0;
+            const canRedo = historyIndex < history.length - 1;
+
+            undoBtn.disabled = !canUndo;
+            redoBtn.disabled = !canRedo;
+
+            if (!canUndo) {
+                undoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                undoBtn.classList.remove('hover:bg-gray-600');
+            } else {
+                undoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                undoBtn.classList.add('hover:bg-gray-600');
+            }
+
+            if (!canRedo) {
+                redoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                redoBtn.classList.remove('hover:bg-gray-600');
+            } else {
+                redoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                redoBtn.classList.add('hover:bg-gray-600');
+            }
+
+            // Re-render lucide icons after DOM manipulation (Tailwind)
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        /** Saves the current canvas pixels and filter settings to history. */
+        function saveState() {
+            if (!originalImage) return;
+
+            // Clear any future redo steps if a new action is performed
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+
+            // Use 'image/png' for lossless pixel data storage in Data URL
+            const currentState = {
+                dataURL: canvas.toDataURL('image/png'), 
+                filters: JSON.parse(JSON.stringify(filters)), // Deep copy of filters state
+                width: canvas.width,
+                height: canvas.height,
+            };
+
+            history.push(currentState);
+            historyIndex++;
+
+            // Enforce max history limit
+            if (history.length > MAX_HISTORY) {
+                history.shift();
+                historyIndex--;
+            }
+
+            updateUndoRedoButtons();
+            showNotification("स्थिति सेव्ड", "वर्तमान स्थिति हिस्ट्री में सेव कर दी गई है।", 1500);
+        }
+
+        /** Loads a specific state from history onto the canvas. */
+        function loadState(state) {
+            // 1. Load canvas pixels (which includes resize/crop/baked filters)
+            const img = new Image();
+            img.onload = function() {
+                canvas.width = state.width;
+                canvas.height = state.height;
+                ctx.clearRect(0, 0, state.width, state.height);
+                // Draw image to fill the new canvas dimensions
+                ctx.drawImage(img, 0, 0, state.width, state.height); 
+
+                // 2. Load filters (for non-destructive color adjustments) and update UI
+                filters = JSON.parse(JSON.stringify(state.filters));
+                updateFilterUI(); 
+                applyFiltersToCanvas(); 
+
+                // 3. Update resizing inputs
+                document.getElementById('widthInput').value = state.width;
+                document.getElementById('widthSlider').value = state.width;
+                document.getElementById('heightInput').value = state.height;
+                document.getElementById('heightSlider').value = state.height;
+                
+                aspectRatio = state.width / state.height;
+                
+                // Update metadata bar manually since applyFiltersToCanvas might not run immediately
+                document.getElementById('currentDimensions').textContent = `${state.width} x ${state.height} px`;
+            };
+            img.src = state.dataURL;
+        }
+
+        /** Undoes the last operation. */
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                loadState(history[historyIndex]);
+                updateUndoRedoButtons();
+                showNotification("Undo सफल", "पिछला बदलाव वापस लिया गया।", 1500);
+            }
+        }
+
+        /** Redoes the previously undone operation. */
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                loadState(history[historyIndex]);
+                updateUndoRedoButtons();
+                showNotification("Redo सफल", "बदलाव को फिर से लागू किया गया।", 1500);
+            }
+        }
+
+        /** Helper to sync filter values to UI elements */
+        function updateFilterUI() {
+            ['brightness', 'contrast', 'saturation', 'rotation'].forEach(name => {
+                const value = filters[name];
+                if (document.getElementById(`${name}Input`)) {
+                    document.getElementById(`${name}Input`).value = value;
+                    document.getElementById(`${name}Slider`).value = value;
+                    document.getElementById(`${name}Value`).textContent = value;
+                }
+            });
+            // Also sync JPEG quality UI
+            updateJPEGQuality(filters.jpegQuality, false);
+        }
+
+        // --- Tab Control Logic ---
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        // Set initial tab styling
+        function setInitialTab() {
+            if (tabButtons.length > 0) {
+                switchTab(tabButtons[0].dataset.tab);
+            }
+            updateUndoRedoButtons(); // Initialize button states
+        }
+
+        /** Handles tab switching */
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            // 1. Update button styling
+            tabButtons.forEach(btn => {
+                if (btn.dataset.tab === tabName) {
+                    btn.classList.add('text-blue-400', 'border-blue-400', 'bg-gray-700', 'rounded-t-lg');
+                    btn.classList.remove('text-gray-400', 'border-transparent');
+                } else {
+                    btn.classList.add('text-gray-400', 'border-transparent');
+                    btn.classList.remove('text-blue-400', 'border-blue-400', 'bg-gray-700', 'rounded-t-lg');
+                }
+            });
+
+            // 2. Update panel visibility
+            tabPanes.forEach(pane => {
+                pane.style.display = pane.id === `tab-${tabName}` ? 'block' : 'none';
+            });
+            
+            // 3. Handle Crop Mode (Enable/Disable crop interaction)
+            if (tabName === 'crop' && originalImage) {
+                enableCropMode();
+            } else {
+                disableCropMode();
+            }
+            
+            // 4. Handle Text Mode (Disable/Enable interaction)
+            if (tabName !== 'text' && isTextMode) {
+                // Exit text mode if changing tabs
+                isTextMode = false;
+                canvas.removeEventListener('click', handleCanvasClickForText);
+                
+                // Reset UI elements on the text tab
+                if (document.getElementById('addTextBtn')) document.getElementById('addTextBtn').disabled = false;
+                if (document.getElementById('finalizeTextBtn')) {
+                    document.getElementById('finalizeTextBtn').classList.add('hidden');
+                    document.getElementById('finalizeTextBtn').disabled = true;
+                }
+                
+                // Reload last state to clear temporary text preview
+                if (history.length > 0) {
+                    loadState(history[historyIndex]);
+                }
+            }
+
+            // 5. Update canvas cursor
+            canvas.style.cursor = 
+                tabName === 'crop' && originalImage ? 'crosshair' : 
+                (tabName === 'text' && isTextMode) ? 'copy' : 
+                'default';
+        }
+
+        // Attach event listeners to tab buttons
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchTab(btn.dataset.tab);
+            });
+        });
+
+        // --- Utility Functions ---
+
+        /** Shows a custom notification modal. */
+        let notificationTimeout;
+        function showNotification(title, message, duration = 2000) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('notification-modal').style.display = 'flex';
+            
+            clearTimeout(notificationTimeout);
+            if (duration > 0) {
+                notificationTimeout = setTimeout(hideNotification, duration);
+            }
+        }
+
+        /** Hides the custom notification modal. */
+        function hideNotification() {
+            document.getElementById('notification-modal').style.display = 'none';
+        }
+
+        /** Formats bytes to KB/MB */
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        /** Converts bytes to KB (integer) */
+        function bytesToKb(bytes) {
+            return Math.round(bytes / 1024);
+        }
+
+        // --- Core Image Handling & FOLDER BROWSING ---
+
+        /** Updates the canvas filter style based on current state (CSS Visual Change) */
+        function applyFiltersToCanvas() {
+            // Apply color filters
+            canvas.style.filter = `
+                brightness(${filters.brightness}%) 
+                contrast(${filters.contrast}%) 
+                saturate(${filters.saturation}%)
+            `;
+            // Apply rotation via CSS transform (for visual display only)
+            canvas.style.transform = `rotate(${filters.rotation}deg)`;
+            
+            document.getElementById('currentDimensions').textContent = `${canvas.width} x ${canvas.height} px`;
+            // Recalculate size after any significant change (resizing or filter change)
+            calculateExportSize();
+        }
+
+        /** Core function to load a File object onto the canvas */
+        function loadImageFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showNotification("फ़ाइल त्रुटि", "अमान्य इमेज फ़ाइल।");
+                return;
+            }
+
+            // Update original file size
+            document.getElementById('originalSize').textContent = formatBytes(file.size);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    originalWidth = img.naturalWidth;
+                    originalHeight = img.naturalHeight;
+                    
+                    // 1. Reset state for the new image
+                    aspectRatio = originalWidth / originalHeight;
+                    canvas.width = originalWidth;
+                    canvas.height = originalHeight;
+                    ctx.drawImage(originalImage, 0, 0, originalWidth, originalHeight);
+
+                    // 2. Update UI elements visibility
+                    document.getElementById('placeholder-text').style.display = 'none';
+                    canvas.style.display = 'block';
+                    document.getElementById('metadata-bar').style.display = 'flex';
+                    
+                    // 3. Initialize controls
+                    document.getElementById('widthInput').value = originalWidth;
+                    document.getElementById('widthSlider').value = originalWidth;
+                    document.getElementById('widthSlider').max = originalWidth * 2; 
+                    document.getElementById('heightInput').value = originalHeight;
+                    document.getElementById('heightSlider').value = originalHeight;
+                    document.getElementById('heightSlider').max = originalHeight * 2;
+                    
+                    // 4. Reset filters and history for the NEW image
+                    resetFilters(false);
+                    history = [];
+                    historyIndex = -1;
+                    
+                    // 5. Save initial state to history
+                    saveState(); 
+
+                    // 6. Update Folder/File Status
+                    updateNavigationUI();
+                    showNotification("इमेज लोड हुई", `फ़ाइल ${file.name} सफलतापूर्वक लोड हुई।`, 1500);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /** Handles file selection (multiple files expected) */
+        function handleImageUpload(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            // Filter out non-image files and convert FileList to Array
+            selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/')).sort((a, b) => a.name.localeCompare(b.name));
+
+            if (selectedFiles.length === 0) {
+                showNotification("फ़ाइल त्रुटि", "कोई इमेज फ़ाइल नहीं मिली। कृपया इमेज चुनें।");
+                return;
+            }
+
+            currentFileIndex = 0;
+            
+            // Load the first image
+            loadImageFile(selectedFiles[currentFileIndex]);
+        }
+        
+        /** Updates the display of navigation buttons and file count */
+        function updateNavigationUI() {
+            const count = selectedFiles.length;
+            const index = currentFileIndex;
+            
+            if (count > 0) {
+                document.getElementById('currentFileIndexDisplay').textContent = `${index + 1} / ${count} (${selectedFiles[index].name})`;
+            } else {
+                document.getElementById('currentFileIndexDisplay').textContent = 'N/A';
+            }
+            
+            // Enable/Disable navigation buttons
+            prevBtn.disabled = !(count > 1 && index > 0);
+            nextBtn.disabled = !(count > 1 && index < count - 1);
+            
+            // Re-render lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+        
+        /** Loads the next image in the selected batch */
+        function nextImageInFolder() {
+            if (currentFileIndex < selectedFiles.length - 1) {
+                currentFileIndex++;
+                loadImageFile(selectedFiles[currentFileIndex]);
+            }
+        }
+
+        /** Loads the previous image in the selected batch */
+        function prevImageInFolder() {
+            if (currentFileIndex > 0) {
+                currentFileIndex--;
+                loadImageFile(selectedFiles[currentFileIndex]);
+            }
+        }
+
+        // --- Resizing Logic (RESTORED) ---
+
+        /** Updates the canvas size and linked inputs */
+        function updateSize(dimension, value) {
+            value = parseInt(value, 10);
+            if (!originalImage || value < 1) return;
+
+            let newWidth = canvas.width;
+            let newHeight = canvas.height;
+            
+            const lockAspectRatio = document.getElementById('aspectRatioLock').checked;
+
+            if (dimension === 'width') {
+                newWidth = value;
+                if (lockAspectRatio) {
+                    newHeight = Math.round(value / aspectRatio);
+                } else {
+                    newHeight = canvas.height;
+                }
+            } else if (dimension === 'height') {
+                newHeight = value;
+                if (lockAspectRatio) {
+                    newWidth = Math.round(value * aspectRatio);
+                } else {
+                    newWidth = canvas.width;
+                }
+            }
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            tempCanvas.getContext('2d').putImageData(imageData, 0, 0);
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
+
+            document.getElementById('widthInput').value = newWidth;
+            document.getElementById('widthSlider').value = newWidth;
+            document.getElementById('heightInput').value = newHeight;
+            document.getElementById('heightSlider').value = newHeight;
+            
+            document.getElementById('currentDimensions').textContent = `${newWidth} x ${newHeight} px`;
+            calculateExportSize();
+        }
+        
+        // --- Cropping Logic (RESTORED) ---
+        let cropRect = { x: 0, y: 0, w: 0, h: 0 };
+
+        function enableCropMode() {
+            if (!originalImage) return;
+
+            cropOverlay.style.pointerEvents = 'auto'; 
+            
+            if (cropState.cropBox) {
+                cropOverlay.removeChild(cropState.cropBox);
+                cropState.cropBox = null;
+            }
+            cropRect = { x: 0, y: 0, w: 0, h: 0 };
+
+            cropOverlay.addEventListener('mousedown', startCrop);
+        }
+
+        function disableCropMode() {
+            cropOverlay.style.pointerEvents = 'none'; 
+            cropOverlay.removeEventListener('mousedown', startCrop);
+            document.removeEventListener('mousemove', moveCrop);
+            document.removeEventListener('mouseup', endCrop);
+            
+            if (cropState.cropBox) {
+                cropOverlay.removeChild(cropState.cropBox);
+                cropState.cropBox = null;
+            }
+            cropRect = { x: 0, y: 0, w: 0, h: 0 };
+        }
+        
+        function getCanvasCoords(clientX, clientY) {
+            const containerRect = canvasContainer.getBoundingClientRect();
+            const canvasNaturalRatio = canvas.width / canvas.height;
+            const containerRatio = containerRect.width / containerRect.height;
+
+            let drawnWidth, drawnHeight, offsetX, offsetY;
+
+            if (canvasNaturalRatio > containerRatio) {
+                drawnWidth = containerRect.width;
+                drawnHeight = drawnWidth / canvasNaturalRatio;
+                offsetX = 0;
+                offsetY = (containerRect.height - drawnHeight) / 2;
+            } else {
+                drawnHeight = containerRect.height;
+                drawnWidth = drawnHeight * canvasNaturalRatio;
+                offsetY = 0;
+                offsetX = (containerRect.width - drawnWidth) / 2;
+            }
+            
+            const x_relative = clientX - containerRect.left - offsetX;
+            const y_relative = clientY - containerRect.top - offsetY;
+
+            const scaleX = canvas.width / drawnWidth;
+            const scaleY = canvas.height / drawnHeight;
+            
+            const x = Math.round(x_relative * scaleX);
+            const y = Math.round(y_relative * scaleY);
+
+            return {
+                x: Math.min(canvas.width, Math.max(0, x)),
+                y: Math.min(canvas.height, Math.max(0, y))
+            };
+        }
+        
+        function startCrop(e) {
+            if (!originalImage || e.button !== 0) return;
+
+            if (cropState.cropBox) {
+                cropOverlay.removeChild(cropState.cropBox);
+            }
+            
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            cropState.startX = coords.x;
+            cropState.startY = coords.y;
+            cropState.isCropping = true;
+
+            const cropBox = document.createElement('div');
+            cropBox.className = 'crop-area';
+            cropOverlay.appendChild(cropBox);
+            cropState.cropBox = cropBox;
+            
+            document.addEventListener('mousemove', moveCrop);
+            document.addEventListener('mouseup', endCrop);
+        }
+
+        function moveCrop(e) {
+            if (!cropState.isCropping) return;
+
+            const containerRect = canvasContainer.getBoundingClientRect();
+            const coords = getCanvasCoords(e.clientX, e.clientY);
+            cropState.currentX = coords.x;
+            cropState.currentY = coords.y;
+
+            let x = Math.min(cropState.startX, cropState.currentX);
+            let y = Math.min(cropState.startY, cropState.currentY);
+            let w = Math.abs(cropState.startX - cropState.currentX);
+            let h = Math.abs(cropState.startY - cropState.currentY);
+            
+            cropRect = { x, y, w, h };
+            
+            document.getElementById('cropSelection').textContent = `${w} x ${h} px`;
+            document.getElementById('cropX').textContent = x;
+            document.getElementById('cropY').textContent = y;
+            
+            const canvasNaturalRatio = canvas.width / canvas.height;
+            const containerRatio = containerRect.width / containerRect.height;
+
+            let drawnWidth, drawnHeight, offsetX, offsetY;
+
+            if (canvasNaturalRatio > containerRatio) {
+                drawnWidth = containerRect.width;
+                drawnHeight = drawnWidth / canvasNaturalRatio;
+                offsetX = 0;
+                offsetY = (containerRect.height - drawnHeight) / 2;
+            } else {
+                drawnHeight = containerRect.height;
+                drawnWidth = drawnHeight * canvasNaturalRatio;
+                offsetY = 0;
+                offsetX = (containerRect.width - drawnWidth) / 2;
+            }
+
+            const displayScaleX = drawnWidth / canvas.width;
+            const displayScaleY = drawnHeight / canvas.height;
+
+            const displayX = x * displayScaleX + offsetX;
+            const displayY = y * displayScaleY + offsetY;
+            const displayW = w * displayScaleX;
+            const displayH = h * displayScaleY;
+
+            if (cropState.cropBox) {
+                cropState.cropBox.style.left = `${displayX}px`;
+                cropState.cropBox.style.top = `${displayY}px`;
+                cropState.cropBox.style.width = `${displayW}px`;
+                cropState.cropBox.style.height = `${displayH}px`;
+            }
+
+        }
+
+        function endCrop() {
+            cropState.isCropping = false;
+            document.removeEventListener('mousemove', moveCrop);
+            document.removeEventListener('mouseup', endCrop);
+            
+            if (cropRect.w <= 0 || cropRect.h <= 0) {
+                if (cropState.cropBox) {
+                    cropOverlay.removeChild(cropState.cropBox);
+                    cropState.cropBox = null;
+                }
+                cropRect = { x: 0, y: 0, w: 0, h: 0 };
+            }
+        }
+
+        function applyCrop() {
+            if (!originalImage) {
+                showNotification("क्रॉप त्रुटि", "पहले एक इमेज अपलोड करें।");
+                return;
+            }
+            
+            const { x, y, w, h } = cropRect;
+
+            if (w <= 0 || h <= 0) {
+                showNotification("अमान्य क्रॉप", "कृपया क्रॉप करने के लिए एक क्षेत्र खींचें और चयन करें।");
+                return;
+            }
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.drawImage(canvas, 0, 0); 
+            
+            canvas.width = w;
+            canvas.height = h;
+
+            ctx.clearRect(0, 0, w, h);
+            
+            ctx.drawImage(tempCanvas, 
+                x, y, 
+                w, h, 
+                0, 0, 
+                w, h 
+            );
+
+            aspectRatio = w / h;
+            
+            document.getElementById('widthInput').value = w;
+            document.getElementById('widthSlider').value = w;
+            document.getElementById('heightInput').value = h;
+            document.getElementById('heightSlider').value = h;
+
+            disableCropMode();
+            
+            applyFiltersToCanvas();
+            showNotification("क्रॉप लागू", `इमेज को सफलतापूर्वक ${w} x ${h}px पर क्रॉप कर दिया गया है।`);
+            
+            saveState();
+
+            switchTab('resize');
+        }
+        // --- End Cropping Logic ---
+
+        // --- Text Insertion Logic (NEW) ---
+
+        /** Prepares the app to accept a canvas click for text placement */
+        function prepareTextInsertion() {
+            if (!originalImage) {
+                showNotification("त्रुटि", "पहले एक इमेज अपलोड करें।");
+                return;
+            }
+
+            const textInput = document.getElementById('textInput').value.trim();
+            if (textInput === "") {
+                showNotification("त्रुटि", "कृपया इन्सर्ट करने के लिए टेक्स्ट दर्ज करें।");
+                return;
+            }
+
+            isTextMode = true;
+            textToDraw.text = textInput;
+            textToDraw.size = parseInt(document.getElementById('fontSizeInput').value, 10);
+            textToDraw.color = document.getElementById('textColorInput').value;
+            textToDraw.font = document.getElementById('fontFamilyInput').value;
+            textToDraw.x = null; // Reset position
+            textToDraw.y = null;
+
+            canvas.style.cursor = 'copy'; // Visual cue
+            canvas.addEventListener('click', handleCanvasClickForText, { once: true });
+            
+            document.getElementById('addTextBtn').disabled = true;
+            document.getElementById('finalizeTextBtn').classList.remove('hidden');
+            document.getElementById('finalizeTextBtn').disabled = true;
+
+            showNotification("टेक्स्ट मोड सक्रिय", "टेक्स्ट की स्थिति निर्धारित करने के लिए इमेज पर कहीं भी क्लिक करें।");
+        }
+
+
+        /** Handles the canvas click event to set text position */
+        function handleCanvasClickForText(e) {
+            if (!isTextMode) return;
+            
+            // Get mouse position relative to canvas container
+            const rect = canvas.getBoundingClientRect();
+            const x_offset = e.clientX - rect.left;
+            const y_offset = e.clientY - rect.top;
+
+            // Scale coordinates to actual canvas resolution
+            textToDraw.x = Math.round(x_offset * (canvas.width / rect.width));
+            textToDraw.y = Math.round(y_offset * (canvas.height / rect.height));
+
+            // Draw the text (temporarily) to show placement and enable finalization
+            drawTextOnCanvas(false); 
+            
+            document.getElementById('finalizeTextBtn').disabled = false;
+            canvas.style.cursor = 'default';
+            
+            showNotification("टेक्स्ट स्थिति सेट", `टेक्स्ट (${textToDraw.text.substring(0, 20)}...) की स्थिति सेट कर दी गई है। इन्सर्ट करने के लिए 'टेक्स्ट इन्सर्ट करें और सेव करें' पर क्लिक करें।`, 4000);
+        }
+
+        /** Draws the text onto the canvas (either for preview or finalization) */
+        function drawTextOnCanvas(isFinalizing = false) {
+            if (!originalImage || textToDraw.x === null) return;
+            
+            // 1. Revert to the last saved history state (to clear temporary text/drawing)
+            if (!isFinalizing && history.length > 0) {
+                // loadState reloads the last pixel state
+                loadState(history[historyIndex]); 
+            }
+            
+            // Wait for the image reload from loadState to complete before drawing text
+            setTimeout(() => {
+                // --- TEXT DRAWING LOGIC ---
+                ctx.font = `${textToDraw.size}px ${textToDraw.font}`;
+                ctx.fillStyle = textToDraw.color;
+                ctx.textAlign = 'center'; // Center alignment for easier placement
+                ctx.textBaseline = 'top'; // Start drawing from the top of the line
+
+                // Support multiline text by splitting on newlines
+                const lines = textToDraw.text.split('\n');
+                const lineHeight = textToDraw.size * 1.2; // 120% line height for spacing
+
+                lines.forEach((line, index) => {
+                    ctx.fillText(
+                        line, 
+                        textToDraw.x, 
+                        textToDraw.y + index * lineHeight
+                    );
+                });
+                // --- END TEXT DRAWING LOGIC ---
+
+                // If this is the final draw, save the state.
+                if (isFinalizing) {
+                    saveState(); 
+                }
+
+            }, 50); // Small delay to ensure image reload is complete
+        }
+
+        /** Finalizes the text insertion and saves the new state */
+        function finalizeTextInsertion() {
+            if (!isTextMode || textToDraw.x === null) {
+                showNotification("त्रुटि", "कृपया पहले टेक्स्ट दर्ज करें और इमेज पर क्लिक करके उसकी स्थिति निर्धारित करें।");
+                return;
+            }
+            
+            drawTextOnCanvas(true); // Final draw and save
+            
+            // Reset text mode state
+            isTextMode = false;
+            textToDraw.x = null;
+            textToDraw.y = null;
+            document.getElementById('addTextBtn').disabled = false;
+            document.getElementById('finalizeTextBtn').classList.add('hidden');
+            document.getElementById('finalizeTextBtn').disabled = true;
+            
+            showNotification("टेक्स्ट सेव्ड", "टेक्स्ट इमेज पर सफलतापूर्वक इन्सर्ट हो गया है और हिस्ट्री में सेव हो गया है।");
+
+            switchTab('text'); // Stay on the text tab for convenience
+        }
+        // --- End Text Insertion Logic ---
+
+
+        // --- Filter Logic (RESTORED) ---
+
+        function updateFilter(filterName, value) {
+            value = parseInt(value, 10);
+            if (!originalImage) return;
+
+            filters[filterName] = value;
+
+            document.getElementById(`${filterName}Input`).value = value;
+            document.getElementById(`${filterName}Slider`).value = value;
+            document.getElementById(`${filterName}Value`).textContent = value;
+            
+            applyFiltersToCanvas();
+        }
+        
+        function applyRotationAndFilters() {
+            if (!originalImage) {
+                showNotification("त्रुटि", "पहले एक इमेज अपलोड करें।");
+                return;
+            }
+
+            const currentWidth = canvas.width;
+            const currentHeight = canvas.height;
+            const rotation = filters.rotation;
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            if (rotation % 90 !== 0) {
+                const rad = rotation * Math.PI / 180;
+                const cos = Math.abs(Math.cos(rad));
+                const sin = Math.abs(Math.sin(rad));
+                tempCanvas.width = currentWidth * cos + currentHeight * sin;
+                tempCanvas.height = currentWidth * sin + currentHeight * cos;
+            } else {
+                if (rotation % 180 !== 0) {
+                    tempCanvas.width = currentHeight;
+                    tempCanvas.height = currentWidth;
+                } else {
+                    tempCanvas.width = currentWidth;
+                    tempCanvas.height = currentHeight;
+                }
+            }
+            
+            tempCtx.filter = `
+                brightness(${filters.brightness}%) 
+                contrast(${filters.contrast}%) 
+                saturate(${filters.saturation}%)
+            `;
+            
+            tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+            tempCtx.rotate(rotation * Math.PI / 180);
+            tempCtx.translate(-currentWidth / 2, -currentHeight / 2);
+            
+            tempCtx.drawImage(canvas, 0, 0, currentWidth, currentHeight);
+            
+            filters.brightness = 100;
+            filters.contrast = 100;
+            filters.saturation = 100;
+            filters.rotation = 0;
+            updateFilterUI();
+            
+            canvas.width = tempCanvas.width;
+            canvas.height = tempCanvas.height;
+            ctx.filter = 'none'; 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(tempCanvas, 0, 0);
+
+            applyFiltersToCanvas(); 
+            saveState();
+            showNotification("फिल्टर लागू", "रोटेशन और रंग समायोजन इमेज पर स्थायी रूप से लागू किए गए हैं।");
+            switchTab('resize');
+        }
+
+
+        function resetFilters(showNotice = true) {
+            filters = { brightness: 100, contrast: 100, saturation: 100, rotation: 0, jpegQuality: 90 }; 
+            
+            updateFilterUI();
+            
+            // Reset Text Insertion State
+            isTextMode = false;
+            if (document.getElementById('addTextBtn')) {
+                document.getElementById('addTextBtn').disabled = false;
+            }
+            if (document.getElementById('finalizeTextBtn')) {
+                document.getElementById('finalizeTextBtn').classList.add('hidden');
+                document.getElementById('finalizeTextBtn').disabled = true;
+            }
+
+            applyFiltersToCanvas();
+            if (showNotice) {
+                showNotification("रीसेट पूरा हुआ", "सभी रंग समायोजन, घूर्णन, और JPEG गुणवत्ता को डिफ़ॉल्ट पर रीसेट कर दिया गया है।");
+            }
+        }
+
+        // --- Export & Compression Logic (RESTORED) ---
+
+        function updateJPEGQuality(value, recalculate = true) {
+            value = parseInt(value, 10);
+            if (value < 1 || value > 100) return;
+            filters.jpegQuality = value;
+            
+            document.getElementById('jpegQualityInput').value = value;
+            document.getElementById('jpegQualitySlider').value = value;
+            document.getElementById('jpegQualityValue').textContent = value;
+
+            if(recalculate) {
+                calculateExportSize();
+            }
+        }
+        
+        function getExportSizeKb(quality) {
+            return new Promise((resolve, reject) => {
+                if (!originalImage) {
+                    reject(0);
+                    return;
+                }
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(bytesToKb(blob.size));
+                    } else {
+                        reject(0);
+                    }
+                }, 'image/jpeg', quality / 100); 
+            });
+        }
+
+        async function calculateExportSize() {
+            if (!originalImage) return;
+            
+            document.getElementById('exportSize').textContent = 'गणना हो रही है...';
+
+            try {
+                const sizeKb = await getExportSizeKb(filters.jpegQuality);
+                document.getElementById('exportSize').textContent = formatBytes(sizeKb * 1024);
+            } catch (error) {
+                document.getElementById('exportSize').textContent = 'गणना विफल';
+            }
+        }
+        
+        async function findBestJpegQuality(targetKb) {
+            if (targetKb <= 0) return 100; 
+
+            let low = 1;
+            let high = 100;
+            let bestQuality = 90; 
+
+            const currentSizeKb = await getExportSizeKb(100); 
+            if (currentSizeKb <= targetKb) {
+                return 100;
+            }
+            
+            const minQualitySizeKb = await getExportSizeKb(1);
+            if (minQualitySizeKb > targetKb) {
+                return 1;
+            }
+
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                const sizeKb = await getExportSizeKb(mid);
+
+                if (sizeKb <= targetKb) {
+                    bestQuality = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return bestQuality;
+        }
+
+        async function compressToTargetKb() {
+            if (!originalImage) {
+                showNotification("त्रुटि", "पहले एक इमेज अपलोड करें।");
+                return;
+            }
+            
+            if (filters.rotation !== 0 || filters.brightness !== 100 || filters.contrast !== 100 || filters.saturation !== 100) {
+                 showNotification("चेतावनी: फिल्टर शामिल नहीं", "KB लक्ष्य प्राप्त करने से पहले, कृपया 'फिल्टर और रोटेशन लागू करें' बटन दबाकर सभी CSS फिल्टर को इमेज पर स्थायी रूप से लागू करें।", 5000);
+                 return;
+            }
+
+            const targetKbInput = document.getElementById('targetKbInput');
+            const targetKb = parseInt(targetKbInput.value, 10);
+
+            if (isNaN(targetKb) || targetKb <= 0) {
+                showNotification("अमान्य KB लक्ष्य", "कृपया 1 KB या उससे अधिक का वैध लक्ष्य साइज़ दर्ज करें।");
+                return;
+            }
+            
+            showNotification("कंप्रेसिंग...", `KB लक्ष्य (${targetKb} KB) तक पहुँचने के लिए सर्वोत्तम गुणवत्ता की गणना की जा रही है।`, 0); 
+            
+            try {
+                const bestQuality = await findBestJpegQuality(targetKb);
+
+                updateJPEGQuality(bestQuality, true);
+
+                const finalSizeKb = await getExportSizeKb(bestQuality);
+                const finalSizeFormatted = formatBytes(finalSizeKb * 1024);
+
+                hideNotification();
+                
+                if (bestQuality === 1) {
+                    showNotification("कंप्रेसन विफल", `इमेज को न्यूनतम गुणवत्ता (1%) पर सेट करने के बाद भी साइज़ ${finalSizeFormatted} है, जो लक्ष्य (${targetKb} KB) से अधिक है।`, 5000);
+                } else if (bestQuality === 100 && finalSizeKb <= targetKb) {
+                    showNotification("कंप्रेसन सफल", `इमेज पहले से ही लक्ष्य (${targetKb} KB) से छोटी है। JPEG गुणवत्ता 100% पर सेट है। (वर्तमान साइज़: ${finalSizeFormatted})`, 5000);
+                } else {
+                    showNotification("कंप्रेसन सफल", `लक्ष्य (${targetKb} KB) तक पहुँचने के लिए JPEG गुणवत्ता ${bestQuality}% पर सेट की गई है। (वर्तमान साइज़: ${finalSizeFormatted})`, 5000);
+                }
+
+            } catch (error) {
+                hideNotification();
+                showNotification("कंप्रेसन त्रुटि", "KB लक्ष्य तक कंप्रेस करने में एक आंतरिक त्रुटि हुई।", 3000);
+                console.error("Compression failed:", error);
+            }
+        }
+
+
+        function exportImage(mimeType, extension) {
+            if (!originalImage) {
+                showNotification("निर्यात त्रुटि", "कृपया निर्यात करने से पहले एक इमेज अपलोड करें।");
+                return;
+            }
+            
+            if (filters.rotation !== 0 || filters.brightness !== 100 || filters.contrast !== 100 || filters.saturation !== 100) {
+                 showNotification("चेतावनी: फिल्टर शामिल नहीं", "निर्यात करने से पहले 'Apply Filters & Rotation' बटन दबाएँ, अन्यथा रंग समायोजन और रोटेशन सेव नहीं होंगे।", 5000);
+                 return;
+            }
+
+            const quality = mimeType === 'image/jpeg' ? filters.jpegQuality / 100 : 1.0;
+            
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `pro_image_lab_export.${extension}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showNotification("निर्यात सफल", `इमेज को ${extension.toUpperCase()} फॉर्मेट में सफलतापूर्वक सेव कर लिया गया है।`);
+                } else {
+                    showNotification("निर्यात विफल", "इमेज डेटा उत्पन्न नहीं हो सका। कृपया कोई अन्य फॉर्मेट ट्राई करें।");
+                }
+            }, mimeType, quality);
+        }
+
+        function exportPDF() {
+            if (!originalImage) {
+                showNotification("निर्यात त्रुटि", "कृपया निर्यात करने से पहले एक इमेज अपलोड करें।");
+                return;
+            }
+            
+            if (filters.rotation !== 0 || filters.brightness !== 100 || filters.contrast !== 100 || filters.saturation !== 100) {
+                 showNotification("चेतावनी: फिल्टर शामिल नहीं", "निर्यात करने से पहले 'Apply Filters & Rotation' बटन दबाएँ, अन्यथा रंग समायोजन और रोटेशन PDF में शामिल नहीं होंगे।", 5000);
+                 return;
+            }
+
+            const imageData = canvas.toDataURL('image/jpeg', filters.jpegQuality / 100);
+            
+            const { jsPDF } = window.jspdf;
+            if (!jsPDF) {
+                showNotification("PDF त्रुटि", "PDF लाइब्रेरी लोड नहीं हुई है।");
+                return;
+            }
+            
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'l' : 'p',
+                unit: 'px',
+                format: [canvas.width, canvas.height] 
+            });
+
+            pdf.addImage(imageData, 'JPEG', 0, 0, canvas.width, canvas.height);
+            
+            pdf.save('pro_image_lab_export.pdf');
+            showNotification("निर्यात सफल", "इमेज को PDF फॉर्मेट में सफलतापूर्वक सेव कर लिया गया है।");
+        }
+
+        // Initial setup for export buttons
+        document.querySelectorAll('.export-btn').forEach(button => {
+            button.classList.add('px-4', 'py-3', 'text-white', 'font-bold', 'rounded-lg', 'shadow-md', 'transition', 'duration-200');
+        });
+        
+        // Initialize the first tab and icon rendering
+        window.onload = function() {
+            setInitialTab();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        };
+
+    </script>
+</body>
+</html>
