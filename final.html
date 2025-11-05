@@ -170,7 +170,7 @@
   font-weight: 600;
   font-family: "Segoe UI", sans-serif;
   text-shadow: 0 2px 6px rgba(0,0,0,0.6);
-  animation: scrollText 20s linear infinite; /* गति बदलें */
+  animation: scrollText 10s linear infinite; /* गति बदलें */
 }
 
 @keyframes scrollText {
@@ -649,7 +649,7 @@ topBar.addEventListener('mouseup', ()=>{ clearTimeout(longPressTimer); });
   // Small UX hint: show best score in console (optional)
   if (best) console.log("Best score:", best);
 /* ============================
-   Auto-hide TopBar safely + Glow Fade Animation
+   Auto-hide TopBar safely + Glow Fade Animation (Mobile Fixed)
    ============================ */
 const topBar = document.getElementById('topBar');
 let hideTimer = null;
@@ -673,7 +673,7 @@ function autoHideTopBar() {
   hideTimer = setTimeout(() => {
     topBar.style.transition = "opacity 0.8s ease";
     topBar.style.opacity = "0";
-    topBar.style.pointerEvents = "none"; // क्लिक रोकें पर गेम चलता रहे
+    topBar.style.pointerEvents = "none"; // clickable नहीं पर गेम चलता रहेगा
   }, 10000);
 }
 
@@ -688,13 +688,19 @@ function showTopBar() {
   autoHideTopBar();
 }
 
-// जब माउस या टच ऊपर जाए
-document.addEventListener('mousemove', e => {
-  if (e.clientY < 08) showTopBar();
-});
-document.addEventListener('touchstart', e => {
-  if (e.touches[0].clientY < 100) showTopBar();
-});
+// Device detection
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+// Desktop पर mouse hover से दिखाएँ
+if (!isTouchDevice) {
+  document.addEventListener('mousemove', e => {
+    if (e.clientY < 80) showTopBar();
+  });
+} else {
+  // Mobile पर केवल पहले load के 10 सेकंड बाद hide होगा,
+  // touch से दोबारा show नहीं होगा (ताकि बटन ब्लॉक न हों)
+  console.log("Touch device detected — topBar auto-hide only, no hover show.");
+}
 
 // प्रारंभ में hide शुरू करें
 autoHideTopBar();
