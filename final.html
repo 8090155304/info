@@ -694,7 +694,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 // Desktop पर mouse hover से दिखाएँ
 if (!isTouchDevice) {
   document.addEventListener('mousemove', e => {
-    if (e.clientY < 80) showTopBar();
+    if (e.clientY < 0) showTopBar();
   });
 } else {
   // Mobile पर केवल पहले load के 10 सेकंड बाद hide होगा,
@@ -786,3 +786,4 @@ loadUserSettings();
 
 </body>
 </html>
+
