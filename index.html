@@ -1,35 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="manifest" href="manifest.json">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <title>Shiv Computer</title>
   <link rel="icon" type="image/png" href="SHIV.png">
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       margin: 0;
       background: #f0f8ff;
     }
-    /* Header styling */
+
+    /* HEADER */
     header {
       background: #0072ff;
-      padding: 10px 20px;
       color: white;
+      padding: 10px 15px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .header-top {
       display: flex;
       align-items: center;
-      gap: 20px;
+      justify-content: space-between;
       flex-wrap: wrap;
     }
 
     .logo {
-      height: 100px;
+      height: 60px;
+      width: auto;
     }
 
-    .site-info {
-      flex: 1;
+    h1 {
+      margin: 0;
+      font-size: 22px;
     }
 
     nav ul {
@@ -47,190 +54,209 @@
     }
 
     nav ul li a:hover {
-      color: #ffeb3b;
+      color: #fa0217;
     }
 
+    /* MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      background: #004fbb;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: auto;
+    }
+
+    /* MAIN */
     main {
-      padding: 40px;
+      padding: 40px 20px;
     }
 
-    /* Footer styling */
+    /* FOOTER */
     footer {
       background-color: #003d80;
       color: white;
       text-align: center;
       padding: 20px 10px;
-      margin-top: 40px;
       font-size: 15px;
+      margin-top: 40px;
     }
 
-    .footer-container p {
-      margin: 5px 0;
-    }
-    
-    /* WhatsApp Button Styling */
     .whatsapp-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       text-decoration: none;
       color: white;
       font-weight: bold;
       font-size: 16px;
-      transition: transform 0.3s ease, color 0.3s ease;
     }
 
     .whatsapp-btn img {
-      width: 8mm;
-      height: 8mm;
-      transition: transform 0.3s ease;
+      width: 24px;
+      height: 24px;
     }
 
-    .whatsapp-btn:hover {
-      transform: scale(1.1);
-      color: #25D366;
-    }
-
-    .whatsapp-btn:hover img {
-      transform: rotate(10deg) scale(1.2);
-    }
-
-    /* ****************************************************** */
-    /* ** WELCOME POPUP CSS ** */
-    /* ****************************************************** */
+    /* WELCOME POPUP */
     #welcomePopup {
-        position: fixed; 
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: flex; 
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        animation: fadeIn 0.5s;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      animation: fadeIn 0.5s;
     }
 
     .popup-content {
-        background-color: white;
-        color: #000;
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        max-width: 90%;
-        width: 350px;
-        animation: slideDown 0.8s ease-out;
+      background-color: white;
+      color: #000;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 9px 20px rgba(0, 0, 0, 0.9);
+      max-width: 90%;
+      width: 350px;
+      animation: slideDown 1.5s ease-out;
     }
 
     .popup-content h2 {
-        color: #0072ff;
-        margin-top: 0;
-        border-bottom: 8px solid #0072ff;
-        padding-bottom: 10px;
+      color: #0072ff;
+      margin-top: 0;
+      border-bottom: 8px solid #0072ff;
+      padding-bottom: 10px;
     }
 
     .popup-content p {
-        margin-bottom: 20px;
+      margin-bottom: 20px;
+      color: #0072ff;
     }
 
     #closePopup {
-        padding: 10px 25px;
-        cursor: pointer;
-        background-color: #0072ff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-weight: bold;
-        transition: background-color 0.3s;
+      padding: 10px 25px;
+      cursor: pointer;
+      background-color: #1ee60b;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
     }
 
     #closePopup:hover {
-        background-color: #0056b3;
+      background-color: #f8fc03;
+      color: red;
     }
 
-    /* CSS Animations */
     @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     @keyframes slideDown {
-        from { transform: translateY(-50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* MOBILE RESPONSIVE */
+    @media (max-width: 768px) {
+      nav ul {
+        flex-direction: column;
+        width: 100%;
+        background: #0072ff;
+        padding: 10px 0;
+        margin: 0;
+        display: none;
+      }
+
+      nav ul.show {
+        display: flex;
+      }
+
+      nav ul li {
+        text-align: center;
+        margin: 10px 0;
+      }
+
+      .menu-toggle {
+        display: block;
+      }
+
+      .logo {
+        height: 50px;
+      }
     }
   </style>
 </head>
 <body>
 
-    <div id="welcomePopup">
-        <div class="popup-content">
-            <h2>Welcome Back!</h2>
-            <p></p>
-            <p>आपका दिन शुभ और मंगलमय हो!</p>
-            <button id="closePopup">शुरू करें (Continue)</button>
-        </div>
+  <!-- Welcome Popup -->
+  <div id="welcomePopup">
+    <div class="popup-content">
+      <h2>Welcome Back!</h2>
+      <p>आपका पुनः स्वागत है!</p>
+      <button id="closePopup">शुरू करें (Continue)</button>
     </div>
+  </div>
 
-
+  <!-- HEADER -->
   <header>
-    <img src="logo.png" alt="Logo" class="logo">
-
-    <div class="site-info">
+    <div class="header-top">
+      <img src="logo.png" alt="Logo" class="logo">
       <h1>Shiv Computer</h1>
-      <nav>
-        <ul>
-          <li><a href="home.html">Home</a></li>
-          <li><a href="about.html">About</a></li>
-          <li><a href="courses.html">Courses</a></li>
-          <li><a href="contact.html">Contact</a></li>
-          <li><a href="Collage.html">College</a></li>
-          <li><a href="Photo.html">Photo</a></li>
-          <li><a href="AI.html">AI</a></li>
-        </ul>
-      </nav>
+      <span class="menu-toggle" onclick="toggleMenu()">☰ Menu</span>
     </div>
+
+    <nav>
+      <ul id="navMenu">
+        <li><a href="home.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="courses.html">Courses</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="Collage.html">College</a></li>
+        <li><a href="Photo.html">Photo</a></li>
+        <li><a href="AI.html">AI</a></li>
+      </ul>
+    </nav>
   </header>
 
+  <!-- MAIN -->
   <main>
     <h2>Welcome to Shiv Computer</h2>
-    <p>Your go-to place for practical computer education.</p>
+    <p>Your go-to Place for Practical Computer Education.</p>
   </main>
 
+  <!-- FOOTER -->
   <footer>
-    <div class="footer-container">
-      <p>&copy; 2025 Shiv Computer. All rights reserved.</p>
-      <p>📍 27, Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
-      <a aria-label="Chat on WhatsApp" 
-   href="https://wa.me/80901553043?text=Hello%20Shiv!" 
-   class="whatsapp-btn">
-  <img alt="WhatsApp" src="wlogo.png" />
-  <span>WhatsApp</span>
-</a>
-    </div>
+    <p>© 2025 Shiv Computer. All rights reserved.</p>
+    <p>📍 27, Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
+    <a href="https://wa.me/80901553043?text=Hello%20Shiv!" class="whatsapp-btn">
+      <img src="wlogo.png" alt="WhatsApp">
+      <span>WhatsApp</span>
+    </a>
   </footer>
 
+  <!-- SCRIPT -->
   <script>
+    // Popup
     document.addEventListener('DOMContentLoaded', function() {
-        const popup = document.getElementById('welcomePopup');
-        const closeButton = document.getElementById('closePopup');
-
-        // Pop-up को बंद करने का फ़ंक्शन
-        closeButton.addEventListener('click', function() {
-            // Pop-up को धीरे-धीरे गायब करने के लिए opacity को 0 करें
-            popup.style.opacity = '0'; 
-            
-            // 500ms (0.5s) के बाद Pop-up को पूरी तरह से हटा दें (display: none)
-            setTimeout(() => {
-                popup.style.display = 'none';
-            }, 500); 
-        });
-        
-        // क्योंकि हमने कोई 'localStorage' चेक नहीं जोड़ा है, Pop-up हर बार दिखेगा।
-        // शुरुआत में, Pop-up तुरंत दिखाने के लिए display: flex सेट करें
-        popup.style.display = 'flex';
+      const popup = document.getElementById('welcomePopup');
+      const closeButton = document.getElementById('closePopup');
+      closeButton.addEventListener('click', function() {
+        popup.style.opacity = '0';
+        setTimeout(() => popup.style.display = 'none', 500);
+      });
     });
+
+    // Toggle Menu
+    function toggleMenu() {
+      document.getElementById("navMenu").classList.toggle("show");
+    }
   </script>
 
 </body>
