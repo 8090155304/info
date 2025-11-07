@@ -320,7 +320,7 @@ collisionSoundInput.addEventListener('change', e => {
 const SCORE_KEY = "flyingGameScore";
 const BEST_KEY = "flyingGameBest";
 
-const PLAYER_SETTINGS = { x: 80, width: 92, height: 48, color: "#FFD700", jumpPower: -8, gravity: 0.38 };
+const PLAYER_SETTINGS = { x: 92, width: 92, height: 92, color: "#FFD700", jumpPower: -8, gravity: 0.40 };
 const OBSTACLE_SETTINGS = { width: 90, gap: 230, speed: 4.0 };
 const COLLISION_OVERLAP_THRESHOLD = 0.40; // 40% overlap rule
 
@@ -343,12 +343,14 @@ function drawBackground(){
   ctx.fillStyle = '#87ceeb';
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // draw bg image contain/center if available
+  // draw bg image cover/fill if available
   if (backgroundImage && backgroundImage.naturalWidth) {
     const vw = canvas.width / (window.devicePixelRatio||1);
     const vh = canvas.height / (window.devicePixelRatio||1);
     const iw = backgroundImage.naturalWidth, ih = backgroundImage.naturalHeight;
-    const ratio = Math.min(vw/iw, vh/ih);
+    
+    // Use "cover" instead of "contain" to fill entire screen
+    const ratio = Math.max(vw/iw, vh/ih);
     const w = iw*ratio, h = ih*ratio;
     const x = (vw - w)/2, y = (vh - h)/2;
     ctx.drawImage(backgroundImage, x, y, w, h);
@@ -363,7 +365,6 @@ function drawBackground(){
     }
   }
 }
-
 function drawPlayer(){
   if (isDestroying) {
     drawDestruction();
@@ -786,4 +787,3 @@ loadUserSettings();
 
 </body>
 </html>
-
