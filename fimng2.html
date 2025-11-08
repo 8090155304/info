@@ -1,0 +1,2816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management System</title>
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #17a2b8;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --sidebar-width: 250px;
+            --personal: #9b59b6;
+            --company: #e67e22;
+            --bg-color: #f5f7fa;
+            --text-color: #333;
+            --card-bg: white;
+        }
+        
+        [data-theme="dark"] {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --card-bg: #2d2d2d;
+            --light: #34495e;
+            --dark: #2c3e50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1002;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .mobile-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        /* Top Controls Bar */
+        .top-controls {
+            position: fixed;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            background: var(--primary);
+            z-index: 1001;
+            border-bottom-left-radius: 8px;
+            box-shadow: -2px 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            min-width: 60px;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.add-btn {
+            background: var(--success);
+        }
+        
+        .control-btn.currency-btn {
+            background: var(--warning);
+        }
+        
+        .control-btn.language-btn {
+            background: var(--info);
+        }
+        
+        .control-btn.theme-btn {
+            background: var(--dark);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: var(--dark);
+            text-align: center;
+        }
+        
+        .sidebar-menu {
+            padding: 15px 0;
+        }
+        
+        .sidebar-menu ul {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .sidebar-menu li:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-menu li.active {
+            background: var(--secondary);
+        }
+        
+        .sidebar-menu a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all 0.3s;
+            margin-top: 60px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 15px 20px;
+            background: var(--light);
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .btn i {
+            margin-right: 5px;
+        }
+        
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .dashboard-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .dashboard-card.personal {
+            border-top: 4px solid var(--personal);
+        }
+        
+        .dashboard-card.company {
+            border-top: 4px solid var(--company);
+        }
+        
+        .dashboard-card i {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .personal-card i {
+            color: var(--personal);
+        }
+        
+        .company-card i {
+            color: var(--company);
+        }
+        
+        .dashboard-card h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .dashboard-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .account-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .personal-badge {
+            background: var(--personal);
+            color: white;
+        }
+        
+        .company-badge {
+            background: var(--company);
+            color: white;
+        }
+        
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .table th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        /* Reminder Section */
+        .reminder-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .reminder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .reminder-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Advance Search */
+        .advance-search {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .advance-search.active {
+            display: block;
+        }
+        
+        .search-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        /* Search Box */
+        .search-box {
+            display: flex;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        
+        .search-btn {
+            padding: 10px 20px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* Export Import */
+        .export-import {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Tabs */
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--secondary);
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            z-index: 1;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 15px 20px;
+            background: var(--success);
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 3000;
+            display: none;
+            max-width: 300px;
+        }
+        
+        .storage-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            background: var(--success);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        /* Account Type Selector */
+        .account-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+        
+        .type-btn.active {
+            border-color: var(--secondary);
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .type-btn.personal.active {
+            border-color: var(--personal);
+            background: rgba(155, 89, 182, 0.1);
+        }
+        
+        .type-btn.company.active {
+            border-color: var(--company);
+            background: rgba(230, 126, 34, 0.1);
+        }
+        
+        .type-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .personal-icon {
+            color: var(--personal);
+        }
+        
+        .company-icon {
+            color: var(--company);
+        }
+        
+        .type-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .type-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Transaction Type Selector */
+        .transaction-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .transaction-type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+        
+        .transaction-type-btn.active {
+            border-color: var(--success);
+            background: rgba(46, 204, 113, 0.1);
+        }
+        
+        .transaction-type-btn.expense.active {
+            border-color: var(--danger);
+            background: rgba(231, 76, 60, 0.1);
+        }
+        
+        .transaction-type-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .income-icon {
+            color: var(--success);
+        }
+        
+        .expense-icon {
+            color: var(--danger);
+        }
+        
+        /* Mobile Specific Styles */
+        @media (max-width: 768px) {
+            .mobile-header {
+                display: block;
+            }
+            
+            .top-controls {
+                position: fixed;
+                top: 60px;
+                right: 0;
+                left: 0;
+                border-radius: 0;
+                justify-content: center;
+                padding: 10px;
+                background: var(--dark);
+            }
+            
+            .control-btn {
+                font-size: 12px;
+                padding: 6px 12px;
+                min-width: 50px;
+            }
+            
+            .control-btn span {
+                display: none;
+            }
+            
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+                z-index: 1003;
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                margin-top: 120px;
+                padding: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .page-title {
+                font-size: 20px;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .dashboard-card {
+                padding: 15px;
+            }
+            
+            .dashboard-card h3 {
+                font-size: 20px;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .export-import {
+                justify-content: center;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                min-width: 100%;
+            }
+            
+            .table {
+                font-size: 14px;
+            }
+            
+            .table th, .table td {
+                padding: 8px 10px;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
+            
+            .modal {
+                padding: 10px;
+            }
+            
+            .modal-content {
+                max-height: 95vh;
+            }
+            
+            .modal-footer {
+                justify-content: center;
+            }
+            
+            .account-type-selector,
+            .transaction-type-selector {
+                flex-direction: column;
+            }
+            
+            .type-btn,
+            .transaction-type-btn {
+                min-width: 100%;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .tab {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            .notification {
+                top: 130px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content {
+                margin-top: 110px;
+                padding: 10px;
+            }
+            
+            .dashboard-card h3 {
+                font-size: 18px;
+            }
+            
+            .card-body {
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            .modal-body {
+                padding: 15px;
+            }
+            
+            .form-control {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-header">
+        <div class="mobile-header-content">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2>Account manger</h2>
+            <h3>Powerd By Shiv Computer</h3>
+            <div></div>
+        </div>
+    </div>
+
+    <div class="top-controls">
+        <button class="control-btn add-btn" id="quickAddBtn">
+            <i class="fas fa-plus"></i>
+            <span>Add</span>
+        </button>
+        <button class="control-btn currency-btn" id="currencyToggle">
+            <i class="fas fa-rupee-sign"></i>
+            <span>INR</span>
+        </button>
+        <button class="control-btn language-btn" id="languageToggle">
+            <i class="fas fa-language"></i>
+            <span>EN</span>
+        </button>
+        <button class="control-btn theme-btn" id="themeToggle">
+            <i class="fas fa-moon"></i>
+            <span>Dark</span>
+        </button>
+    </div>
+
+    <div class="notification" id="notification">
+        Operation completed successfully!
+    </div>
+
+    <div class="storage-status" id="storageStatus">
+        Data saved to local storage
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-chart-line"></i> <span class="menu-text">Account Mangeger</span></h2>
+            <h5><span class="menu-text">Powerd by Shiv Computer</span></h5>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li class="active" data-section="dashboard"><a href="#"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a></li>
+                <li data-section="accounts"><a href="#"><i class="fas fa-wallet"></i> <span class="menu-text">Accounts</span></a></li>
+                <li data-section="transactions"><a href="#"><i class="fas fa-exchange-alt"></i> <span class="menu-text">Transactions</span></a></li>
+                <li data-section="reports"><a href="#"><i class="fas fa-chart-bar"></i> <span class="menu-text">Reports</span></a></li>
+                <li data-section="search"><a href="#"><i class="fas fa-search"></i> <span class="menu-text">Search</span></a></li>
+                <li data-section="export-import"><a href="#"><i class="fas fa-file-export"></i> <span class="menu-text">Export/Import</span></a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 class="page-title">Dashboard</h1>
+            <div>
+                <button class="btn btn-primary" id="addAccountBtn"><i class="fas fa-plus"></i> Add Account</button>
+                <button class="btn btn-warning" id="clearDataBtn"><i class="fas fa-trash"></i> Clear Data</button>
+            </div>
+        </div>
+
+        <div id="dashboard" class="content-section active">
+            <div class="reminder-section" id="reminderSection">
+                <h3><i class="fas fa-bell"></i> Upcoming Transactions</h3>
+                <div id="reminderList">
+                    <div class="reminder-item">
+                        <div>
+                            <strong>No upcoming transactions</strong>
+                            <div style="font-size: 12px; opacity: 0.8;">Add transactions to see reminders</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-cards">
+                <div class="dashboard-card personal">
+                    <span class="account-badge personal-badge">Personal</span>
+                    <i class="fas fa-user"></i>
+                    <h3 id="personalBalance">₹0</h3>
+                    <p>Total Personal Balance</p>
+                </div>
+                <div class="dashboard-card company">
+                    <span class="account-badge company-badge">Company</span>
+                    <i class="fas fa-building"></i>
+                    <h3 id="companyBalance">₹0</h3>
+                    <p>Total Company Balance</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-arrow-up income-icon"></i>
+                    <h3 id="totalIncome">₹0</h3>
+                    <p>Total Income</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-arrow-down expense-icon"></i>
+                    <h3 id="totalExpense">₹0</h3>
+                    <p>Total Expense</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Account Overview</h3>
+                    <div class="export-import">
+                        <button class="btn btn-info" id="printBtn"><i class="fas fa-print"></i> Print</button>
+                        <button class="btn btn-success" id="exportBtn"><i class="fas fa-file-export"></i> Export</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="filter-section">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label class="form-label">Filter by Owner Type</label>
+                                <select class="form-control" id="ownerTypeFilter">
+                                    <option value="all">All Types</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="company">Company</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="form-label">Filter by Account Type</label>
+                                <select class="form-control" id="accountTypeFilter">
+                                    <option value="all">All Accounts</option>
+                                    <option value="savings">Savings</option>
+                                    <option value="current">Current</option>
+                                    <option value="credit">Credit Card</option>
+                                    <option value="loan">Loan</option>
+                                    <option value="investment">Investment</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <button class="btn btn-primary" id="applyFilters"><i class="fas fa-filter"></i> Apply Filters</button>
+                                <button class="btn btn-secondary" id="resetFilters"><i class="fas fa-redo"></i> Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table" id="accountsTable">
+                            <thead>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <th>Type</th>
+                                    <th>Owner</th>
+                                    <th>Balance</th>
+                                    <th>Income</th>
+                                    <th>Expense</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                                        <i class="fas fa-wallet" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                        <br>
+                                        No accounts found. <br>
+                                        <button class="btn btn-primary" style="margin-top: 15px;" onclick="openAddAccountModal()">
+                                            <i class="fas fa-plus"></i> Add Your First Account
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="accounts" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Manage Accounts</h3>
+                    <button class="btn btn-primary" id="addAccountBtn2"><i class="fas fa-plus"></i> Add Account</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="manageAccountsTable">
+                            <thead>
+                                <tr>
+                                    <th>Account Name</th>
+                                    <th>Account No.</th>
+                                    <th>Bank</th>
+                                    <th>Type</th>
+                                    <th>Owner</th>
+                                    <th>Balance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                                        <i class="fas fa-wallet" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                        <br>
+                                        No accounts found. <br>
+                                        <button class="btn btn-primary" style="margin-top: 15px;" onclick="openAddAccountModal()">
+                                            <i class="fas fa-plus"></i> Add Your First Account
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="transactions" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Transaction History</h3>
+                    <button class="btn btn-primary" id="addTransactionBtn"><i class="fas fa-plus"></i> Add Transaction</button>
+                </div>
+                <div class="card-body">
+                    <div class="advance-search" id="advanceSearch">
+                        <h4>Advanced Search</h4>
+                        <div class="search-filters">
+                            <div class="form-group">
+                                <label class="form-label">Date From</label>
+                                <input type="date" class="form-control" id="searchDateFrom">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date To</label>
+                                <input type="date" class="form-control" id="searchDateTo">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Amount Min</label>
+                                <input type="number" class="form-control" id="searchAmountMin" placeholder="Min amount">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Amount Max</label>
+                                <input type="number" class="form-control" id="searchAmountMax" placeholder="Max amount">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <select class="form-control" id="searchCategory">
+                                    <option value="">All Categories</option>
+                                    <option value="salary">Salary</option>
+                                    <option value="business">Business Income</option>
+                                    <option value="investment">Investment</option>
+                                    <option value="other-income">Other Income</option>
+                                    <option value="food">Food & Dining</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="bills">Bills & Utilities</option>
+                                    <option value="transport">Transportation</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="other-expense">Other Expense</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="applyAdvanceSearch">Apply Filters</button>
+                    </div>
+
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search by description, amount, date...">
+                        <button class="search-btn" id="searchBtn"><i class="fas fa-search"></i> Search</button>
+                        <button class="btn btn-info" id="toggleAdvanceSearch">
+                            <i class="fas fa-sliders-h"></i> Advanced
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table" id="transactionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Account</th>
+                                    <th>Owner</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Balance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
+                                        <i class="fas fa-exchange-alt" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                        <br>
+                                        No transactions found. <br>
+                                        <button class="btn btn-primary" style="margin-top: 15px;" onclick="openAddTransactionModal()">
+                                            <i class="fas fa-plus"></i> Add Your First Transaction
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Financial Reports</h3>
+                    <div class="export-import">
+                        <button class="btn btn-info" id="printReportBtn"><i class="fas fa-print"></i> Print Report</button>
+                        <button class="btn btn-danger" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                        <button class="btn btn-success" id="exportExcelBtnReport"><i class="fas fa-file-excel"></i> Export Excel</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="tab-container">
+                        <div class="tabs">
+                            <div class="tab active" data-tab="monthly">Monthly Summary</div>
+                            <div class="tab" data-tab="yearly">Yearly Breakdown</div>
+                            <div class="tab" data-tab="annual">Annual Report</div>
+                        </div>
+
+                        <div class="tab-content active" id="monthly">
+                            <h4 id="monthlyReportTitle">Monthly Financial Summary</h4>
+                            <div class="table-responsive">
+                                <table class="table" id="monthlyReportTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Account</th>
+                                            <th>Owner</th>
+                                            <th>Income</th>
+                                            <th>Expense</th>
+                                            <th>Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                                                <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                                <br>
+                                                No data available for reports. <br>
+                                                Add accounts and transactions to generate reports.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="yearly">
+                            <h4 id="yearlyReportTitle">Yearly Financial Summary</h4>
+                            <div class="table-responsive">
+                                <table class="table" id="yearlyReportTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Account</th>
+                                            <th>Owner</th>
+                                            <th>Income</th>
+                                            <th>Expense</th>
+                                            <th>Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                                                <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                                <br>
+                                                No data available for reports. <br>
+                                                Add accounts and transactions to generate reports.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="annual">
+                            <h4 id="annualReportTitle">Annual Financial Report</h4>
+                            <div class="table-responsive">
+                                <table class="table" id="annualReportTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Account</th>
+                                            <th>Owner</th>
+                                            <th>Income</th>
+                                            <th>Expense</th>
+                                            <th>Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                                                <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                                <br>
+                                                No data available for reports. <br>
+                                                Add accounts and transactions to generate reports.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="search" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Search Transactions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchInputMain" placeholder="Search by description, amount, date...">
+                        <button class="search-btn" id="searchBtnMain"><i class="fas fa-search"></i> Search</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="searchResultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Account</th>
+                                    <th>Owner</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                        <br>
+                                        Enter search terms to find transactions
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="export-import" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Export/Import Data</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Export Data</label>
+                        <div class="export-import">
+                            <button class="btn btn-success" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Excel</button>
+                            <button class="btn btn-danger" id="exportPdfBtn2"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button class="btn btn-info" id="exportCsvBtn"><i class="fas fa-file-csv"></i> CSV</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Import Data</label>
+                        <div class="export-import">
+                            <input type="file" class="form-control" id="importFile" accept=".xlsx, .xls, .csv">
+                            <button class="btn btn-primary" id="importBtn"><i class="fas fa-file-import"></i> Import</button>
+                        </div>
+                        <small style="display: block; margin-top: 5px; color: #666;">Note: Importing data will overwrite existing Transactions data. File must have columns: date, description, account, ownerType, type (Income/Expense), amount, category.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Backup/Restore Local Data</label>
+                        <div class="export-import">
+                            <button class="btn btn-warning" id="backupDataBtn"><i class="fas fa-download"></i> Backup All Data</button>
+                            <input type="file" class="form-control" id="restoreFile" accept=".json" style="flex: 1; min-width: 150px;">
+                            <button class="btn btn-secondary" id="restoreDataBtn"><i class="fas fa-upload"></i> Restore Data</button>
+                        </div>
+                        <small style="display: block; margin-top: 5px; color: #666;">Backup downloads a JSON file of all accounts and transactions.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal" id="addAccountModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="accountModalTitle">Add New Account</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="account-type-selector">
+                    <div class="type-btn personal active" data-owner-type="personal">
+                        <div class="type-icon personal-icon"><i class="fas fa-user"></i></div>
+                        <div class="type-name">Personal</div>
+                        <div class="type-desc">For personal finances</div>
+                    </div>
+                    <div class="type-btn company" data-owner-type="company">
+                        <div class="type-icon company-icon"><i class="fas fa-building"></i></div>
+                        <div class="type-name">Company</div>
+                        <div class="type-desc">For business/company accounts</div>
+                    </div>
+                </div>
+                <form id="accountForm">
+                    <input type="hidden" id="editAccountId" value="">
+                    <input type="hidden" id="ownerType" value="personal">
+                    <div class="form-group">
+                        <label class="form-label">Account Name</label>
+                        <input type="text" class="form-control" id="accountName" placeholder="Enter account nickname" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Account Number</label>
+                        <input type="text" class="form-control" id="accountNumber" placeholder="Enter account number" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bank Name</label>
+                        <input type="text" class="form-control" id="bankName" placeholder="Enter bank name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Account Type</label>
+                        <select class="form-control" id="accountType" required>
+                            <option value="">Select account type</option>
+                            <option value="savings">Savings</option>
+                            <option value="current">Current</option>
+                            <option value="credit">Credit Card</option>
+                            <option value="loan">Loan</option>
+                            <option value="investment">Investment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Initial Balance</label>
+                        <input type="number" class="form-control" id="initialBalance" placeholder="Enter initial balance" value="0" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close">Cancel</button>
+                <button class="btn btn-primary" id="saveAccountBtn">Save Account</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addTransactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Transaction</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transaction-type-selector">
+                    <div class="transaction-type-btn active" data-transaction-type="income">
+                        <div class="transaction-type-icon income-icon"><i class="fas fa-arrow-down"></i></div>
+                        <div class="type-name">Income</div>
+                        <div class="type-desc">Money coming in</div>
+                    </div>
+                    <div class="transaction-type-btn expense" data-transaction-type="expense">
+                        <div class="transaction-type-icon expense-icon"><i class="fas fa-arrow-up"></i></div>
+                        <div class="type-name">Expense</div>
+                        <div class="type-desc">Money going out</div>
+                    </div>
+                </div>
+                <form id="transactionForm">
+                    <input type="hidden" id="transactionType" value="income">
+                    <div class="form-group">
+                        <label class="form-label">Select Account</label>
+                        <select class="form-control" id="transactionAccount" required>
+                            <option value="">Select an account</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="transactionAmount" placeholder="Enter amount" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" id="transactionDescription" placeholder="Enter description" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="transactionDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="transactionCategory" required>
+                            <option value="">Select category</option>
+                            <option value="salary">Salary</option>
+                            <option value="business">Business Income</option>
+                            <option value="investment">Investment</option>
+                            <option value="other-income">Other Income</option>
+                            <option value="food">Food & Dining</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="bills">Bills & Utilities</option>
+                            <option value="transport">Transportation</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="other-expense">Other Expense</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close">Cancel</button>
+                <button class="btn btn-primary" id="saveTransactionBtn">Save Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="viewAccountModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="viewAccountTitle">Account Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Account Name:</strong> <span id="viewAccountName"></span></p>
+                <p><strong>Account Number:</strong> <span id="viewAccountNumber"></span></p>
+                <p><strong>Bank:</strong> <span id="viewBankName"></span></p>
+                <p><strong>Account Type:</strong> <span id="viewAccountType"></span></p>
+                <p><strong>Owner Type:</strong> <span id="viewOwnerType"></span></p>
+                <p><strong>Current Balance:</strong> <span id="viewCurrentBalance"></span></p>
+                <p><strong>Total Income:</strong> <span id="viewTotalIncome"></span></p>
+                <p><strong>Total Expense:</strong> <span id="viewTotalExpense"></span></p>
+
+                <h4 style="margin-top: 20px;">Recent Transactions</h4>
+                <div class="table-responsive">
+                    <table class="table" id="viewTransactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning" id="editFromViewBtn" data-account-id=""><i class="fas fa-edit"></i> Edit Account</button>
+                <button class="btn btn-secondary modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentLanguage = 'en';
+        let currentCurrency = 'INR';
+        let currentTheme = 'light';
+        let accounts = [];
+        let transactions = [];
+
+        // Storage keys
+        const STORAGE_KEYS = {
+            ACCOUNTS: 'financePro_accounts',
+            TRANSACTIONS: 'financePro_transactions',
+            SETTINGS: 'financePro_settings'
+        };
+
+        // DOM Elements
+        const notification = document.getElementById('notification');
+        const addAccountModal = document.getElementById('addAccountModal');
+        const addTransactionModal = document.getElementById('addTransactionModal');
+        const viewAccountModal = document.getElementById('viewAccountModal');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            loadFromLocalStorage();
+            setupEventListeners();
+            updateDashboard();
+            populateAccountsTable();
+            populateManageAccountsTable();
+            populateTransactionsTable();
+            populateTransactionAccountSelect();
+            generateReports();
+        }
+
+        function setupEventListeners() {
+            // Mobile menu
+            document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileMenu);
+
+            // Top controls
+            document.getElementById('quickAddBtn').addEventListener('click', quickAdd);
+            document.getElementById('currencyToggle').addEventListener('click', toggleCurrency);
+            document.getElementById('languageToggle').addEventListener('click', toggleLanguage);
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+            // Navigation
+            document.querySelectorAll('.sidebar-menu li').forEach(item => {
+                item.addEventListener('click', function() {
+                    const targetSection = this.getAttribute('data-section');
+                    switchSection(targetSection);
+                });
+            });
+
+            // Main buttons
+            document.getElementById('addAccountBtn').addEventListener('click', openAddAccountModal);
+            document.getElementById('addAccountBtn2').addEventListener('click', openAddAccountModal);
+            document.getElementById('addTransactionBtn').addEventListener('click', openAddTransactionModal);
+            document.getElementById('clearDataBtn').addEventListener('click', clearAllData);
+
+            // Modal buttons
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', closeAllModals);
+            });
+            document.getElementById('saveAccountBtn').addEventListener('click', saveAccount);
+            document.getElementById('saveTransactionBtn').addEventListener('click', saveTransaction);
+            document.getElementById('editFromViewBtn').addEventListener('click', editFromView);
+
+            // Filter buttons
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            document.getElementById('toggleAdvanceSearch').addEventListener('click', toggleAdvanceSearch);
+            document.getElementById('applyAdvanceSearch').addEventListener('click', applyAdvanceSearch);
+
+            // Search buttons
+            document.getElementById('searchBtn').addEventListener('click', searchTransactions);
+            document.getElementById('searchBtnMain').addEventListener('click', searchTransactionsMain);
+
+            // Export/Import buttons - FIX: All export/import functions are implemented below
+            document.getElementById('printBtn').addEventListener('click', printReport); // Dashboard print
+            document.getElementById('exportBtn').addEventListener('click', exportData); // Dashboard export (Excel)
+            document.getElementById('printReportBtn').addEventListener('click', printReport); // Reports print
+            document.getElementById('exportPdfBtn').addEventListener('click', () => exportPdf('Reports Transactions')); // Reports PDF
+            document.getElementById('exportExcelBtnReport').addEventListener('click', () => exportExcel('Reports Transactions')); // Reports Excel
+
+            document.getElementById('exportExcelBtn').addEventListener('click', () => exportExcel('All Transactions')); // Export/Import Excel
+            document.getElementById('exportPdfBtn2').addEventListener('click', () => exportPdf('All Transactions')); // Export/Import PDF
+            document.getElementById('exportCsvBtn').addEventListener('click', exportCsv); // Export/Import CSV
+            document.getElementById('importBtn').addEventListener('click', importData);
+            document.getElementById('backupDataBtn').addEventListener('click', backupData);
+            document.getElementById('restoreDataBtn').addEventListener('click', restoreData);
+
+            // Account type selector
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('ownerType').value = this.getAttribute('data-owner-type');
+                });
+            });
+
+            // Transaction type selector
+            document.querySelectorAll('.transaction-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.transaction-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('transactionType').value = this.getAttribute('data-transaction-type');
+                });
+            });
+
+            // Tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+
+            // Close modals with escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+
+            // Close mobile menu on body click (excluding sidebar and button)
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('sidebar');
+                const menuBtn = document.getElementById('mobileMenuBtn');
+                
+                if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open') && 
+                    !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+                    toggleMobileMenu();
+                }
+            });
+
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        }
+
+        function switchSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('.sidebar-menu li').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-section') === sectionId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Re-run population functions for the new section
+            if (sectionId === 'accounts') populateManageAccountsTable();
+            if (sectionId === 'transactions') populateTransactionsTable();
+            if (sectionId === 'reports') generateReports();
+            if (sectionId === 'dashboard') populateAccountsTable();
+
+            closeAllModals();
+            window.scrollTo(0, 0); // Scroll to top on section switch
+        }
+
+        function toggleCurrency() {
+            if (currentCurrency === 'INR') {
+                currentCurrency = 'USD';
+            } else if (currentCurrency === 'USD') {
+                currentCurrency = 'EUR';
+            } else {
+                currentCurrency = 'INR';
+            }
+
+            let icon = 'fa-rupee-sign';
+            let text = 'INR';
+
+            if (currentCurrency === 'INR') {
+                icon = 'fa-rupee-sign';
+                text = 'INR';
+            } else if (currentCurrency === 'USD') {
+                icon = 'fa-dollar-sign';
+                text = 'USD';
+            } else {
+                icon = 'fa-euro-sign';
+                text = 'EUR';
+            }
+            document.getElementById('currencyToggle').innerHTML = `<i class="fas ${icon}"></i> <span>${text}</span>`;
+            
+            // Re-render data to reflect new currency symbol (e.g., ₹ to $)
+            updateDashboard();
+            populateAccountsTable();
+            populateManageAccountsTable();
+            populateTransactionsTable();
+            generateReports();
+        }
+
+        function getFormattedCurrency(amount) {
+            const formatter = new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: currentCurrency,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+            });
+            return formatter.format(amount);
+        }
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'hi' : 'en';
+            document.getElementById('languageToggle').innerHTML = currentLanguage === 'en' ? '<i class="fas fa-language"></i> <span>EN</span>' : '<i class="fas fa-language"></i> <span>HI</span>';
+            showNotification('Language toggle is for demonstration, actual translations are not implemented.');
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', currentTheme);
+            document.getElementById('themeToggle').innerHTML = currentTheme === 'dark' ? '<i class="fas fa-sun"></i> <span>Light</span>' : '<i class="fas fa-moon"></i> <span>Dark</span>';
+        }
+
+        function quickAdd() {
+            const activeSection = document.querySelector('.content-section.active').id;
+            if (activeSection === 'accounts' || activeSection === 'dashboard') {
+                openAddAccountModal();
+            } else {
+                openAddTransactionModal();
+            }
+        }
+
+        function openAddAccountModal() {
+            document.getElementById('accountModalTitle').textContent = "Add New Account";
+            document.getElementById('editAccountId').value = "";
+            document.getElementById('accountForm').reset();
+            
+            // Reset to personal account by default
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.type-btn.personal').classList.add('active');
+            document.getElementById('ownerType').value = "personal";
+
+            addAccountModal.style.display = 'flex';
+        }
+
+        function openAddTransactionModal() {
+            addTransactionModal.style.display = 'flex';
+            document.getElementById('transactionForm').reset();
+            
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('transactionDate').value = today;
+
+            // Reset to income by default
+            document.querySelectorAll('.transaction-type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.transaction-type-btn[data-transaction-type="income"]').classList.add('active');
+            document.getElementById('transactionType').value = "income";
+
+            // Refresh account list
+            populateTransactionAccountSelect();
+        }
+
+        function closeAllModals() {
+            addAccountModal.style.display = 'none';
+            addTransactionModal.style.display = 'none';
+            viewAccountModal.style.display = 'none';
+        }
+
+        function saveAccount() {
+            const accountName = document.getElementById('accountName').value;
+            const accountNumber = document.getElementById('accountNumber').value;
+            const bankName = document.getElementById('bankName').value;
+            const accountType = document.getElementById('accountType').value;
+            const ownerType = document.getElementById('ownerType').value;
+            const initialBalance = parseFloat(document.getElementById('initialBalance').value) || 0;
+            const accountId = document.getElementById('editAccountId').value;
+
+            if (!accountName || !accountNumber || !bankName || !accountType) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+
+            if (accountId) {
+                // Edit existing account
+                const accountIndex = accounts.findIndex(acc => acc.id === parseInt(accountId));
+                if (accountIndex !== -1) {
+                    accounts[accountIndex].name = accountName;
+                    accounts[accountIndex].number = accountNumber;
+                    accounts[accountIndex].bank = bankName;
+                    accounts[accountIndex].type = accountType;
+                    accounts[accountIndex].ownerType = ownerType;
+                    // Note: Initial balance is used as current balance when editing, 
+                    // this logic might need refinement for a production app, but for this demo, it overwrites.
+                    accounts[accountIndex].balance = initialBalance; 
+                    showNotification('Account updated successfully!');
+                }
+            } else {
+                // Add new account
+                const newAccount = {
+                    id: accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1,
+                    name: accountName,
+                    number: accountNumber,
+                    bank: bankName,
+                    type: accountType,
+                    ownerType: ownerType,
+                    balance: initialBalance,
+                    income: 0,
+                    expense: 0
+                };
+                accounts.push(newAccount);
+                showNotification('Account added successfully!');
+            }
+
+            saveToLocalStorage();
+            updateDashboard();
+            populateAccountsTable();
+            populateManageAccountsTable();
+            populateTransactionAccountSelect();
+            closeAllModals();
+        }
+
+        function saveTransaction() {
+            const accountId = document.getElementById('transactionAccount').value;
+            const amount = parseFloat(document.getElementById('transactionAmount').value);
+            const description = document.getElementById('transactionDescription').value;
+            const date = document.getElementById('transactionDate').value;
+            const category = document.getElementById('transactionCategory').value;
+            const type = document.getElementById('transactionType').value === 'income' ? 'Income' : 'Expense';
+
+            if (!accountId || !amount || !description || !date || !category) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+
+            const account = accounts.find(acc => acc.id === parseInt(accountId));
+            if (!account) {
+                showNotification('Selected account not found', 'error');
+                return;
+            }
+
+            // Update account balance
+            if (type === 'Income') {
+                account.balance += amount;
+                account.income += amount;
+            } else {
+                account.balance -= amount;
+                account.expense += amount;
+            }
+
+            // Create transaction
+            const newTransaction = {
+                id: transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1,
+                date: date,
+                description: description,
+                account: account.name,
+                ownerType: account.ownerType,
+                type: type,
+                amount: amount,
+                balance: account.balance, // Current balance after transaction
+                category: category
+            };
+            transactions.push(newTransaction);
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+
+            saveToLocalStorage();
+            updateDashboard();
+            populateAccountsTable();
+            populateManageAccountsTable();
+            populateTransactionsTable();
+            generateReports();
+            closeAllModals();
+            showNotification('Transaction added successfully!');
+        }
+
+        function populateTransactionAccountSelect() {
+            const select = document.getElementById('transactionAccount');
+            select.innerHTML = '<option value="">Select an account</option>';
+
+            if (accounts.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "No accounts available - Add an account first";
+                option.disabled = true;
+                select.appendChild(option);
+            } else {
+                accounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+                    option.textContent = `${account.name} (${account.bank}) - ${getFormattedCurrency(account.balance)}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        function updateDashboard() {
+            let personalBalance = 0;
+            let companyBalance = 0;
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            accounts.forEach(account => {
+                if (account.ownerType === 'personal') {
+                    personalBalance += account.balance;
+                } else {
+                    companyBalance += account.balance;
+                }
+                totalIncome += account.income;
+                totalExpense += account.expense;
+            });
+
+            document.getElementById('personalBalance').textContent = getFormattedCurrency(personalBalance);
+            document.getElementById('companyBalance').textContent = getFormattedCurrency(companyBalance);
+            document.getElementById('totalIncome').textContent = getFormattedCurrency(totalIncome);
+            document.getElementById('totalExpense').textContent = getFormattedCurrency(totalExpense);
+        }
+
+        function populateAccountsTable(data = accounts) {
+            const tbody = document.getElementById('accountsTable').querySelector('tbody');
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-wallet" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <br>
+                            No accounts found. <br>
+                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="openAddAccountModal()">
+                                <i class="fas fa-plus"></i> Add Your First Account
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(account => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${account.name}</td>
+                    <td>${account.type}</td>
+                    <td><span class="${account.ownerType === 'personal' ? 'personal-badge' : 'company-badge'}" style="padding: 3px 8px; border-radius: 12px;">${account.ownerType === 'personal' ? 'Personal' : 'Company'}</span></td>
+                    <td>${getFormattedCurrency(account.balance)}</td>
+                    <td>${getFormattedCurrency(account.income)}</td>
+                    <td>${getFormattedCurrency(account.expense)}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn btn-primary" onclick="viewAccount(${account.id})"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn btn-warning" onclick="editAccount(${account.id})"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn btn-danger" onclick="deleteAccount(${account.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateManageAccountsTable() {
+            const tbody = document.getElementById('manageAccountsTable').querySelector('tbody');
+
+            if (accounts.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-wallet" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <br>
+                            No accounts found. <br>
+                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="openAddAccountModal()">
+                                <i class="fas fa-plus"></i> Add Your First Account
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            accounts.forEach(account => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${account.name}</td>
+                    <td>${account.number}</td>
+                    <td>${account.bank}</td>
+                    <td>${account.type}</td>
+                    <td><span class="${account.ownerType === 'personal' ? 'personal-badge' : 'company-badge'}" style="padding: 3px 8px; border-radius: 12px;">${account.ownerType === 'personal' ? 'Personal' : 'Company'}</span></td>
+                    <td>${getFormattedCurrency(account.balance)}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn btn-primary" onclick="viewAccount(${account.id})"><i class="fas fa-eye"></i></button>
+                        <button class="action-btn btn-warning" onclick="editAccount(${account.id})"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn btn-danger" onclick="deleteAccount(${account.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateTransactionsTable(data = transactions) {
+            const tbody = document.getElementById('transactionsTable').querySelector('tbody');
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-exchange-alt" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <br>
+                            No transactions found. <br>
+                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="openAddTransactionModal()">
+                                <i class="fas fa-plus"></i> Add Your First Transaction
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${transaction.date}</td>
+                    <td>${transaction.description}</td>
+                    <td>${transaction.account}</td>
+                    <td><span class="${transaction.ownerType === 'personal' ? 'personal-badge' : 'company-badge'}" style="padding: 3px 8px; border-radius: 12px;">${transaction.ownerType === 'personal' ? 'Personal' : 'Company'}</span></td>
+                    <td><span style="color: ${transaction.type === 'Income' ? 'var(--success)' : 'var(--danger)'};">${transaction.type}</span></td>
+                    <td>${getFormattedCurrency(transaction.amount)}</td>
+                    <td>${getFormattedCurrency(transaction.balance)}</td>
+                    <td class="action-buttons">
+                        <button class="action-btn btn-danger" onclick="deleteTransaction(${transaction.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function viewAccount(accountId) {
+            const account = accounts.find(acc => acc.id === accountId);
+            if (!account) return;
+
+            document.getElementById('viewAccountName').textContent = account.name;
+            document.getElementById('viewAccountNumber').textContent = account.number;
+            document.getElementById('viewBankName').textContent = account.bank;
+            document.getElementById('viewAccountType').textContent = account.type;
+            document.getElementById('viewOwnerType').textContent = account.ownerType === 'personal' ? 'Personal' : 'Company';
+            document.getElementById('viewCurrentBalance').textContent = getFormattedCurrency(account.balance);
+            document.getElementById('viewTotalIncome').textContent = getFormattedCurrency(account.income);
+            document.getElementById('viewTotalExpense').textContent = getFormattedCurrency(account.expense);
+            document.getElementById('editFromViewBtn').setAttribute('data-account-id', accountId);
+
+            // Populate recent transactions
+            const recentTransactions = transactions.filter(t => t.account === account.name)
+                                                    .slice(0, 5); // Show top 5
+            const tbody = document.getElementById('viewTransactionsTable').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            if (recentTransactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #999;">No recent transactions.</td></tr>`;
+            } else {
+                recentTransactions.forEach(t => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${t.date}</td>
+                        <td>${t.description}</td>
+                        <td><span style="color: ${t.type === 'Income' ? 'var(--success)' : 'var(--danger)'};">${t.type}</span></td>
+                        <td>${getFormattedCurrency(t.amount)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            viewAccountModal.style.display = 'flex';
+        }
+
+        function editAccount(accountId) {
+            const account = accounts.find(acc => acc.id === accountId);
+            if (!account) return;
+
+            document.getElementById('accountModalTitle').textContent = "Edit Account";
+            document.getElementById('editAccountId').value = accountId;
+
+            // Set owner type
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-owner-type') === account.ownerType) {
+                    btn.classList.add('active');
+                }
+            });
+            document.getElementById('ownerType').value = account.ownerType;
+
+            // Fill form
+            document.getElementById('accountName').value = account.name;
+            document.getElementById('accountNumber').value = account.number;
+            document.getElementById('bankName').value = account.bank;
+            document.getElementById('accountType').value = account.type;
+            document.getElementById('initialBalance').value = account.balance; // Set current balance in initial field
+            
+            addAccountModal.style.display = 'flex';
+        }
+
+        function editFromView() {
+            const accountId = document.getElementById('editFromViewBtn').getAttribute('data-account-id');
+            closeAllModals();
+            // Using a timeout to ensure modal closes before opening the next
+            setTimeout(() => editAccount(parseInt(accountId)), 300); 
+        }
+
+        function deleteAccount(accountId) {
+            if (!confirm('Are you sure you want to delete this account? All associated transactions will also be removed.')) return;
+
+            const account = accounts.find(acc => acc.id === accountId);
+            if (!account) return;
+
+            // Remove transactions for this account
+            transactions = transactions.filter(t => t.account !== account.name);
+
+            // Remove account
+            accounts = accounts.filter(acc => acc.id !== accountId);
+
+            saveToLocalStorage();
+            updateDashboard();
+            populateAccountsTable();
+            populateManageAccountsTable();
+            populateTransactionsTable();
+            populateTransactionAccountSelect();
+            generateReports();
+            showNotification('Account deleted successfully!');
+        }
+
+        function deleteTransaction(transactionId) {
+            if (!confirm('Are you sure you want to delete this transaction?')) return;
+
+            const transactionIndex = transactions.findIndex(t => t.id === transactionId);
+            if (transactionIndex === -1) return;
+
+            const transaction = transactions[transactionIndex];
+            const account = accounts.find(acc => acc.name === transaction.account);
+
+            if (account) {
+                // Reverse the transaction effect
+                if (transaction.type === 'Income') {
+                    account.balance -= transaction.amount;
+                    account.income -= transaction.amount;
+                } else {
+                    account.balance += transaction.amount;
+                    account.expense -= transaction.amount;
+                }
+            }
+
+            // Remove transaction
+            transactions.splice(transactionIndex, 1);
+
+            saveToLocalStorage();
+            updateDashboard();
+            populateAccountsTable();
+            populateManageAccountsTable();
+            populateTransactionsTable();
+            generateReports();
+            showNotification('Transaction deleted successfully!');
+        }
+
+        function applyFilters() {
+            const ownerType = document.getElementById('ownerTypeFilter').value;
+            const accountType = document.getElementById('accountTypeFilter').value;
+            let filteredAccounts = accounts;
+
+            if (ownerType !== 'all') {
+                filteredAccounts = filteredAccounts.filter(acc => acc.ownerType === ownerType);
+            }
+
+            if (accountType !== 'all') {
+                filteredAccounts = filteredAccounts.filter(acc => acc.type === accountType);
+            }
+
+            populateAccountsTable(filteredAccounts);
+            showNotification('Filters applied successfully!');
+        }
+
+        function resetFilters() {
+            document.getElementById('ownerTypeFilter').value = 'all';
+            document.getElementById('accountTypeFilter').value = 'all';
+            populateAccountsTable(accounts);
+            showNotification('Filters reset!');
+        }
+
+        function toggleAdvanceSearch() {
+            document.getElementById('advanceSearch').classList.toggle('active');
+            if (document.getElementById('advanceSearch').classList.contains('active')) {
+                 document.getElementById('toggleAdvanceSearch').innerHTML = '<i class="fas fa-compress-alt"></i> Simple';
+            } else {
+                document.getElementById('toggleAdvanceSearch').innerHTML = '<i class="fas fa-sliders-h"></i> Advanced';
+            }
+        }
+
+        function applyAdvanceSearch() {
+            const dateFrom = document.getElementById('searchDateFrom').value;
+            const dateTo = document.getElementById('searchDateTo').value;
+            const amountMin = parseFloat(document.getElementById('searchAmountMin').value);
+            const amountMax = parseFloat(document.getElementById('searchAmountMax').value);
+            const category = document.getElementById('searchCategory').value;
+
+            let filtered = transactions;
+
+            if (dateFrom) {
+                filtered = filtered.filter(t => t.date >= dateFrom);
+            }
+            if (dateTo) {
+                filtered = filtered.filter(t => t.date <= dateTo);
+            }
+            if (!isNaN(amountMin)) {
+                filtered = filtered.filter(t => t.amount >= amountMin);
+            }
+            if (!isNaN(amountMax)) {
+                filtered = filtered.filter(t => t.amount <= amountMax);
+            }
+            if (category) {
+                filtered = filtered.filter(t => t.category === category);
+            }
+
+            populateTransactionsTable(filtered);
+            showNotification(`Advanced filters applied. Found ${filtered.length} transactions.`);
+        }
+
+        function searchTransactions() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm.trim()) {
+                populateTransactionsTable(transactions);
+                return;
+            }
+
+            const filtered = transactions.filter(t => 
+                t.description.toLowerCase().includes(searchTerm) || 
+                t.account.toLowerCase().includes(searchTerm) || 
+                t.amount.toString().includes(searchTerm) || 
+                t.date.includes(searchTerm) ||
+                t.category.toLowerCase().includes(searchTerm)
+            );
+
+            populateTransactionsTable(filtered);
+            showNotification(`Found ${filtered.length} transactions for "${searchTerm}"`);
+        }
+
+        function searchTransactionsMain() {
+            const searchTerm = document.getElementById('searchInputMain').value.toLowerCase();
+            const resultsTable = document.getElementById('searchResultsTable').querySelector('tbody');
+
+            if (!searchTerm.trim()) {
+                resultsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-search" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <br>
+                            Enter search terms to find transactions
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const filtered = transactions.filter(t => 
+                t.description.toLowerCase().includes(searchTerm) || 
+                t.account.toLowerCase().includes(searchTerm) || 
+                t.amount.toString().includes(searchTerm) || 
+                t.date.includes(searchTerm)
+            );
+
+            if (filtered.length === 0) {
+                resultsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-search" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <br>
+                            No transactions found for "${searchTerm}"
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            resultsTable.innerHTML = '';
+            filtered.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${transaction.date}</td>
+                    <td>${transaction.description}</td>
+                    <td>${transaction.account}</td>
+                    <td><span class="${transaction.ownerType === 'personal' ? 'personal-badge' : 'company-badge'}" style="padding: 3px 8px; border-radius: 12px;">${transaction.ownerType === 'personal' ? 'Personal' : 'Company'}</span></td>
+                    <td><span style="color: ${transaction.type === 'Income' ? 'var(--success)' : 'var(--danger)'};">${transaction.type}</span></td>
+                    <td>${getFormattedCurrency(transaction.amount)}</td>
+                `;
+                resultsTable.appendChild(row);
+            });
+
+            showNotification(`Found ${filtered.length} transactions`);
+        }
+
+        function generateReports() {
+            // This is a simple placeholder for generating report data. 
+            // In a full application, this would calculate aggregate data 
+            // for the selected timeframes (monthly, yearly, annual).
+            const monthlyTableBody = document.getElementById('monthlyReportTable').querySelector('tbody');
+            const yearlyTableBody = document.getElementById('yearlyReportTable').querySelector('tbody');
+            const annualTableBody = document.getElementById('annualReportTable').querySelector('tbody');
+            
+            if (accounts.length === 0) {
+                const noDataHtml = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-chart-bar" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                            <br>
+                            No data available for reports. <br>
+                            Add accounts and transactions to generate reports.
+                        </td>
+                    </tr>
+                `;
+                monthlyTableBody.innerHTML = noDataHtml;
+                yearlyTableBody.innerHTML = noDataHtml;
+                annualTableBody.innerHTML = noDataHtml;
+                return;
+            }
+
+            // Display all accounts data as a simple "Annual Report" for this demo
+            const reportRows = accounts.map(account => `
+                <tr>
+                    <td>${account.name}</td>
+                    <td><span class="${account.ownerType === 'personal' ? 'personal-badge' : 'company-badge'}" style="padding: 3px 8px; border-radius: 12px;">${account.ownerType === 'personal' ? 'Personal' : 'Company'}</span></td>
+                    <td>${getFormattedCurrency(account.income)}</td>
+                    <td>${getFormattedCurrency(account.expense)}</td>
+                    <td>${getFormattedCurrency(account.balance)}</td>
+                </tr>
+            `).join('');
+
+            // For simplicity, all reports show the same account overview
+            monthlyTableBody.innerHTML = reportRows;
+            yearlyTableBody.innerHTML = reportRows;
+            annualTableBody.innerHTML = reportRows;
+
+            document.getElementById('monthlyReportTitle').textContent = `Monthly Summary - ${new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}`;
+            document.getElementById('yearlyReportTitle').textContent = `Yearly Summary - ${new Date().getFullYear()}`;
+            document.getElementById('annualReportTitle').textContent = `Annual Financial Report - Lifetime`;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+        }
+
+        function clearAllData() {
+            if (!confirm('WARNING: Are you sure you want to delete ALL accounts and transactions? This action is irreversible.')) return;
+
+            accounts = [];
+            transactions = [];
+            localStorage.removeItem(STORAGE_KEYS.ACCOUNTS);
+            localStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
+            
+            initializeApp(); // Reinitialize the app
+            showNotification('All data cleared successfully!', 'success');
+        }
+
+
+        // **********************************************
+        // ******* FIX: EXPORT / IMPORT FUNCTIONS *******
+        // **********************************************
+
+        function downloadFile(data, filename, type) {
+            const file = new Blob([data], { type: type });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(file);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function exportExcel(fileNamePrefix = 'Transactions') {
+            if (transactions.length === 0) {
+                showNotification('No transactions data to export.', 'error');
+                return;
+            }
+            
+            const dataToExport = transactions.map(t => ({
+                Date: t.date,
+                Description: t.description,
+                Account: t.account,
+                Owner: t.ownerType,
+                Type: t.type,
+                Amount: t.amount,
+                Category: t.category,
+                Balance_After: t.balance
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Transactions");
+            
+            const filename = `${fileNamePrefix}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, filename);
+
+            showNotification('Data exported to Excel successfully!');
+        }
+
+        function exportCsv() {
+            if (transactions.length === 0) {
+                showNotification('No transactions data to export.', 'error');
+                return;
+            }
+
+            const dataToExport = transactions.map(t => ({
+                Date: t.date,
+                Description: t.description,
+                Account: t.account,
+                Owner: t.ownerType,
+                Type: t.type,
+                Amount: t.amount,
+                Category: t.category,
+                Balance_After: t.balance
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            
+            const filename = `Transactions_Export_${new Date().toISOString().slice(0, 10)}.csv`;
+            downloadFile(csv, filename, 'text/csv;charset=utf-8;');
+
+            showNotification('Data exported to CSV successfully!');
+        }
+
+        function exportPdf(title = 'Account Report') {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                showNotification('PDF library not loaded. Please check external scripts.', 'error');
+                return;
+            }
+            if (transactions.length === 0) {
+                showNotification('No transactions data to export.', 'error');
+                return;
+            }
+
+            // Create a new jsPDF instance
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Define headers and data
+            const headers = [
+                ['Date', 'Description', 'Account', 'Type', 'Amount', 'Category']
+            ];
+            
+            const data = transactions.map(t => [
+                t.date, 
+                t.description, 
+                t.account, 
+                t.type, 
+                getFormattedCurrency(t.amount),
+                t.category
+            ]);
+
+            // Add title
+            doc.setFontSize(18);
+            doc.text(`${title}: Transactions Report`, 14, 20);
+            
+            // Generate table using jspdf-autotable
+            doc.autoTable({
+                startY: 25,
+                head: headers,
+                body: data,
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [44, 62, 80] }, // Primary color
+                margin: { top: 25 },
+                theme: 'striped',
+                columnStyles: {
+                    4: { halign: 'right' } // Align amount column to the right
+                }
+            });
+
+            const filename = `${title.replace(/\s/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            doc.save(filename);
+            showNotification('Data exported to PDF successfully!');
+        }
+
+        function exportData() {
+            // This is the handler for the generic export button on the Dashboard.
+            // I'll make it call the Excel export function for the main transactions.
+            exportExcel('Dashboard_Summary');
+        }
+
+        function printReport() {
+            // Simple window print
+            window.print();
+        }
+
+        function importData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showNotification('Please select a file to import.', 'error');
+                return;
+            }
+
+            if (!confirm('WARNING: Importing new data will REPLACE all existing transactions. Are you sure you want to continue?')) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                // Convert sheet to JSON array
+                const importedJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                if (importedJson.length < 2) {
+                    showNotification('Import failed: File is empty or has no data rows.', 'error');
+                    return;
+                }
+                
+                // Assuming the first row is headers. Lowercase headers for flexible matching.
+                const headers = importedJson[0].map(h => h.toString().toLowerCase().trim().replace(/ /g, ''));
+                const dataRows = importedJson.slice(1);
+                
+                // Required headers for transaction object creation
+                const requiredHeaders = ['date', 'description', 'account', 'ownertype', 'type', 'amount', 'category'];
+                
+                const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+                if (missingHeaders.length > 0) {
+                    showNotification(`Import failed: Missing required columns: ${missingHeaders.join(', ')}.`, 'error');
+                    return;
+                }
+                
+                const newTransactions = [];
+                let maxId = transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) : 0;
+                
+                // Clear all previous transactions for this import
+                transactions = []; 
+                
+                dataRows.forEach(row => {
+                    const transaction = {};
+                    headers.forEach((header, index) => {
+                        transaction[header] = row[index];
+                    });
+                    
+                    // Simple validation and transaction object creation
+                    const amount = parseFloat(transaction.amount);
+                    if (isNaN(amount) || !transaction.date || !transaction.account) {
+                        // Skip invalid rows
+                        return;
+                    }
+
+                    // Check if account exists, if not, create a dummy or skip
+                    let account = accounts.find(acc => acc.name === transaction.account);
+                    if (!account) {
+                        // If account does not exist, create a placeholder/default one
+                        const newAccId = accounts.length > 0 ? Math.max(...accounts.map(a => a.id)) + 1 : 1;
+                        account = {
+                            id: newAccId,
+                            name: transaction.account,
+                            number: 'N/A',
+                            bank: 'Imported',
+                            type: 'other',
+                            ownerType: transaction.ownertype || 'personal',
+                            balance: 0, // Will be calculated below
+                            income: 0,
+                            expense: 0
+                        };
+                        accounts.push(account);
+                    }
+
+                    const type = transaction.type.toLowerCase() === 'income' ? 'Income' : 'Expense';
+                    
+                    // Update account balance and totals (re-calculation is better for correctness)
+                    if (type === 'Income') {
+                        account.balance += amount;
+                        account.income += amount;
+                    } else {
+                        account.balance -= amount;
+                        account.expense += amount;
+                    }
+                    
+                    maxId++;
+                    newTransactions.push({
+                        id: maxId,
+                        date: transaction.date.split('T')[0], // Ensure date format is clean
+                        description: transaction.description || 'Imported Transaction',
+                        account: account.name,
+                        ownerType: account.ownerType,
+                        type: type,
+                        amount: amount,
+                        category: transaction.category || 'other',
+                        balance: account.balance // This is the running balance at this point
+                    });
+                });
+
+                transactions = newTransactions;
+                transactions.sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending to ensure balance calculation is correct
+                
+                // Re-calculate running balance to ensure accuracy
+                accounts.forEach(acc => { acc.balance = 0; acc.income = 0; acc.expense = 0; });
+                
+                transactions.forEach(t => {
+                    let account = accounts.find(acc => acc.name === t.account);
+                    if (account) {
+                        if (t.type === 'Income') {
+                            account.balance += t.amount;
+                            account.income += t.amount;
+                        } else {
+                            account.balance -= t.amount;
+                            account.expense += t.amount;
+                        }
+                        t.balance = account.balance; // Update transaction object with new running balance
+                    }
+                });
+
+                saveToLocalStorage();
+                initializeApp();
+                showNotification(`Successfully imported ${newTransactions.length} transactions!`);
+
+            };
+            reader.onerror = function(ex) {
+                showNotification('File reading failed: ' + ex, 'error');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function backupData() {
+            const data = {
+                accounts: accounts,
+                transactions: transactions
+            };
+            const json = JSON.stringify(data, null, 2);
+            const filename = `FinancePro_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            downloadFile(json, filename, 'application/json');
+            showNotification('Data backup complete!');
+        }
+
+        function restoreData() {
+            const fileInput = document.getElementById('restoreFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showNotification('Please select a JSON backup file to restore.', 'error');
+                return;
+            }
+
+            if (!confirm('WARNING: Restoring data will overwrite ALL current accounts and transactions. Continue?')) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.accounts && data.transactions) {
+                        accounts = data.accounts;
+                        transactions = data.transactions;
+                        saveToLocalStorage();
+                        initializeApp();
+                        showNotification('Data restored successfully!');
+                    } else {
+                        showNotification('Invalid backup file format.', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error reading or parsing JSON file.', 'error');
+                    console.error('Restore error:', error);
+                }
+            };
+            reader.onerror = function(ex) {
+                showNotification('File reading failed: ' + ex, 'error');
+            };
+            reader.readAsText(file);
+        }
+        
+        // **********************************************
+        // ******* END OF EXPORT / IMPORT FIX ***********
+        // **********************************************
+
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? 'var(--danger)' : 'var(--success)';
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+                localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+                
+                // Also save settings (theme, currency)
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
+                    theme: currentTheme,
+                    currency: currentCurrency,
+                    language: currentLanguage
+                }));
+
+                document.getElementById('storageStatus').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('storageStatus').style.display = 'none';
+                }, 2000);
+            } catch (error) {
+                showNotification('Error saving data to local storage', 'error');
+                console.error('Error saving data:', error);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedAccounts = localStorage.getItem(STORAGE_KEYS.ACCOUNTS);
+                const savedTransactions = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+                const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+                
+                if (savedAccounts) {
+                    accounts = JSON.parse(savedAccounts);
+                }
+                
+                if (savedTransactions) {
+                    transactions = JSON.parse(savedTransactions);
+                }
+
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    currentTheme = settings.theme || 'light';
+                    currentCurrency = settings.currency || 'INR';
+                    currentLanguage = settings.language || 'en';
+                    
+                    // Apply loaded settings
+                    document.body.setAttribute('data-theme', currentTheme);
+                    document.getElementById('themeToggle').innerHTML = currentTheme === 'dark' ? '<i class="fas fa-sun"></i> <span>Light</span>' : '<i class="fas fa-moon"></i> <span>Dark</span>';
+                    
+                    let icon = 'fa-rupee-sign';
+                    let text = 'INR';
+                    if (currentCurrency === 'USD') {
+                        icon = 'fa-dollar-sign';
+                        text = 'USD';
+                    } else if (currentCurrency === 'EUR') {
+                        icon = 'fa-euro-sign';
+                        text = 'EUR';
+                    }
+                    document.getElementById('currencyToggle').innerHTML = `<i class="fas ${icon}"></i> <span>${text}</span>`;
+                    document.getElementById('languageToggle').innerHTML = currentLanguage === 'en' ? '<i class="fas fa-language"></i> <span>EN</span>' : '<i class="fas fa-language"></i> <span>HI</span>';
+                }
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+    </script>
+</body>
+</html>
