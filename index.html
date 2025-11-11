@@ -261,6 +261,27 @@
       document.getElementById("navMenu").classList.toggle("show");
     }
   </script>
+  <script>
+    // ... existing script code ...
+
+    // NEW: Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+          // Registration was successful
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+          // registration failed
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+
+    // Toggle Menu
+    function toggleMenu() {
+      document.getElementById("navMenu").classList.toggle("show");
+    }
+  </script>
 
 </body>
 </html>
