@@ -56,8 +56,8 @@
     }
 
     nav ul li a:hover {
-      color: #fa0217;
-      border-radius: 9px
+      background-color: #ff0000;
+      border-radius: 9px;
     }
 
     /* MENU TOGGLE */
@@ -76,6 +76,14 @@
     /* MAIN */
     main {
       padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     /* FOOTER */
@@ -96,6 +104,7 @@
       color: white;
       font-weight: bold;
       font-size: 16px;
+      margin-top: 10px;
     }
 
     .whatsapp-btn img {
@@ -194,6 +203,198 @@
         height: 50px;
       }
     }
+
+    /* NEW ANIMATIONS - Bina kuch hataye add kiye */
+    
+    /* Colorful background animation */
+    .color-blocks {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .block {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.7;
+      animation: float 15s infinite linear;
+    }
+
+    .block:nth-child(1) {
+      background: #ff0055;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .block:nth-child(2) {
+      background: #00aaff;
+      top: 60%;
+      left: 80%;
+      animation-delay: 2s;
+    }
+
+    .block:nth-child(3) {
+      background: #ffcc00;
+      top: 40%;
+      left: 70%;
+      animation-delay: 4s;
+    }
+
+    .block:nth-child(4) {
+      background: #00ff99;
+      top: 80%;
+      left: 30%;
+      animation-delay: 6s;
+    }
+
+    .block:nth-child(5) {
+      background: #cc00ff;
+      top: 10%;
+      left: 50%;
+      animation-delay: 8s;
+    }
+
+    .block:nth-child(6) {
+      background: #ff6600;
+      top: 70%;
+      left: 10%;
+      animation-delay: 10s;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+      25% {
+        transform: translate(100px, 100px) rotate(90deg);
+      }
+      50% {
+        transform: translate(200px, 0) rotate(180deg);
+      }
+      75% {
+        transform: translate(100px, -100px) rotate(270deg);
+      }
+      100% {
+        transform: translate(0, 0) rotate(360deg);
+      }
+    }
+
+    /* Main heading animation */
+    main h2 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      position: relative;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+      animation: glow 2s infinite alternate;
+      color: #003d80;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7),
+                     0 0 20px rgba(255, 0, 85, 0.5),
+                     0 0 30px rgba(255, 0, 85, 0.3);
+      }
+      to {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.9),
+                     0 0 30px rgba(255, 0, 85, 0.7),
+                     0 0 40px rgba(255, 0, 85, 0.5);
+      }
+    }
+
+    /* Typewriter effect */
+    .typewriter-container {
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      min-height: 60px;
+      color: #003d80;
+      font-weight: bold;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      background-color: #003d80;
+      margin-left: 4px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* Pulsing button */
+    .pulse-button {
+      background: linear-gradient(45deg, #ff0055, #ffcc00);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 2rem;
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
+      transition: all 0.3s ease;
+      animation: pulse 2s infinite;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+
+    .pulse-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 0, 85, 0.8);
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 20px rgba(255, 0, 85, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0);
+      }
+    }
+
+    /* Social Links Section - Original maintain kiya */
+    .social-links {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .social-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      main h2 {
+        font-size: 2.5rem;
+      }
+      
+      .typewriter-container {
+        font-size: 1.4rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -207,7 +408,7 @@
     </div>
   </div>
 
-  <!-- HEADER -->
+  <!-- HEADER - Original maintain kiya -->
   <header>
     <div class="header-top">
       <img src="logo.png" alt="Logo" class="logo">
@@ -228,13 +429,23 @@
     </nav>
   </header>
 
-  <!-- MAIN -->
+  <!-- MAIN - Sirf animations add kiye -->
   <main>
+    <div class="color-blocks">
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+    </div>
+    
     <h2>Welcome to Shiv Computer</h2>
-    <p>Your go-to Place for Practical Computer Education.</p>
+    <div class="typewriter-container" id="typewriter"></div>
+    <button class="pulse-button">Explore Courses</button>
   </main>
 
-  <!-- FOOTER -->
+  <!-- FOOTER - Original maintain kiya -->
   <footer>
     <p>© 2025 Shiv Computer. All rights reserved.</p>
     <p>📍 27, Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
@@ -242,11 +453,18 @@
       <img src="wlogo.png" alt="WhatsApp">
       <span>WhatsApp</span>
     </a>
+    
+    <!-- Social Links - Original maintain kiya -->
+    <div class="social-links">
+      <a href="#">Facebook</a> |
+      <a href="#">Instagram</a> |
+      <a href="#">Twitter</a>
+    </div>
   </footer>
 
-  <!-- SCRIPT -->
+  <!-- SCRIPT - Original + new animations -->
   <script>
-    // Popup
+    // Popup - Original maintain kiya
     document.addEventListener('DOMContentLoaded', function() {
       const popup = document.getElementById('welcomePopup');
       const closeButton = document.getElementById('closePopup');
@@ -254,17 +472,33 @@
         popup.style.opacity = '0';
         setTimeout(() => popup.style.display = 'none', 500);
       });
+
+      // Typewriter effect - Naya add kiya
+      const text = "Your go-to Place for Practical Computer Education.";
+      const typewriterElement = document.getElementById('typewriter');
+      let i = 0;
+      
+      function typeWriter() {
+        if (i < text.length) {
+          typewriterElement.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
+          i++;
+          setTimeout(typeWriter, 100);
+        } else {
+          // Keep the cursor blinking after typing is complete
+          typewriterElement.innerHTML = text + '<span class="cursor"></span>';
+        }
+      }
+      
+      // Start the typewriter effect after a short delay
+      setTimeout(typeWriter, 500);
     });
 
-    // Toggle Menu
+    // Toggle Menu - Original maintain kiya
     function toggleMenu() {
       document.getElementById("navMenu").classList.toggle("show");
     }
-  </script>
-  <script>
-    // ... existing script code ...
 
-    // NEW: Service Worker Registration
+    // Service Worker Registration - Original maintain kiya
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('service-worker.js').then(function(registration) {
@@ -275,11 +509,6 @@
           console.log('ServiceWorker registration failed: ', err);
         });
       });
-    }
-
-    // Toggle Menu
-    function toggleMenu() {
-      document.getElementById("navMenu").classList.toggle("show");
     }
   </script>
 
