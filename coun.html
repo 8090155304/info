@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counter</title>
+    <link rel="icon" type="image/png" href="SHIV.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.2.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+    
+    <style>
+        /* Mobile-First CSS */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .container { 
+            width: 100%;
+            max-width: 750px; 
+            margin: 0 auto; 
+            padding: 20px 10px; 
+        }
+        h2 { 
+            color: #007bff; 
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px; 
+            margin: 0 auto 20px auto;
+            padding-top: 75%; 
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #videoFeed { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: 100%;
+            border: 3px solid #007bff; 
+            object-fit: cover; 
+            transform: scaleX(-1);
+        }
+        #resultCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .controls button { 
+            padding: 12px 15px; 
+            margin: 8px; 
+            font-size: 1rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            border: none; 
+            border-radius: 6px; 
+            transition: background-color 0.3s, opacity 0.3s;
+            flex-grow: 1; 
+            min-width: 140px;
+        }
+        .controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #captureTargetBtn { background-color: #28a745; color: white; }
+        #startCountBtn { background-color: #ffc107; color: #333; }
+        #printHistoryBtn { background-color: #6c757d; color: white; }
+        
+        #output { 
+            margin-top: 20px; 
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 1.1em; 
+            min-height: 50px;
+        }
+        /* --- History Styles --- */
+        #historySection {
+            margin-top: 30px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            text-align: left;
+        }
+        #historyList {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #ced4da;
+            margin-top: 10px;
+        }
+        #historyList li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #ced4da;
+            font-size: 0.95rem;
+        }
+        #historyList li:last-child {
+            border-bottom: none;
+        }
+        
+        /* 🚨 प्रिंट फिक्स: प्रिंट करने पर सिर्फ़ हिस्ट्री सेक्शन दिखना चाहिए */
+        @media print {
+            /* प्रिंट के दौरान पूरे कंटेनर को छुपाएँ */
+            .container {
+                display: none;
+            }
+            /* एक नया कंटेनर जो सिर्फ प्रिंट के लिए उपयोग होगा */
+            body::after {
+                content: '';
+                display: block;
+                width: 100%;
+                height: 100%;
+                /* यहाँ हिस्ट्री सेक्शन का कंटेंट जाएगा */
+            }
+            
+            /* हिस्ट्री सेक्शन को प्रिंट के लिए तैयार करें */
+            #historySection {
+                display: block; /* वापस दृश्यमान करें */
+                width: 90%;
+                margin: 20px auto;
+                padding: 0;
+                box-shadow: none;
+                background: white;
+                text-align: center;
+            }
+            #historySection h3 {
+                text-align: center;
+                margin-bottom: 15px;
+                color: #000;
+                font-size: 1.4rem;
+            }
+            /* प्रिंट बटन और क्लियर बटन को छुपाएँ */
+            #historySection button {
+                display: none;
+            }
+            #historyList {
+                max-height: none; /* पूरी हिस्ट्री दिखाएं */
+                overflow-y: visible;
+                text-align: left;
+                border: 1px solid #333;
+                padding: 10px;
+            }
+            #historyList li {
+                border-bottom: 1px solid #eee;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Object Counter</h2>
+        
+        <div class="video-container">
+            <video id="videoFeed" playsinline autoplay muted></video>
+            <canvas id="resultCanvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="captureTargetBtn" disabled>🎯 स्टेप 1: टारगेट सेट करें</button>
+            <button id="startCountBtn" disabled>🔢 स्टेप 2: गिनती शुरू करें</button>
+        </div>
+
+        <div id="output">
+            <p>स्थिति: लोड हो रहा है... (इंटरनेट ज़रूरी है)</p>
+        </div>
+    </div>
+    
+    <div id="historySection">
+        <h3>📊 गिनती इतिहास (Local Storage)</h3>
+        <div class="controls">
+            <button id="printHistoryBtn">🖨️ इतिहास प्रिंट/PDF करें</button>
+            <button id="clearHistoryBtn" style="background-color: #dc3545; color: white;">🗑️ इतिहास हटाएँ</button>
+        </div>
+        <ul id="historyList">
+            </ul>
+    </div>
+
+
+    <script>
+        const video = document.getElementById('videoFeed');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const resultCtx = resultCanvas.getContext('2d');
+        const captureTargetBtn = document.getElementById('captureTargetBtn');
+        const startCountBtn = document.getElementById('startCountBtn');
+        const printHistoryBtn = document.getElementById('printHistoryBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const output = document.getElementById('output');
+        const historyList = document.getElementById('historyList');
+
+        let model = null;
+        let targetObject = null;
+        let isCounting = false;
+        let animationFrameId = null;
+
+        // --- History Management ---
+        const HISTORY_KEY = 'object_count_history';
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            displayHistory(history);
+            return history;
+        }
+
+        function saveCount(objectName, count) {
+            const now = new Date();
+            const timestamp = now.toLocaleString('hi-IN', {
+                dateStyle: 'medium',
+                timeStyle: 'medium',
+                hour12: true
+            });
+
+            const newEntry = {
+                timestamp,
+                objectName: objectName.toUpperCase(),
+                count: count
+            };
+
+            const history = loadHistory();
+            history.unshift(newEntry); // सबसे नया रिकॉर्ड सबसे पहले
+
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            displayHistory(history);
+        }
+
+        function displayHistory(history) {
+            historyList.innerHTML = ''; // सूची साफ करें
+            if (history.length === 0) {
+                historyList.innerHTML = '<li>कोई रिकॉर्ड नहीं मिला।</li>';
+                return;
+            }
+            history.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `[${item.timestamp}] - ${item.objectName}: ${item.count} गिने गए।`;
+                historyList.appendChild(li);
+            });
+        }
+        
+        // --- Event Listeners for History ---
+        printHistoryBtn.addEventListener('click', () => {
+            window.print();
+        });
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('क्या आप सचमुच गिनती का पूरा इतिहास हटाना चाहते हैं?')) {
+                localStorage.removeItem(HISTORY_KEY);
+                loadHistory();
+            }
+        });
+
+
+        // --- 1. मॉडल लोड करें ---
+        async function loadModel() {
+            output.innerHTML = '<p>⏳लोड हो रहा है... (इंटरनेट से)</p>';
+            loadHistory(); 
+
+            try {
+                model = await cocoSsd.load();
+                output.innerHTML = '<p style="color: #28a745; font-weight: bold;">✅ लोड हो गया। कृपया कैमरा की अनुमति प्रदान करें ।</p>';
+                startCamera();
+            } catch (err) {
+                output.innerHTML = `<p style="color: red; font-weight: bold;">❌ मॉडल लोडिंग विफल। कृपया इंटरनेट जाँचें।</p>`;
+                console.error("Model loading error:", err);
+            }
+        }
+
+        // --- 2. कैमरा एक्सेस शुरू करना ---
+        async function startCamera() {
+            try {
+                const constraints = { video: { facingMode: "environment" } }; 
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+                    
+                    const videoWidth = video.videoWidth;
+                    const videoHeight = video.videoHeight;
+                    
+                    resultCanvas.width = videoWidth;
+                    resultCanvas.height = videoHeight;
+
+                    const container = document.querySelector('.video-container');
+                    container.style.paddingTop = `${(videoHeight / videoWidth) * 100}%`;
+
+                    captureTargetBtn.disabled = false;
+                    output.innerHTML = '<p style="color: #007bff; font-weight: bold;">✅ कैमरा चालू। टारगेट सेट करें।</p>';
+                };
+            } catch (err) {
+                output.innerHTML = `<p style="color: red; font-weight: bold;">❌ कैमरा अनुमति विफल।</p>`;
+                console.error("Camera access error:", err);
+            }
+        }
+
+        // --- 3. टारगेट ऑब्जेक्ट सेट करना (पहला स्कैन) ---
+        captureTargetBtn.addEventListener('click', async () => {
+            if (!model || !video.srcObject) return;
+
+            output.innerHTML = '<p>🎯 टारगेट ऑब्जेक्ट को पहचान रहा है...</p>';
+
+            const predictions = await model.detect(video);
+
+            if (predictions.length === 0) {
+                output.innerHTML = '<p style="color: orange;">⚠️ कोई ऑब्जेक्ट नहीं मिला। फिर से प्रयास करें।</p>';
+                return;
+            }
+
+            const bestPrediction = predictions.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+            targetObject = bestPrediction.class; 
+            
+            output.innerHTML = `<p style="color: blue; font-weight: bold;">🎯 **टारगेट सेट हो गया:** **${targetObject.toUpperCase()}**। अब गिनती शुरू करें।</p>`;
+            
+            captureTargetBtn.disabled = true;
+            startCountBtn.disabled = false;
+        });
+
+        // --- 4. गिनती शुरू करना (दूसरा स्कैन) ---
+        startCountBtn.addEventListener('click', () => {
+            if (!targetObject) return;
+
+            isCounting = true;
+            output.innerHTML = `<p>🔢 गिनती शुरू। **${targetObject.toUpperCase()}** को ट्रैक किया जा रहा है...</p>`;
+            captureTargetBtn.disabled = true;
+            startCountBtn.disabled = true;
+            
+            detectFrame();
+            
+            // 5 सेकंड बाद गिनती बंद करें और सेव करें
+            setTimeout(() => {
+                isCounting = false;
+                cancelAnimationFrame(animationFrameId);
+                
+                // अंतिम गणना को output से निकालें
+                const outputText = output.textContent;
+                const match = outputText.match(/\d+/);
+                const finalCount = match ? parseInt(match[0]) : 0;
+                
+                saveCount(targetObject, finalCount);
+                
+                output.innerHTML += `<p style="color: purple;">💾 गिनती सहेजी गई। नया स्कैन करने के लिए पेज रीफ़्रेश करें।</p>`;
+            }, 5000); // 5 सेकंड तक गिनती करें
+        });
+
+        // --- 5. कंटीन्यूअस डिटेक्शन और काउंटिंग लॉजिक ---
+        async function detectFrame() {
+            if (!isCounting || !model) {
+                cancelAnimationFrame(animationFrameId);
+                return;
+            }
+
+            const predictions = await model.detect(video);
+            
+            resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+
+            let count = 0;
+            
+            predictions.forEach(p => {
+                if (p.class === targetObject) {
+                    count++;
+                    drawBoundingBox(p); 
+                }
+            });
+
+            output.innerHTML = `<p style="font-size: 1.5em; color: #28a745; font-weight: bold;">✅ **${targetObject.toUpperCase()} काउंट:** ${count}</p>`;
+
+            animationFrameId = requestAnimationFrame(detectFrame);
+        }
+
+        // --- 6. बाउंडिंग बॉक्स ड्रा करना ---
+        function drawBoundingBox(prediction) {
+            const [x, y, width, height] = prediction.bbox;
+            
+            resultCtx.beginPath();
+            resultCtx.strokeStyle = 'red'; 
+            resultCtx.lineWidth = 3;
+            resultCtx.rect(x, y, width, height);
+            resultCtx.stroke();
+            
+            resultCtx.fillStyle = 'red';
+            resultCtx.font = '20px Arial';
+            resultCtx.fillText(prediction.class, x, y > 20 ? y - 5 : 20);
+        }
+
+        // पेज लोड होने पर मॉडल लोड करें
+        window.onload = loadModel;
+    </script>
+</body>
+</html>
