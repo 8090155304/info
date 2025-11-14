@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>इमेज को PDF में बदलें</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <!-- jsPDF Library for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SortableJS Library for drag-and-drop reordering -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        /* Custom styles for the draggable image list */
+        #image-list .draggable-item {
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+        #image-list .sortable-ghost {
+            opacity: 0.4;
+            background-color: #e0f2fe; /* light blue */
+            border: 2px dashed #00bfff;
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            place-items: center;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="flex flex-col items-center p-6 bg-white rounded-xl shadow-2xl">
+            <div class="spinner mb-4"></div>
+            <p class="text-gray-700 font-semibold">PDF बनाई जा रही है... कृपया प्रतीक्षा करें।</p>
+        </div>
+    </div>
+
+    <header class="bg-white shadow-md p-4 sticky top-0 z-10">
+        <h1 class="text-2xl font-bold text-gray-800 text-center">इमेज से PDF कनवर्टर</h1>
+        <p class="text-sm text-gray-500 text-center mt-1">JPEG इमेज अपलोड करें, क्रम व्यवस्थित करें, और PDF बनाएँ (अधिकतम 50 इमेज)।</p>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        
+        <!-- File Input Section -->
+        <section class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-blue-200">
+            <h2 class="text-xl font-semibold text-blue-600 mb-4">1. इमेज चुनें (Select Images)</h2>
+            <div class="flex flex-col md:flex-row gap-4 items-start">
+                <input type="file" id="jpeg-input" accept="image/jpeg" multiple class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition duration-150" aria-label="इमेज फ़ाइलें चुनें">
+            </div>
+            <p id="file-count" class="mt-4 text-sm font-medium text-gray-600">0 इमेज चुनी गईं।</p>
+            <p id="error-message" class="text-red-500 mt-2 text-sm font-medium"></p>
+        </section>
+
+        <!-- Configuration Section -->
+        <section class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-yellow-200">
+            <h2 class="text-xl font-semibold text-yellow-700 mb-4">2. PDF सेटिंग्स (PDF Settings)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Image Quality Setting -->
+                <div>
+                    <label for="image-quality" class="block text-sm font-medium text-gray-700 mb-1">इमेज गुणवत्ता/साइज (Image Quality/Size):</label>
+                    <select id="image-quality" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <option value="0.9" selected>उच्च (High) - बड़ा साइज़</option>
+                        <option value="0.7">मध्यम (Medium) - सामान्य साइज़</option>
+                        <option value="0.5">निम्न (Low) - छोटा साइज़</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">यह सेटिंग PDF फाइल का अंतिम आकार (Size) निर्धारित करने में मदद करेगी।</p>
+                </div>
+                <!-- Page Size Setting (Optional but useful for PDF) -->
+                <div>
+                    <label for="page-size" class="block text-sm font-medium text-gray-700 mb-1">PDF पेज साइज़ (Page Size):</label>
+                    <select id="page-size" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <option value="a4" selected>A4 (210 x 297 mm)</option>
+                        <option value="letter">Letter (8.5 x 11 in)</option>
+                        <option value="custom">इमेज के साइज़ के अनुसार (Fit to Image)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">यह निर्धारित करता है कि इमेज को किस पेज साइज़ पर रखा जाएगा।</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Image Preview and Reordering Section -->
+        <section class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-green-200">
+            <h2 class="text-xl font-semibold text-green-700 mb-4">3. क्रम व्यवस्थित करें (Drag & Drop to Reorder)</h2>
+            <p class="text-sm text-gray-500 mb-4">इमेज को क्लिक करके खींचें (Drag) और PDF में जिस क्रम में आप उन्हें चाहते हैं, उसमें छोड़ें (Drop)।</p>
+            
+            <div id="image-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 min-h-[100px] border-dashed border-2 border-gray-300 p-4 rounded-lg bg-gray-50">
+                <!-- Image previews will be injected here -->
+                <p id="placeholder-text" class="col-span-full text-center text-gray-400 py-4">यहां चुनी गई इमेज दिखाई देंगी।</p>
+            </div>
+            <div class="flex justify-end mt-4">
+                 <button onclick="clearAllFiles()" id="clear-button" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium transition duration-150 shadow-md disabled:opacity-50" disabled>
+                    सभी हटाएँ
+                </button>
+            </div>
+        </section>
+
+        <!-- Generate PDF Button -->
+        <section class="text-center p-6 bg-blue-50 rounded-xl shadow-lg">
+            <button onclick="generatePDF()" id="generate-button" class="px-8 py-4 bg-blue-600 text-white font-bold text-lg rounded-xl shadow-xl hover:bg-blue-700 transition duration-300 disabled:bg-blue-400 disabled:cursor-not-allowed transform hover:scale-105" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6 inline-block mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125V5.25a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3-3m0 0-3-3m3 3h4.5a2.25 2.25 0 0 0 2.25-2.25V6.75m0 0a1.5 1.5 0 0 0-.766-1.321L12.5 3.522a1.5 1.5 0 0 0-1.996 0L8.716 5.43c-.487.382-.676.99-.485 1.543l.496 1.761m4.5-.672a2.25 2.25 0 0 0 2.25 2.25h1.5M2.25 12h17.5" />
+                </svg>
+                PDF बनाएँ और डाउनलोड करें
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="mt-8 p-4 bg-gray-800 text-white text-center text-sm">
+        <p>Copyright © 2025. All rights reserved.</p>
+        <p class="font-bold mt-1">Powered by Shiv Computer</p>
+    </footer>
+
+    <script>
+        const MAX_FILES = 50;
+        let selectedFiles = []; // Array to store File objects
+        const imageList = document.getElementById('image-list');
+        const fileInput = document.getElementById('jpeg-input');
+        const fileCount = document.getElementById('file-count');
+        const errorMessage = document.getElementById('error-message');
+        const generateButton = document.getElementById('generate-button');
+        const clearButton = document.getElementById('clear-button');
+        const placeholderText = document.getElementById('placeholder-text');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        
+        // --- 1. Initialize SortableJS for Drag & Drop Reordering ---
+        const sortable = Sortable.create(imageList, {
+            animation: 150,
+            handle: '.draggable-item', // Only elements with this class are draggable
+            ghostClass: 'sortable-ghost',
+            onEnd: function (evt) {
+                // Reorder the original files array based on the new DOM order
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+                
+                // Get the DOM elements array (which is already reordered by SortableJS)
+                const items = Array.from(imageList.children).filter(el => el.classList.contains('draggable-item'));
+                
+                // Now, reconstruct the selectedFiles array based on the `data-file-id` attribute
+                const newFilesOrder = items.map(item => {
+                    const fileId = item.getAttribute('data-file-id');
+                    return selectedFiles.find(file => file.id === fileId);
+                }).filter(file => file !== undefined); // filter out any undefined/ghost elements
+
+                selectedFiles = newFilesOrder;
+                updateFileCountDisplay();
+            },
+        });
+
+        // --- 2. File Selection Handler ---
+        fileInput.addEventListener('change', (event) => {
+            const newFiles = Array.from(event.target.files).filter(file => file.type === 'image/jpeg');
+            let filesToAdd = [];
+            
+            // Check for file limit
+            if (selectedFiles.length + newFiles.length > MAX_FILES) {
+                const availableSlots = MAX_FILES - selectedFiles.length;
+                filesToAdd = newFiles.slice(0, availableSlots);
+                if (availableSlots > 0) {
+                     errorMessage.textContent = `आप केवल ${MAX_FILES} इमेज तक चुन सकते हैं। ${filesToAdd.length} इमेज जोड़ दी गई हैं।`;
+                } else {
+                     errorMessage.textContent = `आप पहले ही अधिकतम ${MAX_FILES} इमेज चुन चुके हैं।`;
+                }
+            } else {
+                filesToAdd = newFiles;
+                errorMessage.textContent = '';
+            }
+
+            // Assign unique ID to each new file for reordering tracking
+            filesToAdd.forEach(file => {
+                file.id = crypto.randomUUID(); // Assign a unique ID for tracking
+                selectedFiles.push(file);
+                addFilePreview(file);
+            });
+
+            updateFileCountDisplay();
+            
+            // Clear the input field so same files can be selected again if needed
+            fileInput.value = ''; 
+        });
+        
+        // --- 3. UI Update Functions ---
+        function updateFileCountDisplay() {
+            const count = selectedFiles.length;
+            fileCount.textContent = `${count} इमेज चुनी गईं।`;
+            generateButton.disabled = count === 0;
+            clearButton.disabled = count === 0;
+            placeholderText.style.display = count === 0 ? 'block' : 'none';
+        }
+
+        function addFilePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const item = document.createElement('div');
+                item.className = 'draggable-item relative group bg-gray-100 p-2 rounded-lg shadow-md hover:shadow-xl transition duration-150';
+                item.setAttribute('data-file-id', file.id);
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = file.name;
+                img.className = 'w-full h-24 object-cover rounded-md';
+
+                const name = document.createElement('p');
+                name.className = 'text-xs text-center truncate mt-1 text-gray-700';
+                name.textContent = file.name;
+                
+                const removeButton = document.createElement('button');
+                removeButton.className = 'absolute top-0 right-0 m-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition duration-150 focus:opacity-100';
+                removeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>';
+                removeButton.onclick = (e) => {
+                    e.stopPropagation();
+                    removeFile(file.id);
+                };
+
+                item.appendChild(img);
+                item.appendChild(name);
+                item.appendChild(removeButton);
+                imageList.appendChild(item);
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function removeFile(fileId) {
+            // Remove from selectedFiles array
+            selectedFiles = selectedFiles.filter(file => file.id !== fileId);
+            
+            // Remove from DOM
+            const itemToRemove = document.querySelector(`[data-file-id="${fileId}"]`);
+            if (itemToRemove) {
+                itemToRemove.remove();
+            }
+            updateFileCountDisplay();
+        }
+
+        function clearAllFiles() {
+            if (selectedFiles.length === 0) return;
+            selectedFiles = [];
+            imageList.innerHTML = '';
+            imageList.appendChild(placeholderText);
+            updateFileCountDisplay();
+            errorMessage.textContent = 'सभी इमेज हटा दी गई हैं।';
+        }
+
+        // --- 4. PDF Generation Logic ---
+        async function generatePDF() {
+            if (selectedFiles.length === 0) {
+                errorMessage.textContent = 'कृपया PDF बनाने के लिए कम से कम एक इमेज चुनें।';
+                return;
+            }
+
+            loadingOverlay.style.display = 'grid';
+            generateButton.disabled = true;
+
+            try {
+                // Get user settings
+                const quality = parseFloat(document.getElementById('image-quality').value); // JPEG quality (0.0 to 1.0)
+                const pageSizeOption = document.getElementById('page-size').value;
+                
+                // Initialize jsPDF
+                // Use 'p' (portrait) and 'mm' (millimeters) as default unit
+                const { jsPDF } = window.jspdf;
+                let doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                
+                let isFirstPage = true;
+
+                for (const file of selectedFiles) {
+                    const base64Image = await readFileAsBase64(file);
+                    
+                    if (!isFirstPage) {
+                        doc.addPage();
+                    }
+                    
+                    // Create an Image object to get dimensions
+                    const img = new Image();
+                    img.src = base64Image;
+                    await new Promise(resolve => img.onload = resolve);
+                    
+                    const imgWidth = img.width;
+                    const imgHeight = img.height;
+                    
+                    // Default PDF dimensions (A4 in mm)
+                    const a4Width = 210;
+                    const a4Height = 297;
+                    
+                    let pdfWidth, pdfHeight;
+
+                    if (pageSizeOption === 'custom') {
+                        // Fit to Image dimensions. Calculate aspect ratio to set PDF size.
+                        const imgRatio = imgWidth / imgHeight;
+                        
+                        // Set the smaller dimension to fit within a typical max size (e.g., A4)
+                        if (imgWidth > imgHeight) { // Landscape
+                             pdfWidth = a4Height; // Max width is A4 height (297)
+                             pdfHeight = pdfWidth / imgRatio;
+                             // Change orientation if needed, but it's simpler to fit image into a single dimension
+                             doc.setPageOrientation('l'); // Set to landscape for this page
+                             doc.internal.pageSize.width = pdfWidth;
+                             doc.internal.pageSize.height = pdfHeight;
+                        } else { // Portrait
+                             pdfHeight = a4Height; // Max height is A4 height (297)
+                             pdfWidth = pdfHeight * imgRatio;
+                             doc.setPageOrientation('p');
+                             doc.internal.pageSize.width = pdfWidth;
+                             doc.internal.pageSize.height = pdfHeight;
+                        }
+
+                        // Reset doc object for the new custom page size
+                        doc = new jsPDF({ 
+                            orientation: (imgWidth > imgHeight ? 'l' : 'p'), 
+                            unit: 'mm', 
+                            format: [pdfWidth, pdfHeight] 
+                        });
+                        if (!isFirstPage) doc.addPage(); // Re-add page if not first
+                        doc.addImage(base64Image, 'JPEG', 0, 0, pdfWidth, pdfHeight, null, 'FAST', quality);
+
+                    } else {
+                        // Use standard page size (A4 or Letter)
+                        let format = pageSizeOption;
+                        
+                        // Calculate dimensions to fit the image while maintaining aspect ratio
+                        const pageW = doc.internal.pageSize.getWidth();
+                        const pageH = doc.internal.pageSize.getHeight();
+                        
+                        // Calculate the ratio for fitting
+                        const widthRatio = pageW / imgWidth;
+                        const heightRatio = pageH / imgHeight;
+                        const ratio = Math.min(widthRatio, heightRatio) * 0.95; // Use 95% of the page size for margin
+
+                        pdfWidth = imgWidth * ratio;
+                        pdfHeight = imgHeight * ratio;
+                        
+                        // Center the image on the page
+                        const x = (pageW - pdfWidth) / 2;
+                        const y = (pageH - pdfHeight) / 2;
+                        
+                        doc.addImage(base64Image, 'JPEG', x, y, pdfWidth, pdfHeight, null, 'FAST', quality);
+                    }
+
+                    isFirstPage = false;
+                }
+
+                // Save the PDF
+                doc.save(`Images_to_PDF_${new Date().toLocaleDateString('hi-IN')}.pdf`);
+
+            } catch (error) {
+                console.error("PDF बनाते समय त्रुटि हुई:", error);
+                errorMessage.textContent = 'PDF बनाने में कोई त्रुटि हुई। कृपया कंसोल (Console) देखें।';
+            } finally {
+                loadingOverlay.style.display = 'none';
+                generateButton.disabled = false;
+            }
+        }
+        
+        // Helper function to read file as Base64 string
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Initialize the UI state
+        updateFileCountDisplay();
+    </script>
+</body>
+</html>

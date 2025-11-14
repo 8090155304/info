@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>PDF से JPEG</title>
+    <!-- Tailwind CSS CDN for professional styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library for rendering PDF files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        /* Custom styles for better aesthetics and font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        /* Style for the canvas elements (not shown by default, used for rendering) */
+        .page-canvas {
+            display: none;
+        }
+        .loading-ring {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #2563eb;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 sm:p-8">
+
+    <div class="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 sm:p-10 mb-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-700 mb-2">
+                PDF को JPEG में बदलें
+            </h1>
+            <p class="text-gray-600 text-lg">
+                आसानी से अपने PDF पेजों को उच्च गुणवत्ता वाली JPEG इमेज में कन्वर्ट करें।
+            </p>
+        </header>
+
+        <!-- Main Form and Inputs -->
+        <div class="space-y-6">
+            <!-- File Input -->
+            <div>
+                <label for="pdfFile" class="block text-sm font-medium text-gray-700 mb-2">1. PDF फाइल चुनें (अधिकतम 10 पेज)</label>
+                <input type="file" id="pdfFile" accept=".pdf" class="w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 p-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition duration-150">
+            </div>
+
+            <!-- Page Selection Input -->
+            <div>
+                <label for="pageNumber" class="block text-sm font-medium text-gray-700 mb-2">2. विशिष्ट पेज नंबर (वैकल्पिक)</label>
+                <input type="number" id="pageNumber" min="1" placeholder="जैसे: 5 (सभी पेजों के लिए खाली छोड़ दें)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <p class="text-xs text-gray-500 mt-1">यदि आप केवल एक पेज कन्वर्ट करना चाहते हैं, तो उसका नंबर डालें।</p>
+            </div>
+
+            <!-- Convert Button -->
+            <button id="convertButton" onclick="startConversion()"
+                class="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-lg shadow-lg text-lg font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition duration-200 transform hover:scale-[1.01] disabled:bg-gray-400 disabled:shadow-none"
+                disabled>
+                <span id="buttonText">JPEG में कन्वर्ट करें</span>
+                <div id="loadingIndicator" class="loading-ring ml-3 hidden"></div>
+            </button>
+
+            <!-- Message Area -->
+            <div id="messageBox" class="p-4 text-sm text-red-700 bg-red-100 rounded-lg hidden" role="alert"></div>
+        </div>
+
+        <!-- Output Area -->
+        <div id="outputArea" class="mt-10 pt-6 border-t border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">कन्वर्टेड इमेज</h2>
+            <div id="imageResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Converted images will be displayed here -->
+            </div>
+            <p id="noResults" class="text-gray-500 text-center py-8">कोई इमेज कन्वर्ट नहीं की गई है।</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full text-center text-gray-500 text-sm mt-8 p-4">
+        Powered by Shiv Computer
+    </footer>
+
+    <script>
+        // Set up the worker source for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        const pdfFileInput = document.getElementById('pdfFile');
+        const pageNumberInput = document.getElementById('pageNumber');
+        const convertButton = document.getElementById('convertButton');
+        const imageResults = document.getElementById('imageResults');
+        const messageBox = document.getElementById('messageBox');
+        const noResults = document.getElementById('noResults');
+        const buttonText = document.getElementById('buttonText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        let pdfDocument = null;
+
+        // --- Utility Functions ---
+
+        function showMessage(text, isError = false) {
+            messageBox.textContent = text;
+            messageBox.className = isError
+                ? "p-4 text-sm text-red-700 bg-red-100 rounded-lg"
+                : "p-4 text-sm text-green-700 bg-green-100 rounded-lg";
+            messageBox.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        function toggleLoading(isLoading) {
+            convertButton.disabled = isLoading || !pdfDocument;
+            loadingIndicator.classList.toggle('hidden', !isLoading);
+            buttonText.textContent = isLoading ? 'कन्वर्ट हो रहा है...' : 'JPEG में कन्वर्ट करें';
+        }
+
+        // --- Core Conversion Logic ---
+
+        // Function to render a single PDF page to a Canvas and convert it to JPEG
+        async function renderPageToJpeg(pdf, pageNum) {
+            try {
+                const page = await pdf.getPage(pageNum);
+                const scale = 2.0; // Higher scale means higher resolution/quality
+                const viewport = page.getViewport({ scale: scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+
+                // Render the page onto the canvas
+                await page.render(renderContext).promise;
+
+                // Convert canvas content to JPEG data URL (quality 0.9)
+                const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+                return {
+                    pageNumber: pageNum,
+                    dataUrl: jpegDataUrl
+                };
+
+            } catch (error) {
+                console.error(`Error rendering page ${pageNum}:`, error);
+                return null;
+            }
+        }
+
+        // Function to handle the conversion process
+        async function startConversion() {
+            if (!pdfDocument) {
+                showMessage("पहले एक PDF फाइल अपलोड करें।", true);
+                return;
+            }
+
+            toggleLoading(true);
+            hideMessage();
+            imageResults.innerHTML = '';
+            noResults.classList.add('hidden');
+
+            const totalPages = pdfDocument.numPages;
+            const specificPageNum = parseInt(pageNumberInput.value, 10);
+            
+            let pagesToConvert = [];
+
+            // Determine which pages to convert
+            if (specificPageNum) {
+                if (specificPageNum < 1 || specificPageNum > totalPages) {
+                    showMessage(`अवैध पेज नंबर: यह PDF में 1 और ${totalPages} के बीच होना चाहिए।`, true);
+                    toggleLoading(false);
+                    return;
+                }
+                pagesToConvert.push(specificPageNum);
+            } else {
+                // Convert all pages up to 10
+                const limit = Math.min(totalPages, 10);
+                for (let i = 1; i <= limit; i++) {
+                    pagesToConvert.push(i);
+                }
+                if (totalPages > 10) {
+                     showMessage(`नोट: PDF में ${totalPages} पेज हैं। केवल पहले 10 पेज कन्वर्ट किए जा रहे हैं (आपकी आवश्यकतानुसार)।`, false);
+                }
+            }
+
+            if (pagesToConvert.length === 0) {
+                 showMessage("कन्वर्ट करने के लिए कोई पेज नहीं मिला।", true);
+                 toggleLoading(false);
+                 return;
+            }
+
+
+            const results = [];
+            
+            // Loop and convert each page
+            for (const pageNum of pagesToConvert) {
+                const result = await renderPageToJpeg(pdfDocument, pageNum);
+                if (result) {
+                    results.push(result);
+                }
+            }
+
+            // Display results
+            if (results.length > 0) {
+                results.forEach(res => {
+                    const card = document.createElement('div');
+                    card.className = "bg-gray-50 p-4 rounded-lg shadow-md";
+                    card.innerHTML = `
+                        <p class="text-center font-semibold text-blue-800 mb-3">पेज ${res.pageNumber}</p>
+                        <img src="${res.dataUrl}" alt="Page ${res.pageNumber}" class="w-full h-auto rounded-lg mb-3 border border-gray-200">
+                        <a href="${res.dataUrl}" download="pdf_page_${res.pageNumber}.jpeg"
+                           class="w-full block text-center py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition duration-150">
+                            डाउनलोड JPEG
+                        </a>
+                    `;
+                    imageResults.appendChild(card);
+                });
+                showMessage(`${results.length} पेज सफलतापूर्वक JPEG में कन्वर्ट किए गए।`);
+            } else {
+                noResults.classList.remove('hidden');
+                showMessage("कन्वर्जन असफल रहा या कोई पेज कन्वर्ट नहीं हुआ।", true);
+            }
+
+            toggleLoading(false);
+        }
+
+        // --- Event Listeners ---
+
+        // Handle file selection and PDF loading
+        pdfFileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            pdfDocument = null;
+            convertButton.disabled = true;
+            hideMessage();
+            imageResults.innerHTML = '';
+            noResults.classList.remove('hidden');
+
+            if (!file) return;
+
+            if (file.type !== 'application/pdf') {
+                showMessage("कृपया एक वैध PDF (.pdf) फाइल चुनें।", true);
+                return;
+            }
+
+            try {
+                // Read file as ArrayBuffer
+                const arrayBuffer = await file.arrayBuffer();
+
+                // Load PDF document
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                pdfDocument = await loadingTask.promise;
+
+                const totalPages = pdfDocument.numPages;
+
+                if (totalPages === 0) {
+                    showMessage("PDF खाली है या लोड नहीं हो सका।", true);
+                    pdfDocument = null;
+                    return;
+                }
+
+                if (totalPages > 10) {
+                    showMessage(`PDF में ${totalPages} पेज हैं। अधिकतम 10 पेज ही एक बार में कन्वर्ट होंगे।`, false);
+                } else {
+                    showMessage(`'${file.name}' (${totalPages} पेज) सफलतापूर्वक लोड हो गई है।`, false);
+                }
+
+                convertButton.disabled = false;
+                pageNumberInput.setAttribute('max', totalPages);
+            } catch (error) {
+                console.error("Error loading PDF:", error);
+                showMessage("PDF लोड करने में कोई त्रुटि हुई। कृपया जांचें कि यह एक वैध PDF फाइल है।", true);
+                pdfDocument = null;
+            }
+        });
+
+        // Initialize state
+        noResults.classList.remove('hidden');
+    </script>
+</body>
+</html>
