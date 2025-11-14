@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Super Car</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    
+    <style>
+        /* --- CSS STYLING --- */
+        
+        /* General Styling */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #0d0d0d;
+            font-family: 'Roboto', sans-serif;
+            color: #ecf0f1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Custom Game Background outside the road */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #1e1e1e;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease;
+        }
+
+        /* Score Board */
+        #score-board {
+            display: flex;
+            justify-content: space-between;
+            width: 90vw;
+            max-width: 400px;
+            margin-bottom: 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.1em;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        /* Game Area */
+        #gameArea {
+            width: 90vw;
+            max-width: 400px;
+            height: 70vh;
+            background-color: #444;
+            border: 10px solid #222;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 0, 0, 0.6);
+            z-index: 5;
+        }
+
+        /* Road Stripes Animation */
+        #gameArea::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2.5vw;
+            max-width: 8px;
+            height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                #f5f6fa,
+                #f5f6fa 7vh,
+                transparent 7vh,
+                transparent 14vh
+            );
+            animation: moveRoad 0.6s linear infinite;
+        }
+
+        @keyframes moveRoad {
+            from { background-position: 0 0; }
+            to { background-position: 0 14vh; }
+        }
+
+        /* Car Styling */
+        .car {
+            position: absolute;
+            width: 16vw;
+            height: 25vw;
+            max-width: 50px; 
+            max-height: 80px;
+            background-color: #3498db;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 0 5px rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            box-sizing: border-box;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: left 0.08s linear, background-color 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        #playerCar {
+            bottom: 5vh;
+            z-index: 10;
+            background-color: #e74c3c;
+        }
+
+        /* Overlay for Pause/Game Over */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5em;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 15;
+        }
+        #overlay.hidden {
+            display: none;
+        }
+        #overlay h2 {
+            margin-bottom: 30px;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+            font-size: 1.5em;
+        }
+        
+        /* Two Main Buttons in Overlay */
+        #overlay button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 6px #27ae60;
+            transition: all 0.2s ease;
+            font-family: 'Press Start 2P', cursive;
+            margin: 10px;
+        }
+        
+        /* Start/Resume Button */
+        #overlayButton {
+            background-color: #2ecc71;
+            color: white;
+            box-shadow: 0 6px #27ae60;
+        }
+        #overlayButton:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #229954;
+        }
+
+        /* Customization Button Style */
+        #customizationButton {
+            background-color: #3498db;
+            color: white;
+            font-size: 0.9em;
+            padding: 10px 20px;
+            box-shadow: 0 4px #2980b9;
+        }
+        #customizationButton:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #2980b9;
+        }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            display: flex;
+            justify-content: space-around;
+            width: 90vw;
+            max-width: 400px;
+            margin-top: 20px;
+            z-index: 10;
+        }
+
+        .control-button {
+            width: 30%;
+            padding: 15px;
+            font-size: 1.8em;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 5px #d35400;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .control-button:active {
+            background-color: #d35400;
+            box-shadow: 0 2px #c0392b;
+            transform: translateY(3px);
+        }
+
+        /* Floating Settings Button */
+        .floating-button {
+            position: absolute;
+            top: 25px;
+            right: 5vw;
+            z-index: 100;
+            padding: 10px;
+            font-size: 1.5em;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            line-height: 1;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .floating-button:active {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            transform: translateY(2px) scale(0.95);
+        }
+
+        /* Control Panel - COMPACT DESIGN */
+        #controls-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.95);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            overflow-y: auto;
+        }
+        #controls-panel.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #controls-panel h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #e67e22;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            border-bottom: 2px solid #d35400;
+            padding-bottom: 10px;
+        }
+
+        /* Compact Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #34495e;
+            padding: 15px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .setting-item:hover {
+            background-color: #3d566e;
+            transform: translateY(-2px);
+        }
+
+        .setting-item i {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            color: #3498db;
+        }
+
+        .setting-item span {
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        /* Expanded Settings Panel */
+        .expanded-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .expanded-panel.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .expanded-content {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .expanded-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .expanded-header h4 {
+            margin: 0;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1em;
+            color: #e67e22;
+        }
+
+        .close-expanded {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #ecf0f1;
+            font-weight: bold;
+        }
+
+        .input-group input[type="file"] {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        
+        .custom-file-upload {
+            border: 2px solid #2ecc71;
+            display: inline-block;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: #27ae60;
+            color: white;
+            font-size: 0.8em;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+        }
+        .custom-file-upload:hover {
+            background-color: #2ecc71;
+        }
+
+        .input-group input[type="color"],
+        .input-group input[type="range"],
+        .input-group input[type="number"],
+        .input-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #2c3e50;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: white;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        .input-group input[type="color"] {
+            height: 40px;
+            padding: 0;
+        }
+        .file-name {
+            font-size: 0.7em;
+            color: #bdc3c7;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+
+        .range-value {
+            font-size: 0.8em;
+            color: #3498db;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Car Type Selection */
+        .car-type-selection {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .car-type-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background-color: #34495e;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .car-type-option:hover {
+            background-color: #3d566e;
+        }
+
+        .car-type-option.selected {
+            border-color: #2ecc71;
+            background-color: #2c3e50;
+        }
+
+        .car-type-option i {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            color: #3498db;
+        }
+
+        .car-type-option span {
+            font-size: 0.7em;
+            text-align: center;
+        }
+
+        #controls-panel button {
+            width: 100%;
+            max-width: 350px;
+            padding: 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+            box-shadow: 0 5px #c0392b;
+            font-family: 'Press Start 2P', cursive;
+        }
+        #controls-panel button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #a93226;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+             #score-board { font-size: 0.9em; padding: 8px 10px; }
+             #gameArea { border-width: 6px; border-radius: 15px; }
+             .car { width: 18vw; height: 28vw; }
+             #mobile-controls { margin-top: 15px; }
+             .control-button { padding: 12px; font-size: 1.5em; border-radius: 10px; box-shadow: 0 4px #d35400; }
+             .floating-button { width: 40px; height: 40px; font-size: 1.2em; top: 15px; right: 3vw; }
+             #controls-panel h3 { font-size: 1.2em; margin-bottom: 15px; }
+             #overlay h2 { font-size: 1.2em; }
+             #overlay button { margin: 8px; padding: 10px 20px; font-size: 1em; }
+             #customizationButton { font-size: 0.8em; padding: 8px 15px; }
+             .settings-grid { gap: 10px; }
+             .setting-item { padding: 12px 8px; }
+             .setting-item i { font-size: 1.5em; }
+             .setting-item span { font-size: 0.7em; }
+             .car-type-selection { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        
+        <div id="score-board">
+            <span id="scoreDisplay">🏁 Score: 0</span>
+            <span id="highScoreDisplay">⭐ High Score: 0</span>
+        </div>
+
+        <button id="toggleSettingsButton" class="floating-button">⚙️</button> 
+
+        <div id="gameArea">
+            <div id="playerCar" class="car"></div>
+            
+            <div id="overlay" class="hidden">
+                <h2 id="overlayMessage">Game Paused</h2>
+                <button id="overlayButton">Start Game</button>
+                <button id="customizationButton">Game Customization</button>
+            </div>
+        </div>
+
+        <div id="mobile-controls">
+            <button class="control-button" id="leftButton">◀</button>
+            <button class="control-button" id="pauseButton">⏸️</button>
+            <button class="control-button" id="rightButton">▶</button>
+        </div>
+
+        <!-- Main Settings Panel with Icons -->
+        <div id="controls-panel">
+            <h3>🛠️ Game Settings</h3>
+            
+            <div class="settings-grid">
+                <div class="setting-item" id="playerCarSetting">
+                    <i class="fas fa-car"></i>
+                    <span>Your Car</span>
+                </div>
+                
+                <div class="setting-item" id="obstacleCarSetting">
+                    <i class="fas fa-traffic-light"></i>
+                    <span>Other Cars</span>
+                </div>
+                
+                <div class="setting-item" id="roadSetting">
+                    <i class="fas fa-road"></i>
+                    <span>Road</span>
+                </div>
+                
+                <div class="setting-item" id="backgroundSetting">
+                    <i class="fas fa-mountain"></i>
+                    <span>Background</span>
+                </div>
+                
+                <div class="setting-item" id="speedSetting">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Speed</span>
+                </div>
+                
+                <div class="setting-item" id="audioSetting">
+                    <i class="fas fa-volume-up"></i>
+                    <span>Audio</span>
+                </div>
+            </div>
+
+            <button id="settingsStartButton">🚀 Start New Game</button>
+        </div>
+
+        <!-- Expanded Settings Panels -->
+        <div class="expanded-panel" id="playerCarPanel">
+            <div class="expanded-content">
+                <div class="expanded-header">
+                    <h4>Your Car Settings</h4>
+                    <button class="close-expanded">&times;</button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="carImageInput">Car Image:</label>
+                    <input type="file" id="carImageInput" accept="image/*">
+                    <label for="carImageInput" class="custom-file-upload">Choose Car Image</label>
+                    <span class="file-name" id="carFileName">No file chosen</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="carSize">Car Size:</label>
+                    <input type="range" id="carSize" min="80" max="120" step="5" value="100">
+                    <span class="range-value" id="carSizeValue">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="expanded-panel" id="obstacleCarPanel">
+            <div class="expanded-content">
+                <div class="expanded-header">
+                    <h4>Other Cars Settings</h4>
+                    <button class="close-expanded">&times;</button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="obstacleCarImageInput">Single Car Image (All Obstacles):</label>
+                    <input type="file" id="obstacleCarImageInput" accept="image/*">
+                    <label for="obstacleCarImageInput" class="custom-file-upload">Choose Car Image</label>
+                    <span class="file-name" id="obstacleCarFileName">No file chosen</span>
+                </div>
+
+                <div class="input-group">
+                    <label>Or Select Multiple Car Types:</label>
+                    <div class="car-type-selection">
+                        <div class="car-type-option" data-type="sedan">
+                            <i class="fas fa-car"></i>
+                            <span>Sedan</span>
+                        </div>
+                        <div class="car-type-option" data-type="suv">
+                            <i class="fas fa-truck"></i>
+                            <span>SUV</span>
+                        </div>
+                        <div class="car-type-option" data-type="sports">
+                            <i class="fas fa-bolt"></i>
+                            <span>Sports</span>
+                        </div>
+                        <div class="car-type-option" data-type="taxi">
+                            <i class="fas fa-taxi"></i>
+                            <span>Taxi</span>
+                        </div>
+                        <div class="car-type-option" data-type="police">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Police</span>
+                        </div>
+                        <div class="car-type-option" data-type="truck">
+                            <i class="fas fa-truck-monster"></i>
+                            <span>Truck</span>
+                        </div>
+                    </div>
+                    <span class="file-name" id="selectedCarTypes">No car types selected</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="obstacleFrequency">Car Frequency:</label>
+                    <input type="range" id="obstacleFrequency" min="500" max="3000" step="100" value="1000">
+                    <span class="range-value" id="obstacleFrequencyValue">1000 ms</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="expanded-panel" id="roadPanel">
+            <div class="expanded-content">
+                <div class="expanded-header">
+                    <h4>Road Settings</h4>
+                    <button class="close-expanded">&times;</button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="backgroundInput">Road Color:</label>
+                    <input type="color" id="backgroundInput" value="#555555">
+                </div>
+
+                <div class="input-group">
+                    <label for="roadBorderColor">Road Border Color:</label>
+                    <input type="color" id="roadBorderColor" value="#222222">
+                </div>
+
+                <div class="input-group">
+                    <label for="roadStripeColor">Road Stripe Color:</label>
+                    <input type="color" id="roadStripeColor" value="#f5f6fa">
+                </div>
+            </div>
+        </div>
+
+        <div class="expanded-panel" id="backgroundPanel">
+            <div class="expanded-content">
+                <div class="expanded-header">
+                    <h4>Background Settings</h4>
+                    <button class="close-expanded">&times;</button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="gameBgImageInput">Background Image:</label>
+                    <input type="file" id="gameBgImageInput" accept="image/*">
+                    <label for="gameBgImageInput" class="custom-file-upload">Choose BG Image</label>
+                    <span class="file-name" id="gameBgFileName">No file chosen</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="gameTheme">Game Theme:</label>
+                    <select id="gameTheme">
+                        <option value="default">Default</option>
+                        <option value="desert">Desert</option>
+                        <option value="forest">Forest</option>
+                        <option value="mountain">Mountain</option>
+                        <option value="night">Night</option>
+                        <option value="winter">Winter</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="expanded-panel" id="speedPanel">
+            <div class="expanded-content">
+                <div class="expanded-header">
+                    <h4>Speed Settings</h4>
+                    <button class="close-expanded">&times;</button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="initialSpeed">Initial Game Speed:</label>
+                    <input type="range" id="initialSpeed" min="1" max="5" step="0.5" value="3">
+                    <span class="range-value" id="initialSpeedValue">3</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="expanded-panel" id="audioPanel">
+            <div class="expanded-content">
+                <div class="expanded-header">
+                    <h4>Audio Settings</h4>
+                    <button class="close-expanded">&times;</button>
+                </div>
+                
+                <div class="input-group">
+                    <label for="backgroundMusic">Background Music:</label>
+                    <input type="file" id="backgroundMusic" accept="audio/*">
+                    <label for="backgroundMusic" class="custom-file-upload">Choose Music</label>
+                    <span class="file-name" id="backgroundMusicFileName">No file chosen</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="crashSoundInput">Crash Sound:</label>
+                    <input type="file" id="crashSoundInput" accept="audio/*">
+                    <label for="crashSoundInput" class="custom-file-upload">Choose Sound</label>
+                    <span class="file-name" id="crashSoundFileName">No file chosen</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="musicVolume">Music Volume:</label>
+                    <input type="range" id="musicVolume" min="0" max="1" step="0.1" value="0.5">
+                    <span class="range-value" id="musicVolumeValue">50%</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="sfxVolume">SFX Volume:</label>
+                    <input type="range" id="sfxVolume" min="0" max="1" step="0.1" value="0.8">
+                    <span class="range-value" id="sfxVolumeValue">80%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgMusic" src="background_music.mp3" loop></audio>
+    <audio id="crashSound" src="car_crash.mp3"></audio>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+
+        const gameContainer = document.getElementById('game-container');
+        const gameArea = document.getElementById('gameArea');
+        const playerCar = document.getElementById('playerCar');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const overlay = document.getElementById('overlay');
+        const overlayMessage = document.getElementById('overlayMessage');
+        const overlayButton = document.getElementById('overlayButton');
+        const customizationButton = document.getElementById('customizationButton');
+
+        // Main settings panel
+        const controlsPanel = document.getElementById('controls-panel');
+        const toggleSettingsButton = document.getElementById('toggleSettingsButton');
+        const settingsStartButton = document.getElementById('settingsStartButton');
+
+        // Expanded panels
+        const playerCarPanel = document.getElementById('playerCarPanel');
+        const obstacleCarPanel = document.getElementById('obstacleCarPanel');
+        const roadPanel = document.getElementById('roadPanel');
+        const backgroundPanel = document.getElementById('backgroundPanel');
+        const speedPanel = document.getElementById('speedPanel');
+        const audioPanel = document.getElementById('audioPanel');
+
+        // Setting items (icons)
+        const playerCarSetting = document.getElementById('playerCarSetting');
+        const obstacleCarSetting = document.getElementById('obstacleCarSetting');
+        const roadSetting = document.getElementById('roadSetting');
+        const backgroundSetting = document.getElementById('backgroundSetting');
+        const speedSetting = document.getElementById('speedSetting');
+        const audioSetting = document.getElementById('audioSetting');
+
+        // Input elements
+        const carImageInput = document.getElementById('carImageInput');
+        const carFileNameSpan = document.getElementById('carFileName');
+        const carSizeControl = document.getElementById('carSize');
+        const carSizeValueSpan = document.getElementById('carSizeValue');
+        
+        const obstacleCarImageInput = document.getElementById('obstacleCarImageInput');
+        const obstacleCarFileNameSpan = document.getElementById('obstacleCarFileName');
+        const obstacleFrequencyControl = document.getElementById('obstacleFrequency');
+        const obstacleFrequencyValueSpan = document.getElementById('obstacleFrequencyValue');
+        
+        const backgroundInput = document.getElementById('backgroundInput');
+        const roadBorderColor = document.getElementById('roadBorderColor');
+        const roadStripeColor = document.getElementById('roadStripeColor');
+        
+        const gameBgImageInput = document.getElementById('gameBgImageInput');
+        const gameBgFileNameSpan = document.getElementById('gameBgFileName');
+        const gameThemeSelect = document.getElementById('gameTheme');
+        
+        const initialSpeedControl = document.getElementById('initialSpeed');
+        const initialSpeedValueSpan = document.getElementById('initialSpeedValue');
+        
+        const backgroundMusicInput = document.getElementById('backgroundMusic');
+        const backgroundMusicFileNameSpan = document.getElementById('backgroundMusicFileName');
+        const crashSoundInput = document.getElementById('crashSoundInput');
+        const crashSoundFileNameSpan = document.getElementById('crashSoundFileName');
+        const musicVolumeControl = document.getElementById('musicVolume');
+        const musicVolumeValueSpan = document.getElementById('musicVolumeValue');
+        const sfxVolumeControl = document.getElementById('sfxVolume');
+        const sfxVolumeValueSpan = document.getElementById('sfxVolumeValue');
+
+        // Car type selection
+        const carTypeOptions = document.querySelectorAll('.car-type-option');
+        const selectedCarTypesSpan = document.getElementById('selectedCarTypes');
+
+        const leftButton = document.getElementById('leftButton');
+        const rightButton = document.getElementById('rightButton');
+        const pauseButton = document.getElementById('pauseButton');
+
+        const bgMusic = document.getElementById('bgMusic');
+        const crashSound = document.getElementById('crashSound');
+
+        // Game Constants & Variables
+        const GAME_WIDTH_VW = 90; 
+        const CAR_WIDTH_VW = 16;  
+        const MOVE_STEP_VW = 5; 
+        let obstacleInterval;
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('highScore') || 0);
+        let isGameOver = true;
+        let isPaused = false;
+        let playerX_VW = (GAME_WIDTH_VW - CAR_WIDTH_VW) / 2;
+        let obstacleSpeedMultiplier = 1;
+        let obstacleCarImage = null;
+        let currentCarSize = 100;
+        let selectedCarTypes = [];
+
+        // Car type colors and styles
+        const carTypeStyles = {
+            sedan: { color: '#3498db', icon: 'fas fa-car' },
+            suv: { color: '#e74c3c', icon: 'fas fa-truck' },
+            sports: { color: '#f1c40f', icon: 'fas fa-bolt' },
+            taxi: { color: '#f39c12', icon: 'fas fa-taxi' },
+            police: { color: '#2980b9', icon: 'fas fa-shield-alt' },
+            truck: { color: '#7f8c8d', icon: 'fas fa-truck-monster' }
+        };
+
+        // Car type images (you can replace these with actual image URLs)
+        const carTypeImages = {
+            sedan: 'https://via.placeholder.com/50x80/3498db/ffffff?text=SEDAN',
+            suv: 'https://via.placeholder.com/50x80/e74c3c/ffffff?text=SUV',
+            sports: 'https://via.placeholder.com/50x80/f1c40f/000000?text=SPORTS',
+            taxi: 'https://via.placeholder.com/50x80/f39c12/ffffff?text=TAXI',
+            police: 'https://via.placeholder.com/50x80/2980b9/ffffff?text=POLICE',
+            truck: 'https://via.placeholder.com/50x80/7f8c8d/ffffff?text=TRUCK'
+        };
+        
+        // --- 1. Control Panel Toggle ---
+        function openSettings() {
+             controlsPanel.classList.add('active');
+             toggleSettingsButton.textContent = '❌'; 
+             toggleSettingsButton.style.backgroundColor = '#e74c3c'; 
+             overlay.classList.add('hidden');
+        }
+        
+        function closeSettings() {
+             controlsPanel.classList.remove('active');
+             toggleSettingsButton.textContent = '⚙️'; 
+             toggleSettingsButton.style.backgroundColor = '#3498db';
+             if (isGameOver || isPaused) {
+                 overlay.classList.remove('hidden');
+             }
+        }
+
+        toggleSettingsButton.addEventListener('click', () => {
+            if (controlsPanel.classList.contains('active')) {
+                closeSettings();
+                if (!isGameOver && isPaused) {
+                    showOverlay("Game Paused", "Resume Game", resumeGame);
+                }
+            } else {
+                if (!isGameOver && !isPaused) {
+                    pauseGame();
+                }
+                openSettings();
+            }
+        });
+        
+        customizationButton.addEventListener('click', () => {
+            openSettings();
+        });
+
+        // --- 2. Expanded Panel Management ---
+        function openExpandedPanel(panel) {
+            panel.classList.add('active');
+        }
+
+        function closeAllExpandedPanels() {
+            document.querySelectorAll('.expanded-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+        }
+
+        // Setting item click events
+        playerCarSetting.addEventListener('click', () => openExpandedPanel(playerCarPanel));
+        obstacleCarSetting.addEventListener('click', () => openExpandedPanel(obstacleCarPanel));
+        roadSetting.addEventListener('click', () => openExpandedPanel(roadPanel));
+        backgroundSetting.addEventListener('click', () => openExpandedPanel(backgroundPanel));
+        speedSetting.addEventListener('click', () => openExpandedPanel(speedPanel));
+        audioSetting.addEventListener('click', () => openExpandedPanel(audioPanel));
+
+        // Close expanded panels
+        document.querySelectorAll('.close-expanded').forEach(button => {
+            button.addEventListener('click', closeAllExpandedPanels);
+        });
+
+        // --- 3. Car Type Selection ---
+        carTypeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const carType = option.dataset.type;
+                
+                if (option.classList.contains('selected')) {
+                    option.classList.remove('selected');
+                    selectedCarTypes = selectedCarTypes.filter(type => type !== carType);
+                } else {
+                    option.classList.add('selected');
+                    selectedCarTypes.push(carType);
+                }
+                
+                updateSelectedCarTypesDisplay();
+                saveSettings();
+            });
+        });
+
+        function updateSelectedCarTypesDisplay() {
+            if (selectedCarTypes.length === 0) {
+                selectedCarTypesSpan.textContent = "No car types selected";
+            } else {
+                selectedCarTypesSpan.textContent = selectedCarTypes.join(', ');
+            }
+        }
+
+        function getRandomCarType() {
+            if (selectedCarTypes.length === 0) {
+                return null;
+            }
+            const randomIndex = Math.floor(Math.random() * selectedCarTypes.length);
+            return selectedCarTypes[randomIndex];
+        }
+
+        // --- 4. Local Storage and Initialization ---
+        function saveSettings() {
+            localStorage.setItem('carImage', playerCar.style.backgroundImage);
+            localStorage.setItem('carFileName', carFileNameSpan.textContent);
+            localStorage.setItem('carSize', carSizeControl.value);
+            localStorage.setItem('obstacleCarImage', obstacleCarImage);
+            localStorage.setItem('obstacleCarFileName', obstacleCarFileNameSpan.textContent);
+            localStorage.setItem('selectedCarTypes', JSON.stringify(selectedCarTypes));
+            localStorage.setItem('obstacleFrequency', obstacleFrequencyControl.value);
+            localStorage.setItem('bgColor', backgroundInput.value);
+            localStorage.setItem('roadBorderColor', roadBorderColor.value);
+            localStorage.setItem('roadStripeColor', roadStripeColor.value);
+            localStorage.setItem('gameBgImage', gameContainer.style.backgroundImage);
+            localStorage.setItem('gameBgFileName', gameBgFileNameSpan.textContent);
+            localStorage.setItem('gameTheme', gameThemeSelect.value);
+            localStorage.setItem('initialSpeed', initialSpeedControl.value);
+            localStorage.setItem('backgroundMusicFileName', backgroundMusicFileNameSpan.textContent);
+            localStorage.setItem('crashSoundFileName', crashSoundFileNameSpan.textContent);
+            localStorage.setItem('musicVolume', musicVolumeControl.value);
+            localStorage.setItem('sfxVolume', sfxVolumeControl.value);
+        }
+
+        function loadSettings() {
+            highScoreDisplay.textContent = `⭐ High Score: ${highScore}`;
+
+            // Load all settings from localStorage
+            const savedCarImage = localStorage.getItem('carImage');
+            const savedCarFileName = localStorage.getItem('carFileName');
+            const savedCarSize = localStorage.getItem('carSize');
+            const savedObstacleCarImage = localStorage.getItem('obstacleCarImage');
+            const savedObstacleCarFileName = localStorage.getItem('obstacleCarFileName');
+            const savedSelectedCarTypes = localStorage.getItem('selectedCarTypes');
+            const savedObstacleFrequency = localStorage.getItem('obstacleFrequency');
+            const savedBgColor = localStorage.getItem('bgColor');
+            const savedRoadBorderColor = localStorage.getItem('roadBorderColor');
+            const savedRoadStripeColor = localStorage.getItem('roadStripeColor');
+            const savedGameBgImage = localStorage.getItem('gameBgImage');
+            const savedGameBgFileName = localStorage.getItem('gameBgFileName');
+            const savedGameTheme = localStorage.getItem('gameTheme');
+            const savedInitialSpeed = localStorage.getItem('initialSpeed');
+            const savedBackgroundMusicFileName = localStorage.getItem('backgroundMusicFileName');
+            const savedCrashSoundFileName = localStorage.getItem('crashSoundFileName');
+            const savedMusicVolume = localStorage.getItem('musicVolume');
+            const savedSfxVolume = localStorage.getItem('sfxVolume');
+
+            // Apply settings
+            if (savedCarImage && savedCarImage !== 'none' && savedCarFileName) {
+                playerCar.style.backgroundImage = savedCarImage;
+                carFileNameSpan.textContent = savedCarFileName;
+            }
+            
+            if (savedCarSize) {
+                carSizeControl.value = savedCarSize;
+                carSizeValueSpan.textContent = savedCarSize + "%";
+                currentCarSize = savedCarSize;
+                updateCarSize();
+            }
+            
+            if (savedObstacleCarImage && savedObstacleCarImage !== 'none' && savedObstacleCarFileName) {
+                obstacleCarImage = savedObstacleCarImage;
+                obstacleCarFileNameSpan.textContent = savedObstacleCarFileName;
+            }
+            
+            if (savedSelectedCarTypes) {
+                selectedCarTypes = JSON.parse(savedSelectedCarTypes);
+                // Update UI for selected car types
+                carTypeOptions.forEach(option => {
+                    if (selectedCarTypes.includes(option.dataset.type)) {
+                        option.classList.add('selected');
+                    }
+                });
+                updateSelectedCarTypesDisplay();
+            }
+            
+            if (savedObstacleFrequency) {
+                obstacleFrequencyControl.value = savedObstacleFrequency;
+                obstacleFrequencyValueSpan.textContent = savedObstacleFrequency + " ms";
+            }
+            
+            if (savedBgColor) {
+                backgroundInput.value = savedBgColor;
+                gameArea.style.backgroundColor = savedBgColor;
+            }
+            
+            if (savedRoadBorderColor) {
+                roadBorderColor.value = savedRoadBorderColor;
+                gameArea.style.borderColor = savedRoadBorderColor;
+            }
+            
+            if (savedRoadStripeColor) {
+                roadStripeColor.value = savedRoadStripeColor;
+                updateRoadStripes();
+            }
+            
+            if (savedGameBgImage && savedGameBgImage !== 'none' && savedGameBgFileName) {
+                gameContainer.style.backgroundImage = savedGameBgImage;
+                gameBgFileNameSpan.textContent = savedGameBgFileName;
+            }
+            
+            if (savedGameTheme) {
+                gameThemeSelect.value = savedGameTheme;
+                applyGameTheme(savedGameTheme);
+            }
+            
+            if (savedInitialSpeed) {
+                initialSpeedControl.value = savedInitialSpeed;
+                initialSpeedValueSpan.textContent = savedInitialSpeed;
+            }
+            
+            if (savedBackgroundMusicFileName) {
+                backgroundMusicFileNameSpan.textContent = savedBackgroundMusicFileName;
+            }
+            
+            if (savedCrashSoundFileName) {
+                crashSoundFileNameSpan.textContent = savedCrashSoundFileName;
+            }
+            
+            if (savedMusicVolume) {
+                musicVolumeControl.value = savedMusicVolume;
+                musicVolumeValueSpan.textContent = Math.round(savedMusicVolume * 100) + "%";
+                bgMusic.volume = savedMusicVolume;
+            }
+            
+            if (savedSfxVolume) {
+                sfxVolumeControl.value = savedSfxVolume;
+                sfxVolumeValueSpan.textContent = Math.round(savedSfxVolume * 100) + "%";
+                crashSound.volume = savedSfxVolume;
+            }
+        }
+
+        // --- 5. Customization Functions ---
+        function handleFileUpload(inputElement, targetElement, fileNameSpan, isBackground, isAudio) {
+            const file = inputElement.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (isAudio) {
+                        if (targetElement === bgMusic) {
+                            bgMusic.src = e.target.result;
+                        } else if (targetElement === crashSound) {
+                            crashSound.src = e.target.result;
+                        }
+                    } else {
+                        const url = `url(${e.target.result})`;
+                        targetElement.style.backgroundImage = url;
+                    }
+                    fileNameSpan.textContent = file.name;
+                    saveSettings();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                if (!isAudio) {
+                    targetElement.style.backgroundImage = 'none';
+                    if (!isBackground) targetElement.style.backgroundColor = '#e74c3c'; 
+                }
+                fileNameSpan.textContent = "No file chosen";
+                saveSettings();
+            }
+        }
+
+        function updateRoadStripes() {
+            const stripeColor = roadStripeColor.value;
+            const style = document.createElement('style');
+            style.textContent = `
+                #gameArea::after {
+                    background: repeating-linear-gradient(
+                        to bottom,
+                        ${stripeColor},
+                        ${stripeColor} 7vh,
+                        transparent 7vh,
+                        transparent 14vh
+                    );
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        function updateCarSize() {
+            const sizeMultiplier = currentCarSize / 100;
+            const carWidth = 16 * sizeMultiplier;
+            const carHeight = 25 * sizeMultiplier;
+            
+            playerCar.style.width = carWidth + 'vw';
+            playerCar.style.height = carHeight + 'vw';
+            
+            document.querySelectorAll('#gameArea .car:not(#playerCar)').forEach(car => {
+                car.style.width = carWidth + 'vw';
+                car.style.height = carHeight + 'vw';
+            });
+        }
+
+        function applyGameTheme(theme) {
+            // Reset to default first
+            gameContainer.style.backgroundColor = '#1e1e1e';
+            gameArea.style.backgroundColor = '#444';
+            gameArea.style.borderColor = '#222';
+            roadStripeColor.value = '#f5f6fa';
+            updateRoadStripes();
+            
+            switch(theme) {
+                case 'desert':
+                    gameContainer.style.backgroundColor = '#f39c12';
+                    gameArea.style.backgroundColor = '#e67e22';
+                    gameArea.style.borderColor = '#d35400';
+                    roadStripeColor.value = '#f5f6fa';
+                    updateRoadStripes();
+                    break;
+                case 'forest':
+                    gameContainer.style.backgroundColor = '#27ae60';
+                    gameArea.style.backgroundColor = '#2ecc71';
+                    gameArea.style.borderColor = '#229954';
+                    roadStripeColor.value = '#f5f6fa';
+                    updateRoadStripes();
+                    break;
+                case 'mountain':
+                    gameContainer.style.backgroundColor = '#7f8c8d';
+                    gameArea.style.backgroundColor = '#95a5a6';
+                    gameArea.style.borderColor = '#7f8c8d';
+                    roadStripeColor.value = '#f5f6fa';
+                    updateRoadStripes();
+                    break;
+                case 'night':
+                    gameContainer.style.backgroundColor = '#2c3e50';
+                    gameArea.style.backgroundColor = '#34495e';
+                    gameArea.style.borderColor = '#2c3e50';
+                    roadStripeColor.value = '#f5f6fa';
+                    updateRoadStripes();
+                    break;
+                case 'winter':
+                    gameContainer.style.backgroundColor = '#3498db';
+                    gameArea.style.backgroundColor = '#ecf0f1';
+                    gameArea.style.borderColor = '#bdc3c7';
+                    roadStripeColor.value = '#2c3e50';
+                    updateRoadStripes();
+                    break;
+            }
+        }
+
+        // --- 6. Event Listeners for Settings ---
+        carImageInput.addEventListener('change', () => handleFileUpload(carImageInput, playerCar, carFileNameSpan, false, false));
+        
+        carSizeControl.addEventListener('input', () => {
+            currentCarSize = carSizeControl.value;
+            carSizeValueSpan.textContent = currentCarSize + "%";
+            updateCarSize();
+            saveSettings();
+        });
+        
+        obstacleCarImageInput.addEventListener('change', () => {
+            const file = obstacleCarImageInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    obstacleCarImage = `url(${e.target.result})`;
+                    obstacleCarFileNameSpan.textContent = file.name;
+                    saveSettings();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                obstacleCarImage = null;
+                obstacleCarFileNameSpan.textContent = "No file chosen";
+                saveSettings();
+            }
+        });
+        
+        obstacleFrequencyControl.addEventListener('input', () => {
+            obstacleFrequencyValueSpan.textContent = obstacleFrequencyControl.value + " ms";
+            saveSettings();
+        });
+        
+        backgroundInput.addEventListener('input', (event) => { 
+            gameArea.style.backgroundColor = event.target.value; 
+            saveSettings(); 
+        });
+        
+        roadBorderColor.addEventListener('input', (event) => { 
+            gameArea.style.borderColor = event.target.value; 
+            saveSettings(); 
+        });
+        
+        roadStripeColor.addEventListener('input', (event) => { 
+            updateRoadStripes();
+            saveSettings(); 
+        });
+        
+        gameBgImageInput.addEventListener('change', () => handleFileUpload(gameBgImageInput, gameContainer, gameBgFileNameSpan, true, false));
+        
+        gameThemeSelect.addEventListener('change', () => {
+            applyGameTheme(gameThemeSelect.value);
+            saveSettings();
+        });
+        
+        initialSpeedControl.addEventListener('input', () => {
+            initialSpeedValueSpan.textContent = initialSpeedControl.value;
+            saveSettings();
+        });
+        
+        backgroundMusicInput.addEventListener('change', () => handleFileUpload(backgroundMusicInput, bgMusic, backgroundMusicFileNameSpan, false, true));
+        
+        crashSoundInput.addEventListener('change', () => handleFileUpload(crashSoundInput, crashSound, crashSoundFileNameSpan, false, true));
+        
+        musicVolumeControl.addEventListener('input', () => { 
+            bgMusic.volume = musicVolumeControl.value; 
+            musicVolumeValueSpan.textContent = Math.round(musicVolumeControl.value * 100) + "%";
+            saveSettings(); 
+        });
+        
+        sfxVolumeControl.addEventListener('input', () => { 
+            crashSound.volume = sfxVolumeControl.value; 
+            sfxVolumeValueSpan.textContent = Math.round(sfxVolumeControl.value * 100) + "%";
+            saveSettings(); 
+        });
+
+        settingsStartButton.addEventListener('click', () => {
+             if (controlsPanel.classList.contains('active')) {
+                closeSettings(); 
+            }
+            startGame();
+        });
+
+        // --- 7. Game State Management ---
+        function showOverlay(message, buttonText, buttonAction) {
+            overlayMessage.textContent = message;
+            overlayButton.textContent = buttonText;
+            overlayButton.onclick = buttonAction;
+            overlay.classList.remove('hidden');
+            customizationButton.style.display = 'block';
+        }
+
+        function hideOverlay() {
+            overlay.classList.add('hidden');
+        }
+
+        function pauseGame() {
+            isPaused = true;
+            bgMusic.pause();
+            pauseButton.textContent = '▶️'; 
+            showOverlay("Game Paused", "Resume Game", resumeGame);
+            customizationButton.style.display = 'none';
+        }
+
+        function resumeGame() {
+            isPaused = false;
+            hideOverlay();
+            bgMusic.play().catch(e => console.log("Audio resume blocked."));
+            pauseButton.textContent = '⏸️'; 
+            
+            document.querySelectorAll('#gameArea .car:not(#playerCar)').forEach(car => {
+                let obstacleY = parseFloat(car.style.top);
+                startObstacleMovement(car, obstacleY, parseFloat(car.dataset.speed));
+            });
+            if (obstacleInterval) clearInterval(obstacleInterval);
+            obstacleInterval = setInterval(createObstacle, parseInt(obstacleFrequencyControl.value)); 
+        }
+
+        function togglePause() {
+            if (isPaused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        }
+
+        // --- 8. Movement and Gameplay ---
+        function playCrashSound() {
+            crashSound.currentTime = 0;
+            crashSound.play();
+        }
+
+        function updatePlayerPosition() {
+            playerCar.style.left = playerX_VW + 'vw';
+        }
+
+        function movePlayer(direction) {
+            if (isGameOver || isPaused || controlsPanel.classList.contains('active')) return;
+
+            if (direction === 'left') {
+                playerX_VW = Math.max(0, playerX_VW - MOVE_STEP_VW);
+            } else if (direction === 'right') {
+                playerX_VW = Math.min(GAME_WIDTH_VW - CAR_WIDTH_VW, playerX_VW + MOVE_STEP_VW);
+            }
+            updatePlayerPosition();
+        }
+
+        // Control Logic
+        document.addEventListener('keydown', (e) => {
+            if (controlsPanel.classList.contains('active')) return;
+            if (e.key === 'ArrowLeft') movePlayer('left');
+            else if (e.key === 'ArrowRight') movePlayer('right');
+            else if (e.key === ' ' || e.key === 'p' || e.key === 'P') { if (!isGameOver) togglePause(); }
+        });
+
+        let moveInterval;
+        function startMove(direction) {
+            if (isGameOver || isPaused || controlsPanel.classList.contains('active')) return;
+            movePlayer(direction);
+            if (moveInterval) clearInterval(moveInterval);
+            moveInterval = setInterval(() => movePlayer(direction), 100); 
+        }
+        function stopMove() { clearInterval(moveInterval); }
+
+        leftButton.addEventListener('mousedown', () => startMove('left'));
+        leftButton.addEventListener('touchstart', (e) => { e.preventDefault(); startMove('left'); });
+        document.addEventListener('mouseup', stopMove);
+        document.addEventListener('touchend', stopMove);
+        rightButton.addEventListener('mousedown', () => startMove('right'));
+        rightButton.addEventListener('touchstart', (e) => { e.preventDefault(); startMove('right'); });
+        pauseButton.addEventListener('click', () => { if (!isGameOver) togglePause(); });
+        
+
+        function startObstacleMovement(obstacle, initialY, speed) {
+            const GAME_AREA_HEIGHT = gameArea.offsetHeight;
+
+            function moveObstacle() {
+                if (isGameOver || isPaused || controlsPanel.classList.contains('active')) {
+                    return; 
+                }
+
+                initialY += speed;
+                obstacle.style.top = initialY + 'px';
+
+                if (checkCollision(playerCar, obstacle)) {
+                    gameOver();
+                    return;
+                }
+
+                if (initialY > GAME_AREA_HEIGHT) {
+                    obstacle.remove();
+                    score++;
+                    scoreDisplay.textContent = `🏁 Score: ${score}`;
+                    if (score % 10 === 0) { 
+                        obstacleSpeedMultiplier += 0.05;
+                        clearInterval(obstacleInterval);
+                        obstacleInterval = setInterval(createObstacle, Math.max(500, parseInt(obstacleFrequencyControl.value) - (score * 5))); 
+                    }
+                } else {
+                    requestAnimationFrame(moveObstacle);
+                }
+            }
+            requestAnimationFrame(moveObstacle);
+        }
+
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('car');
+            
+            // Check if we should use single image or multiple car types
+            if (obstacleCarImage) {
+                // Use single image for all obstacles
+                obstacle.style.backgroundImage = obstacleCarImage;
+                obstacle.style.backgroundColor = 'transparent';
+            } else if (selectedCarTypes.length > 0) {
+                // Use multiple car types
+                const carType = getRandomCarType();
+                if (carType) {
+                    // Use placeholder images or colors based on car type
+                    obstacle.style.backgroundColor = carTypeStyles[carType].color;
+                    // If you have actual images, you can use:
+                    // obstacle.style.backgroundImage = `url(${carTypeImages[carType]})`;
+                    // obstacle.style.backgroundColor = 'transparent';
+                } else {
+                    // Fallback to random color
+                    obstacle.style.backgroundColor = `rgb(${Math.random() * 200 + 50}, ${Math.random() * 200 + 50}, ${Math.random() * 200 + 50})`;
+                }
+            } else {
+                // Use random colors
+                obstacle.style.backgroundColor = `rgb(${Math.random() * 200 + 50}, ${Math.random() * 200 + 50}, ${Math.random() * 200 + 50})`;
+            }
+            
+            const maxLeftVW = GAME_WIDTH_VW - CAR_WIDTH_VW;
+            const randomX_VW = Math.floor(Math.random() * maxLeftVW);
+            obstacle.style.left = randomX_VW + 'vw';
+            
+            obstacle.style.top = '-25vw'; 
+            gameArea.appendChild(obstacle);
+
+            const baseObstacleSpeed = parseFloat(initialSpeedControl.value); 
+            const currentObstacleSpeed = (baseObstacleSpeed + (score / 20)) * obstacleSpeedMultiplier; 
+            obstacle.dataset.speed = currentObstacleSpeed; 
+            
+            startObstacleMovement(obstacle, -80, currentObstacleSpeed);
+        }
+
+        function checkCollision(carA, carB) {
+            const a = carA.getBoundingClientRect();
+            const b = carB.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            const a_left = a.left - gameAreaRect.left;
+            const a_top = a.top - gameAreaRect.top;
+            const b_left = b.left - gameAreaRect.left;
+            const b_top = b.top - gameAreaRect.top;
+
+            return (
+                a_left < b_left + b.width &&
+                a_left + a.width > b_left &&
+                a_top < b_top + b.height &&
+                a_top + a.height > b_top
+            );
+        }
+
+        function clearObstacles() {
+            document.querySelectorAll('#gameArea .car:not(#playerCar)').forEach(car => car.remove());
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            isPaused = false;
+            clearInterval(obstacleInterval);
+            bgMusic.pause();
+            playCrashSound();
+            pauseButton.textContent = '⏸️';
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                showOverlay(`💥 Game Over! NEW High Score: ${highScore}`, "Play Again", startGame);
+            } else {
+                showOverlay(`💥 Game Over! Score: ${score}`, "Play Again", startGame);
+            }
+            
+            scoreDisplay.textContent = `💥 Crash! Final: ${score}`;
+        }
+
+        function startGame() {
+            if (controlsPanel.classList.contains('active')) {
+                closeSettings();
+            }
+
+            isGameOver = false;
+            isPaused = false;
+            score = 0;
+            obstacleSpeedMultiplier = 1;
+            scoreDisplay.textContent = '🏁 Score: 0';
+            highScoreDisplay.textContent = `⭐ High Score: ${highScore}`;
+            
+            clearObstacles();
+            hideOverlay();
+
+            playerX_VW = (GAME_WIDTH_VW - CAR_WIDTH_VW) / 2;
+            updatePlayerPosition();
+
+            bgMusic.currentTime = 0;
+            bgMusic.play().catch(e => console.log("Audio playback blocked."));
+
+            if (obstacleInterval) clearInterval(obstacleInterval);
+            obstacleInterval = setInterval(createObstacle, parseInt(obstacleFrequencyControl.value));
+        }
+
+        // Initial setup
+        loadSettings();
+        updatePlayerPosition();
+        updateCarSize();
+        showOverlay(`Welcome! High Score: ${highScore}`, "Start Game", startGame);
+    </script>
+</body>
+</html>
