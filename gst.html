@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>Modern Financial Calculator</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--secondary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a08a0;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: #3ab0d6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+            color: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-details {
+            flex-grow: 1;
+        }
+
+        .history-amount {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Financial Calculator</h1>
+            <p class="subtitle">Calculate GST and other financial values with ease</p>
+        </header>
+
+        <div class="calculator-grid">
+            <div class="calculator-section">
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-calculator"></i> GST Calculator</h2>
+                    
+                    <div class="form-group">
+                        <label for="amount">Amount (₹)</label>
+                        <input type="number" id="amount" placeholder="Enter amount" min="0" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gstRate">GST Rate (%)</label>
+                        <input type="number" id="gstRate" placeholder="Enter GST rate" min="0" max="100" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="calculationType">Calculation Type</label>
+                        <select id="calculationType">
+                            <option value="exclusive">GST Exclusive (Add GST)</option>
+                            <option value="inclusive">GST Inclusive (Extract GST)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="calculateBtn" class="btn">Calculate GST</button>
+                </div>
+                
+                <div id="resultCard" class="result-card hidden">
+                    <h3 class="result-title"><i class="fas fa-chart-pie"></i> Calculation Result</h3>
+                    
+                    <div class="result-item">
+                        <span>Original Amount:</span>
+                        <span id="originalAmount">₹0.00</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span>GST Rate:</span>
+                        <span id="resultGstRate">0%</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span>GST Amount:</span>
+                        <span id="gstAmount">₹0.00</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span>Total Amount:</span>
+                        <span id="totalAmount">₹0.00</span>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="saveHistoryBtn" class="btn btn-secondary">
+                            <i class="fas fa-save"></i> Save to History
+                        </button>
+                        <button id="exportPdfBtn" class="btn btn-success">
+                            <i class="fas fa-file-pdf"></i> Export as PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history-section">
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-history"></i> Calculation History</h2>
+                    
+                    <div class="history-list" id="historyList">
+                        <div class="empty-history">
+                            <i class="fas fa-history fa-2x"></i>
+                            <p>No calculations saved yet</p>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button id="clearHistoryBtn" class="btn btn-secondary">
+                            <i class="fas fa-trash"></i> Clear History
+                        </button>
+                        <button id="exportAllPdfBtn" class="btn btn-success">
+                            <i class="fas fa-file-export"></i> Export All as PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2025 GST Calculator | Designed for GST Calculations</p>
+            <p>Powerd By SHIV Computer</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const amountInput = document.getElementById('amount');
+            const gstRateInput = document.getElementById('gstRate');
+            const calculationTypeSelect = document.getElementById('calculationType');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resultCard = document.getElementById('resultCard');
+            const originalAmountSpan = document.getElementById('originalAmount');
+            const resultGstRateSpan = document.getElementById('resultGstRate');
+            const gstAmountSpan = document.getElementById('gstAmount');
+            const totalAmountSpan = document.getElementById('totalAmount');
+            const saveHistoryBtn = document.getElementById('saveHistoryBtn');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
+            const historyList = document.getElementById('historyList');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+            const exportAllPdfBtn = document.getElementById('exportAllPdfBtn');
+            
+            // Current calculation data
+            let currentCalculation = null;
+            
+            // Load history from localStorage
+            let calculationHistory = JSON.parse(localStorage.getItem('gstCalculationHistory')) || [];
+            renderHistory();
+            
+            // Event Listeners
+            calculateBtn.addEventListener('click', calculateGST);
+            saveHistoryBtn.addEventListener('click', saveToHistory);
+            exportPdfBtn.addEventListener('click', exportCurrentToPdf);
+            clearHistoryBtn.addEventListener('click', clearHistory);
+            exportAllPdfBtn.addEventListener('click', exportAllToPdf);
+            
+            // GST Calculation Function
+            function calculateGST() {
+                const amount = parseFloat(amountInput.value);
+                const gstRate = parseFloat(gstRateInput.value);
+                const calculationType = calculationTypeSelect.value;
+                
+                if (isNaN(amount) || isNaN(gstRate)) {
+                    alert('Please enter valid amount and GST rate');
+                    return;
+                }
+                
+                let originalAmount, gstAmount, totalAmount;
+                
+                if (calculationType === 'exclusive') {
+                    originalAmount = amount;
+                    gstAmount = (amount * gstRate) / 100;
+                    totalAmount = originalAmount + gstAmount;
+                } else {
+                    totalAmount = amount;
+                    originalAmount = (amount * 100) / (100 + gstRate);
+                    gstAmount = totalAmount - originalAmount;
+                }
+                
+                // Update result display
+                originalAmountSpan.textContent = `₹${originalAmount.toFixed(2)}`;
+                resultGstRateSpan.textContent = `${gstRate}%`;
+                gstAmountSpan.textContent = `₹${gstAmount.toFixed(2)}`;
+                totalAmountSpan.textContent = `₹${totalAmount.toFixed(2)}`;
+                
+                // Show result card
+                resultCard.classList.remove('hidden');
+                
+                // Store current calculation
+                currentCalculation = {
+                    originalAmount,
+                    gstRate,
+                    gstAmount,
+                    totalAmount,
+                    calculationType,
+                    timestamp: new Date().toISOString()
+                };
+            }
+            
+            // Save to History
+            function saveToHistory() {
+                if (!currentCalculation) {
+                    alert('No calculation to save');
+                    return;
+                }
+                
+                calculationHistory.unshift(currentCalculation);
+                localStorage.setItem('gstCalculationHistory', JSON.stringify(calculationHistory));
+                renderHistory();
+                
+                alert('Calculation saved to history!');
+            }
+            
+            // Render History
+            function renderHistory() {
+                if (calculationHistory.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-history">
+                            <i class="fas fa-history fa-2x"></i>
+                            <p>No calculations saved yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                historyList.innerHTML = '';
+                
+                calculationHistory.forEach((calc, index) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    
+                    const date = new Date(calc.timestamp);
+                    const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                    
+                    historyItem.innerHTML = `
+                        <div class="history-details">
+                            <div class="history-amount">₹${calc.totalAmount.toFixed(2)}</div>
+                            <div class="history-date">${formattedDate}</div>
+                            <div>GST: ${calc.gstRate}% | ${calc.calculationType === 'exclusive' ? 'Exclusive' : 'Inclusive'}</div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn view-history" data-index="${index}" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn delete-history" data-index="${index}" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    historyList.appendChild(historyItem);
+                });
+                
+                // Add event listeners to history buttons
+                document.querySelectorAll('.view-history').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        viewHistoryItem(index);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-history').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        deleteHistoryItem(index);
+                    });
+                });
+            }
+            
+            // View History Item
+            function viewHistoryItem(index) {
+                const calc = calculationHistory[index];
+                
+                // Update current calculation
+                currentCalculation = calc;
+                
+                // Update inputs
+                if (calc.calculationType === 'exclusive') {
+                    amountInput.value = calc.originalAmount;
+                } else {
+                    amountInput.value = calc.totalAmount;
+                }
+                
+                gstRateInput.value = calc.gstRate;
+                calculationTypeSelect.value = calc.calculationType;
+                
+                // Calculate and show result
+                calculateGST();
+                
+                // Scroll to calculator
+                document.querySelector('.calculator-section').scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Delete History Item
+            function deleteHistoryItem(index) {
+                if (confirm('Are you sure you want to delete this calculation?')) {
+                    calculationHistory.splice(index, 1);
+                    localStorage.setItem('gstCalculationHistory', JSON.stringify(calculationHistory));
+                    renderHistory();
+                }
+            }
+            
+            // Clear History
+            function clearHistory() {
+                if (calculationHistory.length === 0) {
+                    alert('History is already empty');
+                    return;
+                }
+                
+                if (confirm('Are you sure you want to clear all history?')) {
+                    calculationHistory = [];
+                    localStorage.setItem('gstCalculationHistory', JSON.stringify(calculationHistory));
+                    renderHistory();
+                }
+            }
+            
+            // Export Current to PDF
+            function exportCurrentToPdf() {
+                if (!currentCalculation) {
+                    alert('No calculation to export');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(20);
+                doc.setTextColor(67, 97, 238);
+                doc.text('GST Calculation Result', 20, 30);
+                
+                // Add calculation details
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                
+                let yPosition = 60;
+                doc.text(`Original Amount: ₹${currentCalculation.originalAmount.toFixed(2)}`, 20, yPosition);
+                yPosition += 15;
+                doc.text(`GST Rate: ${currentCalculation.gstRate}%`, 20, yPosition);
+                yPosition += 15;
+                doc.text(`GST Amount: ₹${currentCalculation.gstAmount.toFixed(2)}`, 20, yPosition);
+                yPosition += 15;
+                doc.text(`Total Amount: ₹${currentCalculation.totalAmount.toFixed(2)}`, 20, yPosition);
+                yPosition += 15;
+                doc.text(`Calculation Type: ${currentCalculation.calculationType === 'exclusive' ? 'GST Exclusive' : 'GST Inclusive'}`, 20, yPosition);
+                yPosition += 15;
+                
+                const date = new Date(currentCalculation.timestamp);
+                doc.text(`Calculated on: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`, 20, yPosition);
+                
+                // Save the PDF
+                doc.save(`GST_Calculation_${date.getTime()}.pdf`);
+            }
+            
+            // Export All to PDF
+            function exportAllToPdf() {
+                if (calculationHistory.length === 0) {
+                    alert('No history to export');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(20);
+                doc.setTextColor(67, 97, 238);
+                doc.text('GST Calculation History', 20, 30);
+                
+                // Add history items
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                
+                let yPosition = 60;
+                calculationHistory.forEach((calc, index) => {
+                    if (yPosition > 270) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    const date = new Date(calc.timestamp);
+                    
+                    doc.text(`${index + 1}. ₹${calc.totalAmount.toFixed(2)} | GST: ${calc.gstRate}% | ${calc.calculationType === 'exclusive' ? 'Exclusive' : 'Inclusive'}`, 20, yPosition);
+                    yPosition += 7;
+                    doc.text(`   Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`, 20, yPosition);
+                    yPosition += 10;
+                });
+                
+                // Save the PDF
+                doc.save(`GST_Calculation_History_${new Date().getTime()}.pdf`);
+            }
+        });
+    </script>
+</body>
+</html>
