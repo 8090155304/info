@@ -1,34 +1,48 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <title>Shiv Computer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="SHIV.png">
+  <link rel="manifest" href="manifest.json">
   <style>
     body {
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       margin: 0;
       background: #f0f8ff;
     }
 
-    /* Header styling */
+    /* HEADER */
     header {
       background: #0072ff;
-      padding: 10px 20px;
       color: white;
+      padding: 8px 10px;
+      position: relative;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .header-top {
       display: flex;
       align-items: center;
-      gap: 20px;
+      justify-content: space-between;
       flex-wrap: wrap;
     }
 
     .logo {
-      height: 100px;
+      height: 60px;
+      width: auto;
     }
 
-    .site-info {
-      flex: 1;
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      color: yellow;
+      text-decoration: none;
+      font-weight: bold;
     }
 
     nav ul {
@@ -43,100 +57,465 @@
       color: yellow;
       text-decoration: none;
       font-weight: bold;
+      padding: 5px 10px;
     }
 
     nav ul li a:hover {
-      color: #ffeb3b;
+      background-color: #ff0000;
+      border-radius: 9px;
     }
 
+    /* MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      background: #004fbb;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: auto;
+    }
+
+    /* MAIN */
     main {
-      padding: 40px;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
-    /* Footer styling */
+    /* FOOTER */
     footer {
       background-color: #003d80;
       color: white;
       text-align: center;
       padding: 20px 10px;
-      margin-top: 40px;
       font-size: 15px;
+      margin-top: 40px;
     }
 
-    .footer-container p {
-      margin: 5px 0;
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .whatsapp-btn img {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* WELCOME POPUP */
+    #welcomePopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      animation: fadeIn 0.5s;
+    }
+
+    .popup-content {
+      background-color: white;
+      color: #000;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 9px 20px rgba(0, 0, 0, 0.9);
+      max-width: 90%;
+      width: 350px;
+      animation: slideDown 1.5s ease-out;
+    }
+
+    .popup-content h2 {
+      color: #0072ff;
+      margin-top: 0;
+      border-bottom: 8px solid #0072ff;
+      padding-bottom: 10px;
+    }
+
+    .popup-content p {
+      margin-bottom: 20px;
+      color: #0072ff;
+    }
+
+    #closePopup {
+      padding: 10px 25px;
+      cursor: pointer;
+      background-color: #1ee60b;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    #closePopup:hover {
+      background-color: #f8fc03;
+      color: red;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* MOBILE RESPONSIVE */
+    @media (max-width: 768px) {
+      nav ul {
+        flex-direction: column;
+        width: 100%;
+        background: #0072ff;
+        padding: 10px 0;
+        margin: 0;
+        display: none;
+      }
+
+      nav ul.show {
+        display: flex;
+      }
+
+      nav ul li {
+        text-align: center;
+        margin: 10px 0;
+      }
+
+      .menu-toggle {
+        display: block;
+      }
+
+      .logo {
+        height: 50px;
+      }
+    }
+
+    /* NEW ANIMATIONS - Bina kuch hataye add kiye */
+    
+    /* Colorful background animation */
+    .color-blocks {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .block {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      border-radius: 90%;
+      filter: blur(20px);
+      opacity: 0.8;
+      animation: float 5s infinite linear;
+    }
+
+    .block:nth-child(1) {
+      background: #ff0055;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .block:nth-child(2) {
+      background: #00aaff;
+      top: 60%;
+      left: 80%;
+      animation-delay: 2s;
+    }
+
+    .block:nth-child(3) {
+      background: #ffcc00;
+      top: 40%;
+      left: 70%;
+      animation-delay: 4s;
+    }
+
+    .block:nth-child(4) {
+      background: #00ff99;
+      top: 80%;
+      left: 30%;
+      animation-delay: 6s;
+    }
+
+    .block:nth-child(5) {
+      background: #cc00ff;
+      top: 10%;
+      left: 50%;
+      animation-delay: 8s;
+    }
+
+    .block:nth-child(6) {
+      background: #ff6600;
+      top: 70%;
+      left: 10%;
+      animation-delay: 10s;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+      25% {
+        transform: translate(100px, 100px) rotate(90deg);
+      }
+      50% {
+        transform: translate(200px, 0) rotate(180deg);
+      }
+      75% {
+        transform: translate(100px, -100px) rotate(270deg);
+      }
+      100% {
+        transform: translate(0, 0) rotate(360deg);
+      }
+    }
+
+    /* Main heading animation */
+    main h2 {
+      font-size: 5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      animation: glow 10s infinite alternate;
+      color: #003d80;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7),
+                     0 0 20px rgba(255, 0, 85, 0.5),
+                     0 0 30px rgba(255, 0, 85, 0.3);
+      }
+      to {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.9),
+                     0 0 30px rgba(255, 0, 85, 0.7),
+                     0 0 40px rgba(255, 0, 85, 0.5);
+      }
+    }
+
+    /* Typewriter effect */
+    .typewriter-container {
+      font-size: 2.3rem;
+      margin-bottom: 2rem;
+      min-height: 60px;
+      color: #003d80;
+      font-weight: bold;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 5px;
+      background-color: #003d80;
+      margin-left: 4px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* Pulsing button */
+    .pulse-button {
+      background: linear-gradient(45deg, #ff0055, #ffcc00);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 2rem;
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
+      transition: all 0.3s ease;
+      animation: pulse 2s infinite;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+
+    .pulse-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 0, 85, 0.8);
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 20px rgba(255, 0, 85, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0);
+      }
+    }
+
+    /* Social Links Section - Original maintain kiya */
+    .social-links {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .social-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      main h2 {
+        font-size: 2.5rem;
+      }
+      
+      .typewriter-container {
+        font-size: 1.4rem;
+      }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <img src="logo.png" alt="Logo" class="logo">
-
-    <div class="site-info">
-      <h1>Shiv Computer</h1>
-      <nav>
-        <ul>
-          <li><a href="iisstart.htm">Home</a></li>
-          <li><a href="about.html">About</a></li>
-          <li><a href="courses.html">Courses</a></li>
-          <li><a href="contact.html">Contact</a></li>
-          <li><a href="Collage.html">College</a></li>
-          <li><a href="Photo.html">Photo</a></li>
-          <li><a href="AI.html">AI</a></li>
-        </ul>
-      </nav>
+  <!-- Welcome Popup -->
+  <div id="welcomePopup">
+    <div class="popup-content">
+      <h2>Welcome Back!</h2>
+      <p>आपका पुनः स्वागत है!</p>
+      <button id="closePopup">शुरू करें (Continue)</button>
     </div>
+  </div>
+
+  <!-- HEADER - Original maintain kiya -->
+  <header>
+    <div class="header-top">
+      <img src="logo.png" alt="Logo" class="logo">
+      <h1>SHIV COMPUTER</h1>
+      <span class="menu-toggle" onclick="toggleMenu()">☰ Menu</span>
+    </div>
+
+    <nav>
+      <ul id="navMenu">
+        <li><a href="home.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="courses.html">Courses</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="Collage.html">College</a></li>
+        <li><a href="Photo.html">Photo</a></li>
+        <li><a href="AI.html">AI</a></li>
+      </ul>
+    </nav>
   </header>
 
-  <!-- Main Content -->
+  <!-- MAIN - Sirf animations add kiye -->
   <main>
-    <h2>Welcome to Shiv Computer</h2>
-    <p>Your go-to place for practical computer education.</p>
+    <div class="color-blocks">
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+      <div class="block"></div>
+    </div>
+    
+    <h2>Welcome to SHIV COMPUTER</h2>
+    <div class="typewriter-container" id="typewriter"></div>
+    <button class="pulse-button">| For Explore Open Menu |</button>
   </main>
 
-  <!-- Footer -->
+  <!-- FOOTER - Original maintain kiya -->
   <footer>
-    <div class="footer-container">
-      <p>&copy; 2025 Shiv Computer. All rights reserved.</p>
-      <p>📍 27, Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
-      <a aria-label="Chat on WhatsApp" 
-   href="https://wa.me/80901553043?text=Hello%20Shiv!" 
-   class="whatsapp-btn">
-  <img alt="WhatsApp" src="wlogo.png" />
-  <span>WhatsApp</span>
-</a>
-
-<style>
-  .whatsapp-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    color: white; /* Default text color white */
-    font-weight: bold;
-    font-size: 16px;
-    transition: transform 0.3s ease, color 0.3s ease;
-  }
-
-  .whatsapp-btn img {
-    width: 8mm;   /* Logo width 8mm */
-    height: 8mm;  /* Logo height 8mm */
-    transition: transform 0.3s ease;
-  }
-
-  .whatsapp-btn:hover {
-    transform: scale(1.1);  /* Zoom-in effect */
-    color: #25D366; /* WhatsApp green on hover */
-  }
-
-  .whatsapp-btn:hover img {
-    transform: rotate(10deg) scale(1.2); /* Icon rotate + zoom */
-  }
-</style>
-
+    <p>© 2025 Shiv Computer. All rights reserved.</p>
+    <p>📍 27, Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
+    <a href="https://wa.me/80901553043?text=Hello%20Shiv!" class="whatsapp-btn">
+      <img src="wlogo.png" alt="WhatsApp">
+      <span>WhatsApp</span>
+    </a>
+    
+    <!-- Social Links - Original maintain kiya -->
+    <div class="social-links">
+      <a href="https://www.facebook.com/profile.php?id=100093146240602">Facebook</a> |
+      <a href="https://www.instagram.com/ceshiv.kumar/">Instagram</a> |
+      <a href="https://x.com/ceshiv">🐦 Twitter</a>
     </div>
   </footer>
+
+  <!-- SCRIPT - Original + new animations -->
+  <script>
+    // Popup - Original maintain kiya
+    document.addEventListener('DOMContentLoaded', function() {
+      const popup = document.getElementById('welcomePopup');
+      const closeButton = document.getElementById('closePopup');
+      closeButton.addEventListener('click', function() {
+        popup.style.opacity = '0';
+        setTimeout(() => popup.style.display = 'none', 500);
+      });
+
+      // Typewriter effect - Naya add kiya
+      const text = "Your go-to Place for Practical Computer Education.";
+      const typewriterElement = document.getElementById('typewriter');
+      let i = 0;
+      
+      function typeWriter() {
+        if (i < text.length) {
+          typewriterElement.innerHTML = text.substring(0, i+1) + '<span class="cursor"></span>';
+          i++;
+          setTimeout(typeWriter, 100);
+        } else {
+          // Keep the cursor blinking after typing is complete
+          typewriterElement.innerHTML = text + '<span class="cursor"></span>';
+        }
+      }
+      
+      // Start the typewriter effect after a short delay
+      setTimeout(typeWriter, 500);
+    });
+
+    // Toggle Menu - Original maintain kiya
+    function toggleMenu() {
+      document.getElementById("navMenu").classList.toggle("show");
+    }
+
+    // Service Worker Registration - Original maintain kiya
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+          // Registration was successful
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+          // registration failed
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+  </script>
 
 </body>
 </html>
