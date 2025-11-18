@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>Candy Drop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffafbd, #ffc3a0);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #ff4081;
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-info {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; 
+        }
+        
+        .score-container, .level-container, .high-score-container {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff4081;
+            margin: 5px;
+        }
+        
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background-color: rgba(255, 255, 255, 0.9);
+            background-size: cover; 
+            background-position: center; 
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+            /* Add touch-action for better mobile interaction */
+            touch-action: none; 
+        }
+        
+        .basket {
+            position: absolute;
+            bottom: 20px;
+            width: 100px;
+            height: 50px;
+            background-color: #ff4081;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.1s ease;
+            box-shadow: 0 -5px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .basket::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            right: 10px;
+            height: 15px;
+            background-color: var(--basket-color, #ff4081);
+            border-radius: 50%;
+        }
+        
+        .candy {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            background-color: #ff4081;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .level-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .level-btn {
+            padding: 10px 20px;
+            background-color: #ffcccb;
+            color: #ff4081;
+        }
+        
+        .level-btn.active {
+            background-color: #ff4081;
+            color: white;
+        }
+        
+        .customization-panel {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .customization-panel h2 {
+            color: #ff4081;
+            margin-bottom: 15px;
+        }
+        
+        .customization-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ffcccb;
+            flex-wrap: wrap; 
+            justify-content: center;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #ffcccb;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background-color: #ff4081;
+            color: white;
+        }
+        
+        .customization-content {
+            display: none;
+        }
+        
+        .customization-content.active {
+            display: block;
+        }
+        
+        .color-options, .shape-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        
+        .color-option.selected {
+            border-color: #333;
+        }
+        
+        .shape-option {
+            width: 60px;
+            height: 60px;
+            background-color: #ff4081;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 10px;
+            border: 3px solid transparent;
+        }
+        
+        .shape-option.selected {
+            border-color: #333;
+        }
+        
+        .music-controls, .visual-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .local-music-info {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            background-color: #ffe0e6;
+            border-radius: 8px;
+            border: 1px solid #ff4081;
+            margin-bottom: 10px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+            justify-content: space-between;
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #ff4081;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+            display: none;
+        }
+        
+        .game-over h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .game-over p {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+        
+        /* Mobile/Small Screen Adjustments for Game Area */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .game-area {
+                height: 350px; 
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .basket {
+                bottom: 10px; 
+            }
+            
+            .candy {
+                width: 30px; 
+                height: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Customizable Candy Drop Game</h1>
+        
+        <div class="game-info">
+            <div class="score-container">Score: <span id="score">0</span></div>
+            <div class="high-score-container">High Score: <span id="highScore">0</span></div>
+            <div class="level-container">Level: <span id="level">1</span></div>
+        </div>
+        
+        <div class="level-selector">
+            <button class="level-btn active" data-level="1">Easy</button>
+            <button class="level-btn" data-level="2">Medium</button>
+            <button class="level-btn" data-level="3">Hard</button>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="basket" id="basket"></div>
+            <div class="game-over" id="gameOver">
+                <h2>Game Over!</h2>
+                <p>Your Score: <span id="finalScore">0</span></p>
+                <p>High Score: <span id="gameOverHighScore">0</span></p>
+                <button id="restartBtn">Play Again</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">Start Game</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="customizeBtn">Customize Game</button>
+        </div>
+        
+        <div class="customization-panel" id="customizationPanel">
+            <h2>Customize Your Game</h2>
+            
+            <div class="customization-tabs">
+                <div class="tab" data-tab="candy">Candy</div>
+                <div class="tab" data-tab="basket">Basket</div>
+                <div class="tab" data-tab="visuals">Visuals</div>
+                <div class="tab" data-tab="music">Music</div> 
+            </div>
+            
+            <div class="customization-content" id="candy-tab">
+                <h3>Candy Color (New candies are random by default)</h3>
+                <div class="color-options" id="candyColors">
+                    <div class="color-option selected" style="background-color: #FF4081;" data-color="#FF4081"></div>
+                    <div class="color-option" style="background-color: #FFC107;" data-color="#FFC107"></div>
+                    <div class="color-option" style="background-color: #4CAF50;" data-color="#4CAF50"></div>
+                    <div class="color-option" style="background-color: #2196F3;" data-color="#2196F3"></div>
+                    <div class="color-option" style="background-color: #9C27B0;" data-color="#9C27B0"></div>
+                </div>
+                
+                <h3>Candy Shape</h3>
+                <div class="shape-options" id="candyShapes">
+                    <div class="shape-option selected" data-shape="circle">●</div>
+                    <div class="shape-option" data-shape="square">■</div>
+                    <div class="shape-option" data-shape="diamond">◆</div>
+                    <div class="shape-option" data-shape="star">★</div>
+                </div>
+                
+                <button id="applyCandy">Apply Candy Changes</button>
+            </div>
+            
+            <div class="customization-content" id="basket-tab">
+                <h3>Basket Color</h3>
+                <div class="color-options" id="basketColors">
+                    <div class="color-option selected" style="background-color: #FF4081;" data-color="#FF4081"></div>
+                    <div class="color-option" style="background-color: #8BC34A;" data-color="#8BC34A"></div>
+                    <div class="color-option" style="background-color: #03A9F4;" data-color="#03A9F4"></div>
+                    <div class="color-option" style="background-color: #FF9800;" data-color="#FF9800"></div>
+                    <div class="color-option" style="background-color: #795548;" data-color="#795548"></div>
+                </div>
+                
+                <h3>Basket Size</h3>
+                <div class="volume-control">
+                    <span>Small</span>
+                    <input type="range" id="basketSize" min="80" max="150" value="100">
+                    <span>Large</span>
+                </div>
+                
+                <h3>Basket Speed</h3>
+                <div class="volume-control">
+                    <span>Slow</span>
+                    <input type="range" id="basketSpeed" min="10" max="40" value="20">
+                    <span>Fast</span>
+                </div>
+                
+                <button id="applyBasket">Apply Basket Changes</button>
+            </div>
+
+            <div class="customization-content" id="visuals-tab">
+                <h3>Game Area Background</h3>
+                <div class="visual-controls">
+                    <label for="backgroundInput" style="width: 100%; max-width: 400px; text-align: left;">
+                        Enter Image URL or CSS Color (e.g., #f0f8ff, url('https://...') ):
+                    </label>
+                    <input type="text" id="backgroundInput" value="rgba(255, 255, 255, 0.9)" 
+                        style="width: 100%; max-width: 400px; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                    <button id="applyVisuals">Apply Background</button>
+                </div>
+            </div>
+            
+            <div class="customization-content" id="music-tab">
+                <h3>Game Music Controls</h3>
+                <div class="music-controls">
+                    <button id="toggleMusic">Enable Music</button>
+                    
+                    <div class="volume-control">
+                        <span>Music Volume:</span>
+                        <input type="range" id="musicVolume" min="0" max="100" value="50">
+                    </div>
+                    
+                    <div class="volume-control">
+                        <span>SFX Volume:</span>
+                        <input type="range" id="sfxVolume" min="0" max="100" value="70">
+                    </div>
+
+                    <div class="local-music-info">
+                        **Local Music Status:** <span id="localMusicStatus">Synthesizer (Default)</span>
+                        <br>
+                        *Note: For security, local files must be re-selected on page reload.*
+                    </div>
+
+                    <h3 style="margin-top: 15px;">Use Local Music File</h3>
+                    <input type="file" id="localAudioInput" accept="audio/*" style="max-width: 400px;">
+                    <button id="useSynthBtn" style="background-color: #3f51b5; margin-top: 10px;">Switch to Synthesizer</button>
+
+                    <h3 style="margin-top: 15px;" id="synthHeading">Synthesizer Settings</h3>
+                    <div class="volume-control" id="synthWaveControl">
+                        <span>Wave Type:</span>
+                        <select id="musicWaveType" style="padding: 5px; border-radius: 5px;">
+                            <option value="sine">Sine (Smooth)</option>
+                            <option value="square">Square (Punchy)</option>
+                            <option value="sawtooth">Sawtooth (Sharp)</option>
+                            <option value="triangle">Triangle (Soft)</option>
+                        </select>
+                    </div>
+
+                    <div class="volume-control" id="synthFreqControl">
+                        <span>Base Frequency (Hz):</span>
+                        <input type="range" id="musicFrequency" min="200" max="800" value="440" style="flex-grow: 1;">
+                        <span id="freqValue">440Hz</span>
+                    </div>
+
+                    <button id="applyMusicSettings">Apply Music Changes</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <p>Use the **LEFT and RIGHT arrow keys** or **tap/swipe the game area** to move the basket</p>
+            <p>Catch the falling candies to earn points. Catching is now easier, even a slight touch counts!</p>
+            <p>If you miss 5 candies, the game is over! (Customized setting)</p>
+            <p>Your High Score and Settings are auto-saved locally.</p>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const gameArea = document.getElementById('gameArea');
+        const basket = document.getElementById('basket');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const highScoreElement = document.getElementById('highScore');
+        const gameOverHighScoreElement = document.getElementById('gameOverHighScore');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const customizeBtn = document.getElementById('customizeBtn');
+        const customizationPanel = document.getElementById('customizationPanel');
+        
+        // Audio elements 
+        let audioContext;
+        let backgroundMusic; // OscillatorNode for synth
+        let musicGainNode; 
+        let musicNoteInterval; 
+        
+        // NEW AUDIO ELEMENTS FOR LOCAL FILE
+        let localAudioElement = document.createElement('audio'); // ELEMENT CREATION MOVED HERE
+        localAudioElement.loop = true;
+        localAudioElement.crossOrigin = "anonymous";
+        localAudioElement.volume = 1.0; 
+        
+        let mediaSourceNode; // MediaElementAudioSourceNode for local file
+        let useLocalFile = false; // Preference flag
+        
+        // Customization elements
+        const localMusicStatusElement = document.getElementById('localMusicStatus');
+        const localAudioInput = document.getElementById('localAudioInput');
+        const useSynthBtn = document.getElementById('useSynthBtn');
+        const synthHeading = document.getElementById('synthHeading');
+        const synthWaveControl = document.getElementById('synthWaveControl');
+        const synthFreqControl = document.getElementById('synthFreqControl');
+
+
+        // Game variables (omitted for brevity)
+        let score = 0;
+        let highScore = 0; 
+        let level = 1;
+        let gameSpeed = 1; 
+        let candyInterval;
+        let isGameRunning = false;
+        let isPaused = false;
+        let missedCandies = 0;
+        let basketPosition; 
+        let basketMoveSpeed = 20; 
+        
+        // Customization variables (omitted for brevity)
+        let candyColor = '#FF4081'; 
+        let candyShape = 'circle';
+        let basketColor = '#FF4081';
+        let basketSize = 100;
+        let musicEnabled = false;
+        let musicVolume = 0.5;
+        let sfxVolume = 0.7;
+        let gameBackground = 'rgba(255, 255, 255, 0.9)';
+        let musicWaveType = 'sine'; 
+        let musicBaseFrequency = 440;
+        
+        // Arrays for random candy selection (omitted for brevity)
+        const CANDY_COLORS = ['#FF4081', '#FFC107', '#4CAF50', '#2196F3', '#9C27B0', '#FF9800'];
+        const CANDY_SHAPES = ['circle', 'square', 'diamond', 'star'];
+
+        // --- LOCAL STORAGE FUNCTIONS ---
+        function saveSettings() {
+            const settings = {
+                level,
+                basketColor,
+                basketSize,
+                basketMoveSpeed,
+                musicEnabled,
+                musicVolume,
+                sfxVolume,
+                gameBackground,
+                musicWaveType,
+                musicBaseFrequency,
+                useLocalFile
+            };
+            localStorage.setItem('candyDropSettings', JSON.stringify(settings));
+        }
+
+        function saveHighScore() {
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('candyDropHighScore', highScore);
+                highScoreElement.textContent = highScore;
+            }
+        }
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('candyDropSettings'));
+            const savedHighScore = localStorage.getItem('candyDropHighScore');
+
+            // Load High Score
+            if (savedHighScore) {
+                highScore = parseInt(savedHighScore);
+                highScoreElement.textContent = highScore;
+            }
+
+            if (settings) {
+                // Load Game/Level settings (omitted for brevity)
+                level = settings.level || 1;
+                levelElement.textContent = level;
+                document.querySelectorAll('.level-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.dataset.level) === level) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Apply basket settings (omitted for brevity)
+                basketColor = settings.basketColor || basketColor;
+                basketSize = settings.basketSize || basketSize;
+                basketMoveSpeed = settings.basketMoveSpeed || basketMoveSpeed;
+                document.getElementById('basketSize').value = basketSize;
+                document.getElementById('basketSpeed').value = basketMoveSpeed;
+                basket.style.backgroundColor = basketColor;
+                basket.style.width = basketSize + 'px';
+                basket.style.borderRadius = basketSize/10 + 'px ' + basketSize/10 + 'px 0 0';
+                basket.style.setProperty('--basket-color', basketColor);
+                
+                // Apply music settings
+                musicEnabled = settings.musicEnabled !== undefined ? settings.musicEnabled : musicEnabled;
+                musicVolume = settings.musicVolume !== undefined ? settings.musicVolume : musicVolume;
+                sfxVolume = settings.sfxVolume !== undefined ? settings.sfxVolume : sfxVolume;
+                musicWaveType = settings.musicWaveType || musicWaveType;
+                musicBaseFrequency = settings.musicBaseFrequency || musicBaseFrequency;
+                useLocalFile = settings.useLocalFile !== undefined ? settings.useLocalFile : useLocalFile; // LOAD PREFERENCE
+
+                document.getElementById('toggleMusic').textContent = musicEnabled ? 'Disable Music' : 'Enable Music';
+                document.getElementById('musicVolume').value = musicVolume * 100;
+                document.getElementById('sfxVolume').value = sfxVolume * 100;
+                
+                const musicWaveTypeElement = document.getElementById('musicWaveType');
+                if (musicWaveTypeElement) musicWaveTypeElement.value = musicWaveType;
+                
+                const musicFrequencyElement = document.getElementById('musicFrequency');
+                if (musicFrequencyElement) {
+                    musicFrequencyElement.value = musicBaseFrequency;
+                    document.getElementById('freqValue').textContent = musicBaseFrequency + 'Hz';
+                }
+
+                // Apply background settings (omitted for brevity)
+                gameBackground = settings.gameBackground || gameBackground;
+                gameArea.style.background = gameBackground;
+                gameArea.style.backgroundSize = 'cover';
+                gameArea.style.backgroundPosition = 'center';
+                document.getElementById('backgroundInput').value = gameBackground;
+
+                // Re-apply game speed based on loaded level
+                switch(level) {
+                    case 1: gameSpeed = 1; break;
+                    case 2: gameSpeed = 3; break;
+                    case 3: gameSpeed = 4; break;
+                }
+            }
+
+            // Update local music status display
+            updateMusicPreferenceUI();
+        }
+        // Load settings immediately
+        loadSettings();
+        // --- END LOCAL STORAGE FUNCTIONS ---
+
+
+        // Initialize audio - **FIXED:** `localAudioElement` is now available globally
+        function initAudio() {
+            if (audioContext) {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                return;
+            }
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // 1. Setup Oscillator for Synth
+                backgroundMusic = audioContext.createOscillator();
+                backgroundMusic.type = musicWaveType;
+                backgroundMusic.frequency.setValueAtTime(0, audioContext.currentTime);
+                backgroundMusic.start();
+
+                // 2. Create Media Source Node from HTML Audio
+                // FIX: This line now safely runs because localAudioElement is created outside
+                mediaSourceNode = audioContext.createMediaElementSource(localAudioElement); 
+
+                // 3. Create Gain Node for volume control (shared)
+                musicGainNode = audioContext.createGain(); 
+                musicGainNode.gain.value = musicEnabled ? musicVolume : 0;
+                
+                // Connect Gain Node to Destination
+                musicGainNode.connect(audioContext.destination);
+                
+                console.log("Audio initialized successfully");
+            } catch (error) {
+                console.log("Audio initialization failed: ", error);
+            }
+        }
+
+        // Connects the correct source (Synth or Local File) to the Gain Node
+        function connectMusicSource() {
+            if (!audioContext || !musicGainNode || !mediaSourceNode) return;
+            
+            // Disconnect all potential sources from the gain node first
+            try {
+                backgroundMusic.disconnect();
+            } catch {}
+            try {
+                mediaSourceNode.disconnect();
+            } catch {}
+            
+            if (useLocalFile && localAudioElement && localAudioElement.src) {
+                // Connect Local File Source
+                mediaSourceNode.connect(musicGainNode);
+                console.log("Switched to Local File Music Source.");
+            } else {
+                // Connect Synthesizer Source (Default)
+                backgroundMusic.connect(musicGainNode);
+                console.log("Switched to Synthesizer Music Source.");
+            }
+        }
+        
+        // Play background music
+        function playBackgroundMusic() {
+            if (!audioContext || !musicEnabled || !musicGainNode) {
+                 if (localAudioElement) localAudioElement.pause();
+                 clearInterval(musicNoteInterval);
+                 return;
+            }
+            
+            clearInterval(musicNoteInterval);
+            connectMusicSource(); // Ensure the correct source is connected
+            
+            try {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                musicGainNode.gain.setValueAtTime(musicVolume, audioContext.currentTime);
+
+                if (useLocalFile && localAudioElement.src) {
+                    // Play local audio
+                    localAudioElement.play().catch(e => console.log("Local audio autoplay failed (interaction needed):", e));
+                    // Stop synthesizer
+                    backgroundMusic.frequency.setValueAtTime(0, audioContext.currentTime);
+                } else {
+                    // Play synthesizer (default)
+                    if (localAudioElement) localAudioElement.pause();
+
+                    backgroundMusic.type = musicWaveType;
+                    const baseFreq = musicBaseFrequency;
+                    const notes = [baseFreq, baseFreq * 1.25, baseFreq * 1.5, baseFreq * 2]; 
+                    let noteIndex = 0;
+                    
+                    const playNote = () => {
+                        if (!musicEnabled || !isGameRunning || isPaused || useLocalFile) {
+                            musicGainNode.gain.setValueAtTime(0.0001, audioContext.currentTime + 0.1);
+                            clearInterval(musicNoteInterval); 
+                            backgroundMusic.frequency.setValueAtTime(0, audioContext.currentTime);
+                            return;
+                        }
+                        
+                        backgroundMusic.frequency.setValueAtTime(notes[noteIndex], audioContext.currentTime);
+                        noteIndex = (noteIndex + 1) % notes.length;
+                        musicNoteInterval = setTimeout(playNote, 500);
+                    };
+
+                    playNote();
+                }
+                
+            } catch (error) {
+                console.log("Error playing background music: ", error);
+            }
+        }
+        
+        // Play catch sound (same as before)
+        function playCatchSound() {
+            if (!audioContext || !musicEnabled) return;
+            
+            try {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const catchOscillator = audioContext.createOscillator();
+                catchOscillator.type = 'sine';
+                catchOscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+                
+                const catchGain = audioContext.createGain();
+                catchGain.gain.setValueAtTime(sfxVolume * 0.5, audioContext.currentTime); 
+                catchGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                catchOscillator.connect(catchGain);
+                catchGain.connect(audioContext.destination);
+                
+                catchOscillator.start();
+                catchOscillator.stop(audioContext.currentTime + 0.2);
+                
+            } catch (error) {
+                console.log("Error playing catch sound: ", error);
+            }
+        }
+        
+        // Play game over sound (same as before)
+        function playGameOverSound() {
+            if (!audioContext || !musicEnabled) return;
+            
+            try {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const gameOverOscillator = audioContext.createOscillator();
+                gameOverOscillator.type = 'sawtooth';
+                gameOverOscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                gameOverOscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 1);
+                
+                const gameOverGain = audioContext.createGain();
+                gameOverGain.gain.setValueAtTime(sfxVolume * 0.7, audioContext.currentTime); 
+                gameOverGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1);
+                
+                gameOverOscillator.connect(gameOverGain);
+                gameOverGain.connect(audioContext.destination);
+                
+                gameOverOscillator.start();
+                gameOverOscillator.stop(audioContext.currentTime + 1);
+                
+            } catch (error) {
+                console.log("Error playing game over sound: ", error);
+            }
+        }
+
+        // Function to update basket position for responsiveness
+        function updateBasketPosition() {
+            basketPosition = (gameArea.offsetWidth / 2) - (basket.offsetWidth / 2);
+            basket.style.left = basketPosition + 'px';
+        }
+
+        function updateMusicPreferenceUI() {
+            if (useLocalFile && localAudioElement && localAudioElement.src) {
+                localMusicStatusElement.textContent = `Local File: ${localAudioInput.files[0] ? localAudioInput.files[0].name : 'Ready'}`;
+                useSynthBtn.style.display = 'block';
+                synthHeading.style.display = 'none';
+                synthWaveControl.style.display = 'none';
+                synthFreqControl.style.display = 'none';
+            } else if (useLocalFile) {
+                 localMusicStatusElement.textContent = `Local File: (Not selected. Please choose file.)`;
+                 useSynthBtn.style.display = 'block';
+                 synthHeading.style.display = 'none';
+                 synthWaveControl.style.display = 'none';
+                 synthFreqControl.style.display = 'none';
+            } else {
+                localMusicStatusElement.textContent = `Synthesizer (Default)`;
+                useSynthBtn.style.display = 'none';
+                synthHeading.style.display = 'block';
+                synthWaveControl.style.display = 'flex';
+                synthFreqControl.style.display = 'flex';
+            }
+        }
+
+        updateBasketPosition();
+        window.addEventListener('resize', updateBasketPosition);
+        
+        // Initialize audio when user interacts with the page
+        document.addEventListener('click', function initAudioOnInteraction() {
+            initAudio();
+            document.removeEventListener('click', initAudioOnInteraction);
+        });
+        
+        // Event listeners for controls
+        document.addEventListener('keydown', (e) => {
+            if (!isGameRunning || isPaused) return;
+            
+            if (e.key === 'ArrowLeft') {
+                basketPosition = Math.max(0, basketPosition - basketMoveSpeed);
+            } else if (e.key === 'ArrowRight') {
+                basketPosition = Math.min(gameArea.offsetWidth - basket.offsetWidth, basketPosition + basketMoveSpeed);
+            }
+            
+            basket.style.left = basketPosition + 'px';
+        });
+
+        // Level selection (omitted for brevity)
+        levelButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                levelButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                level = parseInt(button.getAttribute('data-level'));
+                levelElement.textContent = level;
+                
+                switch(level) {
+                    case 1: gameSpeed = 1; break; 
+                    case 2: gameSpeed = 3; break;
+                    case 3: gameSpeed = 4; break;
+                }
+                saveSettings(); 
+            });
+        });
+
+        // Start game
+        startBtn.addEventListener('click', startGame);
+        
+        // Pause game
+        pauseBtn.addEventListener('click', () => {
+            if (!isGameRunning) return;
+            
+            if (isPaused) {
+                isPaused = false;
+                pauseBtn.textContent = 'Pause';
+                if (!candyInterval) {
+                     createCandies();
+                }
+                
+                if (musicEnabled) {
+                    playBackgroundMusic();
+                }
+            } else {
+                isPaused = true;
+                pauseBtn.textContent = 'Resume';
+                clearInterval(candyInterval);
+                candyInterval = null;
+                clearInterval(musicNoteInterval);
+                if (musicGainNode) musicGainNode.gain.setValueAtTime(0.0001, audioContext.currentTime); 
+                if (localAudioElement) localAudioElement.pause();
+            }
+        });
+        
+        // Restart game
+        restartBtn.addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            resetGame();
+            startGame();
+        });
+        
+        // Customization panel
+        customizeBtn.addEventListener('click', () => {
+            customizationPanel.style.display = customizationPanel.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // Tab switching (omitted for brevity)
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.customization-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+        
+        // Candy customization events (omitted for brevity)
+        document.querySelectorAll('#candyColors .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#candyColors .color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                candyColor = option.dataset.color;
+            });
+        });
+        
+        document.querySelectorAll('#candyShapes .shape-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#candyShapes .shape-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                candyShape = option.dataset.shape;
+            });
+        });
+        
+        document.getElementById('applyCandy').addEventListener('click', saveSettings);
+        
+        // Basket customization events (omitted for brevity)
+        document.querySelectorAll('#basketColors .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#basketColors .color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                basketColor = option.dataset.color;
+            });
+        });
+        
+        document.getElementById('basketSize').addEventListener('input', (e) => {
+            basketSize = parseInt(e.target.value);
+        });
+        
+        document.getElementById('basketSpeed').addEventListener('input', (e) => {
+            basketMoveSpeed = parseInt(e.target.value);
+        });
+        
+        document.getElementById('applyBasket').addEventListener('click', () => {
+            basket.style.backgroundColor = basketColor;
+            basket.style.width = basketSize + 'px';
+            basket.style.borderRadius = basketSize/10 + 'px ' + basketSize/10 + 'px 0 0';
+            
+            basket.style.setProperty('--basket-color', basketColor);
+            
+            updateBasketPosition();
+            saveSettings(); 
+            alert('Basket customization applied and saved!');
+        });
+        
+        // VISUALS TAB EVENTS (omitted for brevity)
+        document.getElementById('applyVisuals').addEventListener('click', () => {
+            const input = document.getElementById('backgroundInput').value.trim();
+            gameBackground = input;
+
+            gameArea.style.background = gameBackground.includes('url(') || gameBackground.startsWith('#') || gameBackground.includes('rgba') ? gameBackground : `url('${gameBackground}')`;
+            gameArea.style.backgroundSize = 'cover';
+            gameArea.style.backgroundPosition = 'center';
+
+            saveSettings(); 
+            alert('Background applied and saved!');
+        });
+
+        // --- MUSIC CONTROLS EVENTS ---
+        document.getElementById('toggleMusic').addEventListener('click', () => {
+            musicEnabled = !musicEnabled;
+            document.getElementById('toggleMusic').textContent = musicEnabled ? 'Disable Music' : 'Enable Music';
+            
+            initAudio(); 
+
+            if (musicEnabled && isGameRunning && !isPaused) {
+                playBackgroundMusic();
+            } else {
+                if (localAudioElement) localAudioElement.pause();
+                clearInterval(musicNoteInterval);
+                if (musicGainNode) musicGainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+            }
+            saveSettings(); 
+        });
+        
+        document.getElementById('musicVolume').addEventListener('input', (e) => {
+            musicVolume = parseInt(e.target.value) / 100;
+            if (musicGainNode) {
+                 musicGainNode.gain.setValueAtTime(musicVolume, audioContext.currentTime);
+            }
+            saveSettings(); 
+        });
+        
+        document.getElementById('sfxVolume').addEventListener('input', (e) => {
+            sfxVolume = parseInt(e.target.value) / 100;
+            saveSettings(); 
+        });
+
+        // Local Audio File Selection
+        localAudioInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (localAudioElement && localAudioElement.src) {
+                    URL.revokeObjectURL(localAudioElement.src); 
+                }
+                
+                const objectURL = URL.createObjectURL(file);
+                
+                initAudio(); 
+                
+                localAudioElement.src = objectURL;
+                useLocalFile = true;
+                
+                updateMusicPreferenceUI();
+                saveSettings();
+                
+                if (isGameRunning && musicEnabled && !isPaused) {
+                    playBackgroundMusic();
+                }
+                alert(`"${file.name}" set as background music. Start the game to play it!`);
+            } else if (useLocalFile) {
+                // If user cancels selection but local preference was set, switch back to synth
+                useLocalFile = false;
+                updateMusicPreferenceUI();
+                saveSettings();
+                alert("File selection cancelled. Switched back to Synthesizer.");
+            }
+        });
+        
+        // Switch to Synthesizer button
+        useSynthBtn.addEventListener('click', () => {
+             useLocalFile = false;
+             if (localAudioElement) localAudioElement.pause();
+             localAudioElement.src = "";
+             localAudioInput.value = ""; // Clear file input
+             
+             updateMusicPreferenceUI();
+             saveSettings();
+             
+             if (isGameRunning && musicEnabled && !isPaused) {
+                 playBackgroundMusic();
+             }
+             alert("Switched back to Synthesizer music.");
+        });
+
+        // Synthesizer settings (omitted for brevity)
+        document.getElementById('musicFrequency').addEventListener('input', (e) => {
+            musicBaseFrequency = parseInt(e.target.value);
+            document.getElementById('freqValue').textContent = musicBaseFrequency + 'Hz';
+        });
+
+        document.getElementById('applyMusicSettings').addEventListener('click', () => {
+            musicWaveType = document.getElementById('musicWaveType').value;
+            
+            if (backgroundMusic) {
+                backgroundMusic.type = musicWaveType; 
+            }
+            
+            if (musicEnabled && isGameRunning && !isPaused && !useLocalFile) {
+                 playBackgroundMusic();
+            }
+            saveSettings(); 
+            alert('Music settings applied and saved!');
+        });
+        
+        
+        // --- MOBILE/TOUCH CONTROLS ADDITION ---
+        
+        // Function to calculate basket position based on touch/mouse X coordinate
+        function moveBasketToX(clientX) {
+            if (!isGameRunning || isPaused) return;
+
+            // Get the game area's bounding rectangle (position and size on screen)
+            const gameAreaRect = gameArea.getBoundingClientRect();
+
+            // Calculate the X position of the touch/click relative to the game area
+            let relativeX = clientX - gameAreaRect.left;
+
+            // Center the basket under the touch/click point
+            let newBasketPosition = relativeX - (basket.offsetWidth / 2);
+
+            // Clamp the position to stay within the game area boundaries
+            basketPosition = Math.max(
+                0, 
+                Math.min(gameArea.offsetWidth - basket.offsetWidth, newBasketPosition)
+            );
+
+            // Apply the new position
+            basket.style.left = basketPosition + 'px';
+        }
+
+        // 1. Mouse Events (for desktop clicking or simulating touch on desktop)
+        gameArea.addEventListener('mousedown', (e) => {
+            // Only respond to left mouse button click
+            if (e.button === 0) { 
+                moveBasketToX(e.clientX);
+            }
+        });
+
+        // 2. Touch Events (for mobile devices)
+        gameArea.addEventListener('touchstart', (e) => {
+            // Prevent default scrolling/zooming behavior
+            e.preventDefault(); 
+            
+            // Get the X coordinate of the first touch point
+            const touchX = e.touches[0].clientX; 
+            moveBasketToX(touchX);
+        });
+
+        gameArea.addEventListener('touchmove', (e) => {
+            e.preventDefault(); 
+            const touchX = e.touches[0].clientX;
+            moveBasketToX(touchX);
+        });
+
+        // Increase keyboard move speed slightly for better feel (since touch is now instant)
+        basketMoveSpeed = basketMoveSpeed * 1.5; 
+        // --- END MOBILE/TOUCH CONTROLS ADDITION ---
+
+        
+        // Game functions
+        function startGame() {
+            if (isGameRunning) return;
+            
+            isGameRunning = true;
+            isPaused = false;
+            startBtn.disabled = true;
+            pauseBtn.textContent = 'Pause';
+            
+            if (musicEnabled) {
+                initAudio();
+                playBackgroundMusic();
+            }
+            
+            updateBasketPosition();
+            createCandies();
+        }
+        
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(candyInterval);
+            candyInterval = null;
+            clearInterval(musicNoteInterval);
+            startBtn.disabled = false;
+            
+            playGameOverSound();
+            
+            saveHighScore();
+
+            const candies = document.querySelectorAll('.candy');
+            candies.forEach(candy => gameArea.removeChild(candy));
+            
+            if (musicGainNode) musicGainNode.gain.setValueAtTime(0.0001, audioContext.currentTime); 
+            if (localAudioElement) localAudioElement.pause();
+
+            finalScoreElement.textContent = score;
+            gameOverHighScoreElement.textContent = highScore;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        function resetGame() {
+            score = 0;
+            missedCandies = 0;
+            scoreElement.textContent = score;
+            
+            updateBasketPosition();
+        }
+
+        // CANDY CREATION FUNCTION
+        function createCandies() {
+            const creationInterval = level === 1 ? 1800 : (1000 - (level * 200)); 
+            
+            candyInterval = setInterval(() => {
+                if (isPaused) return;
+                
+                const candy = document.createElement('div');
+                candy.classList.add('candy');
+                
+                const randomColor = CANDY_COLORS[Math.floor(Math.random() * CANDY_COLORS.length)];
+                const randomShape = CANDY_SHAPES[Math.floor(Math.random() * CANDY_SHAPES.length)];
+
+                candy.style.backgroundColor = randomColor;
+                
+                if (randomShape === 'square') {
+                    candy.style.borderRadius = '5px';
+                } else if (randomShape === 'diamond') {
+                    candy.style.borderRadius = '0';
+                    candy.style.transform = 'rotate(45deg)';
+                } else if (randomShape === 'star') {
+                    candy.style.borderRadius = '0';
+                    candy.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+                }
+                
+                const points = Math.floor(Math.random() * 5 + 1) * 10 * level;
+                candy.dataset.points = points;
+                
+                const leftPosition = Math.random() * (gameArea.offsetWidth - 40);
+                candy.style.left = leftPosition + 'px';
+                
+                candy.style.top = '0px';
+                
+                gameArea.appendChild(candy);
+                
+                let topPosition = 0;
+                const fallInterval = setInterval(() => {
+                    if (isPaused) return;
+                    
+                    topPosition += gameSpeed;
+                    candy.style.top = topPosition + 'px';
+                    
+                    // NEW FLEXIBLE CATCHING LOGIC
+                    const candyBottom = topPosition + candy.offsetHeight;
+                    // Basket is 50px high and 20px from bottom, so its top is gameArea.offsetHeight - 70px
+                    const basketTop = gameArea.offsetHeight - basket.offsetHeight - 20; 
+
+                    if (candyBottom > basketTop + 10 && // Check if candy has fallen 10px below the top edge of the basket
+                        candyBottom < gameArea.offsetHeight && // Check if candy is still within the game area (i.e., not completely missed)
+                        parseInt(candy.style.left) < basketPosition + basket.offsetWidth && // Candy's left edge is to the left of basket's right edge
+                        parseInt(candy.style.left) + candy.offsetWidth > basketPosition) { // Candy's right edge is to the right of basket's left edge
+                        
+                        // Candy is caught
+                        score += parseInt(candy.dataset.points);
+                        scoreElement.textContent = score;
+                        gameArea.removeChild(candy);
+                        clearInterval(fallInterval);
+                        
+                        playCatchSound();
+                        
+                        basket.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            basket.style.transform = 'scale(1)';
+                        }, 100);
+                    }
+                    
+                    // Check if candy is missed
+                    if (topPosition > gameArea.offsetHeight) {
+                        missedCandies++;
+                        gameArea.removeChild(candy);
+                        clearInterval(fallInterval);
+                        
+                        if (missedCandies >= 50) { 
+                            endGame();
+                        }
+                    }
+                }, 20);
+            }, creationInterval); 
+        }
+
+    </script>
+</body>
+</html>
