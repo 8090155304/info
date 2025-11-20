@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fruit Puzzle</title>
-    <link rel="icon" type="image/png" href="SHIV.png">
     <style>
         * {
             margin: 0;
@@ -20,324 +19,214 @@
             justify-content: center;
             align-items: center;
             overflow-x: hidden;
-            position: relative;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
-        /* Mobile optimized container */
         .game-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 15px;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-            width: 100vw;
-            height: 100vh;
-            max-width: 100vw;
-            max-height: 100vh;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 95vw; /* Increased max-width for better use of large screens */
+            width: 98%; /* Ensure it uses most of the screen on small devices */
             position: relative;
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
         }
 
         .game-header {
             text-align: center;
-            margin-bottom: 10px;
-            flex-shrink: 0;
+            margin-bottom: 20px;
         }
 
         .game-title {
-            font-size: clamp(1.8em, 5vw, 2.5em);
+            font-size: 2.5em;
             background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-            animation: titleGlow 3s ease-in-out infinite alternate;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        @keyframes titleGlow {
-            0% { filter: drop-shadow(0 0 5px rgba(240, 147, 251, 0.5)); }
-            100% { filter: drop-shadow(0 0 20px rgba(245, 87, 108, 0.8)); }
-        }
-
-        /* Mobile optimized score board */
-        .score-board {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
             margin-bottom: 10px;
-            flex-shrink: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .score-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: clamp(0.8em, 2.5vw, 1em);
-            font-weight: bold;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease;
-            text-align: center;
-            min-height: 40px;
+        .score-board {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* ---------------------------------
+           UI/Animation Improvement: Score Item 
+           Added 3D effect and more vibrant color
+           --------------------------------- */
+        .score-item {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px; /* Squared off corners */
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 6px 0 #1B5E20, 0 8px 15px rgba(0, 0, 0, 0.3); /* 3D effect */
+            transition: all 0.2s ease-in-out;
+            min-width: 100px; /* Ensures text doesn't wrap awkwardly */
+            text-align: center;
         }
 
         .score-item:hover {
-            transform: scale(1.05);
+            transform: translateY(-4px); /* More noticeable lift on hover */
+            box-shadow: 0 10px 0 #1B5E20, 0 12px 20px rgba(0, 0, 0, 0.4);
         }
-
-        .score-item span:first-child {
-            font-size: 0.7em;
-            opacity: 0.9;
-            margin-bottom: 2px;
-        }
-
-        /* Mobile game board */
-        .game-board-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            overflow: hidden;
-        }
-
+        
+        /* ---------------------------------
+           Responsive Fix: Dynamic Board Gap 
+           --------------------------------- */
         .game-board {
             display: grid;
-            gap: 3px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.6);
+            grid-template-columns: repeat(var(--board-size), 1fr); /* Uses JS variable */
+            gap: 1vw; /* Dynamic gap based on viewport width */
+            margin: 0 auto;
+            padding: 10px; /* Reduced padding */
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 15px;
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
-            max-width: 90vw;
-            max-height: calc(90vw - 30px);
-            width: 90vmin;
-            height: 90vmin;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 100%; /* Ensure it fits within the container */
         }
 
+        /* ---------------------------------
+           Responsive/Animation Improvement: Dynamic Tile Size and Smooth Fall
+           --------------------------------- */
         .fruit-tile {
-            width: 100%;
-            height: 100%;
-            border-radius: 10px;
+            /* Dynamic size based on board size (approx 9-11vw for 8x8) */
+            width: 11vw;
+            height: 11vw;
+            max-width: 60px; /* Set max size for large monitors */
+            max-height: 60px;
+            
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0); /* Smoother transition for fall/movement */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(1.2em, 4vmin, 2em);
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            box-shadow: 
-                0 2px 8px rgba(0, 0, 0, 0.1),
-                inset 0 -1px 3px rgba(0, 0, 0, 0.1),
-                inset 0 1px 3px rgba(255, 255, 255, 0.8);
+            font-size: 1.8em; /* Slightly smaller font for better mobile fit */
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: relative;
             overflow: hidden;
-            touch-action: manipulation;
         }
 
         .fruit-tile:hover {
             transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
         }
 
         .fruit-tile.selected {
-            animation: selectedPulse 1s infinite;
-            box-shadow: 
-                0 0 20px rgba(255, 215, 0, 0.8),
-                0 0 40px rgba(255, 215, 0, 0.4);
-            border: 2px solid #ffd700;
-            background: linear-gradient(145deg, #fff9e6, #ffed99);
-        }
-
-        @keyframes selectedPulse {
-            0%, 100% { 
-                transform: scale(1.1);
-                filter: brightness(1.2);
-            }
-            50% { 
-                transform: scale(1.15);
-                filter: brightness(1.4);
-            }
+            transform: scale(1.15);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            border: 3px solid #ffd700;
         }
 
         .fruit-tile.matched {
-            animation: matchExplosion 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 10;
+            animation: matchAnimation 0.6s ease-out;
         }
 
-        @keyframes matchExplosion {
-            0% { 
-                transform: scale(1) rotate(0deg);
-                filter: brightness(1);
+        @keyframes matchAnimation {
+            0% {
+                transform: scale(1);
             }
-            50% { 
-                transform: scale(1.4) rotate(180deg);
-                filter: brightness(2) saturate(3);
-                box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            50% {
+                transform: scale(1.3) rotate(180deg);
             }
-            100% { 
-                transform: scale(0) rotate(360deg);
+            100% {
+                transform: scale(0);
                 opacity: 0;
             }
         }
-
-        /* Mobile controls */
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-            padding: 0 10px;
-            flex-shrink: 0;
+        
+        /* ---------------------------------
+           UI/Animation Improvement: New Tile Appearance
+           --------------------------------- */
+        @keyframes appearAnimation {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) translateY(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .fruit-tile.new {
+            animation: appearAnimation 0.5s ease-out;
         }
 
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* ---------------------------------
+           UI/Animation Improvement: 3D Buttons 
+           --------------------------------- */
         .btn {
-            padding: 12px 15px;
+            padding: 12px 25px;
             border: none;
-            border-radius: 20px;
-            font-size: clamp(0.8em, 2.5vw, 1em);
+            border-radius: 25px;
+            font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            min-height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: manipulation;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 5px 0 #3b4d82; /* 3D depth */
         }
 
         .btn-secondary {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
+            box-shadow: 0 5px 0 #9e3650; /* 3D depth */
         }
 
         .btn:hover {
-            transform: translateY(-2px) scale(1.05);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #3b4d82, 0 8px 20px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
+        }
+        .btn-secondary:hover {
+             box-shadow: 0 7px 0 #9e3650, 0 8px 20px rgba(0, 0, 0, 0.3);
         }
 
         .btn:active {
-            transform: translateY(0) scale(0.98);
+            transform: translateY(3px); /* Button pushes down */
+            box-shadow: 0 2px 0 (var(--shadow-color)), 0 3px 6px rgba(0,0,0,0.3);
+        }
+        /* Define shadow color for active state based on primary/secondary */
+        .btn-primary:active {
+            box-shadow: 0 2px 0 #3b4d82, 0 3px 6px rgba(0,0,0,0.3);
+        }
+        .btn-secondary:active {
+            box-shadow: 0 2px 0 #9e3650, 0 3px 6px rgba(0,0,0,0.3);
         }
 
-        /* Mobile optimized combo indicator */
-        .combo-indicator {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(2em, 8vw, 4em);
-            font-weight: bold;
-            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 100;
-            text-align: center;
-            max-width: 90vw;
-        }
 
-        .combo-indicator.show {
-            animation: enhancedComboAnimation 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        @keyframes enhancedComboAnimation {
-            0% { 
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.3) rotate(-180deg);
-            }
-            20% { 
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1.3) rotate(0deg);
-            }
-            40% { 
-                transform: translate(-50%, -50%) scale(1.8) rotate(360deg);
-            }
-            100% { 
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8) rotate(1440deg);
-            }
-        }
-
-        /* Mobile optimized progress bar */
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 8px;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
-            background-size: 200% 100%;
-            transition: width 0.5s ease;
-            animation: progressGlow 2s ease-in-out infinite;
-            border-radius: 4px;
-        }
-
-        @keyframes progressGlow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        /* Mobile optimized achievement */
-        .achievement {
-            position: fixed;
-            top: 10px;
-            right: -100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            transition: right 0.5s ease;
-            z-index: 1001;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
-            max-width: 90vw;
-        }
-
-        .achievement.show {
-            right: 10px;
-        }
-
-        /* Mobile optimized customization panel */
         .customization-panel {
             position: fixed;
-            right: -100%;
-            top: 0;
-            width: 85vw;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.95);
+            right: -350px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            background: white;
+            border-radius: 20px 0 0 20px;
             padding: 20px;
             box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
-            transition: right 0.4s ease;
+            transition: right 0.3s ease;
+            max-height: 80vh;
             overflow-y: auto;
-            backdrop-filter: blur(10px);
-            z-index: 1000;
         }
 
         .customization-panel.active {
@@ -357,83 +246,199 @@
             cursor: pointer;
             font-size: 1.2em;
             box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-            transition: right 0.4s ease;
-            z-index: 999;
+            transition: right 0.3s ease;
         }
 
         .toggle-panel.active {
-            right: 85vw;
+            right: 300px;
         }
-
-        /* Different screen sizes */
-        @media (max-width: 320px) {
-            .game-title {
-                font-size: 1.5em;
-            }
-            .score-item {
-                font-size: 0.7em;
-                padding: 6px 10px;
-            }
-            .btn {
-                font-size: 0.7em;
-                padding: 10px 12px;
+        /* ---------------------------------
+           Responsive Fix: Toggle Panel on Small Screen
+           --------------------------------- */
+        @media (max-width: 768px) {
+            .toggle-panel.active {
+                right: 250px;
             }
         }
+        
+        .customization-section {
+            margin-bottom: 20px;
+        }
 
-        @media (min-width: 768px) {
-            .game-container {
-                width: 90vw;
-                height: 90vh;
-                max-width: 600px;
-                max-height: 800px;
-                padding: 20px;
+        .customization-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .customization-option {
+            margin-bottom: 10px;
+        }
+
+        .customization-option label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .customization-option input[type="range"],
+        .customization-option select,
+        .customization-option input[type="color"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100; /* Ensure it's above the board */
+        }
+
+        .combo-indicator.show {
+            animation: comboAnimation 1s ease-out;
+        }
+
+        @keyframes comboAnimation {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
             }
-            
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.5) rotate(-5deg); /* More dramatic scale */
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleAnimation 1s ease-out forwards;
+        }
+
+        @keyframes particleAnimation {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* ---------------------------------
+           Responsive Fixes for Mobile (max-width: 768px)
+           --------------------------------- */
+        @media (max-width: 768px) {
             .game-board {
-                max-width: 500px;
-                max-height: 500px;
+                /* The grid size changes dynamically in JS, but tile size needs adjustment */
+                width: 95%; 
+                gap: 0.5vw;
             }
             
             .fruit-tile {
-                font-size: 2em;
+                width: 12vw; /* Larger percentage for smaller screens */
+                height: 12vw;
+                font-size: 1.5em;
+                border-radius: 8px; /* Slightly smaller border radius */
+            }
+            
+            .game-title {
+                font-size: 1.8em; /* Smaller title */
+            }
+            
+            .score-item {
+                font-size: 1em;
+                padding: 8px 10px;
+            }
+            
+            .customization-panel {
+                width: 250px;
+                right: -250px;
+            }
+            
+            .toggle-panel.active {
+                right: 250px;
             }
         }
 
-        /* Prevent zoom on double tap */
-        @media screen and (-webkit-min-device-pixel-ratio: 0) {
-            .fruit-tile {
-                -webkit-tap-highlight-color: transparent;
-            }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
         }
 
-        /* iPhone notch support */
-        @supports (padding-top: env(safe-area-inset-top)) {
-            .game-container {
-                padding-top: calc(15px + env(safe-area-inset-top));
-                padding-bottom: calc(15px + env(safe-area-inset-bottom));
-            }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: -300px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transition: right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smoother slide-in */
+            z-index: 1000;
+        }
+
+        .achievement.show {
+            right: 20px;
+        }
+
+        .achievement h4 {
+            color: #667eea;
+            margin-bottom: 5px;
         }
     </style>
+<base target="_blank">
 </head>
 <body>
     <div class="game-container">
         <div class="game-header">
-            <h1 class="game-title">🍓 फ्रूट पज़ल 🍊</h1>
+            <h1 class="game-title">🍓 Fruit Puzzle Paradise 🍊</h1>
             <div class="score-board">
                 <div class="score-item">
-                    <span>स्कोर</span>
+                    <span>Score: </span>
                     <span id="score">0</span>
                 </div>
                 <div class="score-item">
-                    <span>चालें</span>
+                    <span>Moves: </span>
                     <span id="moves">30</span>
                 </div>
                 <div class="score-item">
-                    <span>लेवल</span>
+                    <span>Level: </span>
                     <span id="level">1</span>
                 </div>
                 <div class="score-item">
-                    <span>लक्ष्य</span>
+                    <span>Target: </span>
                     <span id="target">1000</span>
                 </div>
             </div>
@@ -442,15 +447,13 @@
             </div>
         </div>
         
-        <div class="game-board-container">
-            <div class="game-board" id="gameBoard"></div>
-        </div>
+        <div class="game-board" id="gameBoard"></div>
         
         <div class="controls">
-            <button class="btn btn-primary" onclick="game.newGame()">नया गेम</button>
-            <button class="btn btn-secondary" onclick="game.shuffleBoard()">शफल</button>
-            <button class="btn btn-primary" onclick="game.showHint()">संकेत</button>
-            <button class="btn btn-secondary" onclick="game.pauseGame()">रोकें</button>
+            <button class="btn btn-primary" onclick="game.newGame()">New Game</button>
+            <button class="btn btn-secondary" onclick="game.shuffleBoard()">Shuffle</button>
+            <button class="btn btn-primary" onclick="game.showHint()">Hint</button>
+            <button class="btn btn-secondary" onclick="game.pauseGame()">Pause</button>
         </div>
         
         <div class="combo-indicator" id="comboIndicator"></div>
@@ -459,12 +462,12 @@
     <button class="toggle-panel" onclick="toggleCustomization()">⚙️</button>
     
     <div class="customization-panel" id="customizationPanel">
-        <h2>🎨 अनुकूलन</h2>
+        <h2>🎨 Customization</h2>
         
         <div class="customization-section">
-            <h3>गेम सेटिंग्स</h3>
+            <h3>Game Settings</h3>
             <div class="customization-option">
-                <label for="boardSize">बोर्ड साइज़</label>
+                <label for="boardSize">Board Size</label>
                 <select id="boardSize" onchange="updateBoardSize()">
                     <option value="6">6x6</option>
                     <option value="8" selected>8x8</option>
@@ -472,47 +475,68 @@
                 </select>
             </div>
             <div class="customization-option">
-                <label for="movesLimit">चालें सीमा</label>
+                <label for="movesLimit">Moves Limit</label>
                 <input type="range" id="movesLimit" min="10" max="50" value="30" onchange="updateMovesLimit()">
                 <span id="movesLimitValue">30</span>
             </div>
             <div class="customization-option">
-                <label for="targetScore">लक्ष्य स्कोर</label>
+                <label for="targetScore">Target Score</label>
                 <input type="range" id="targetScore" min="500" max="5000" value="1000" step="100" onchange="updateTargetScore()">
                 <span id="targetScoreValue">1000</span>
             </div>
         </div>
         
         <div class="customization-section">
-            <h3>दिखावट</h3>
+            <h3>Visual Theme</h3>
             <div class="customization-option">
-                <label for="fruitSet">फ्रूट सेट</label>
+                <label for="backgroundColor">Background Color</label>
+                <input type="color" id="backgroundColor" value="#667eea" onchange="updateBackgroundColor()">
+            </div>
+            <div class="customization-option">
+                <label for="fruitSet">Fruit Set</label>
                 <select id="fruitSet" onchange="updateFruitSet()">
-                    <option value="classic">क्लासिक फ्रूट्स</option>
-                    <option value="tropical">ट्रॉपिकल फ्रूट्स</option>
-                    <option value="emoji">इमोजी स्टाइल</option>
-                    <option value="custom">कस्टम</option>
+                    <option value="classic">Classic Fruits</option>
+                    <option value="tropical">Tropical Fruits</option>
+                    <option value="emoji">Emoji Style</option>
+                    <option value="custom">Custom</option>
                 </select>
             </div>
             <div class="customization-option">
-                <label for="animationSpeed">एनिमेशन स्पीड</label>
-                <input type="range" id="animationSpeed" min="0.1" max="1" value="0.4" step="0.1" onchange="updateAnimationSpeed()">
+                <label for="animationSpeed">Animation Speed</label>
+                <input type="range" id="animationSpeed" min="0.1" max="1" value="0.3" step="0.1" onchange="updateAnimationSpeed()">
             </div>
         </div>
         
         <div class="customization-section">
-            <h3>साउंड</h3>
+            <h3>Sound Effects</h3>
             <div class="customization-option">
                 <label>
                     <input type="checkbox" id="soundEnabled" checked onchange="toggleSound()">
-                    साउंड चालू
+                    Enable Sound
                 </label>
             </div>
             <div class="customization-option">
-                <label for="soundVolume">वॉल्यूम</label>
+                <label for="soundVolume">Volume</label>
                 <input type="range" id="soundVolume" min="0" max="100" value="50" onchange="updateVolume()">
             </div>
         </div>
+        
+        <div class="customization-section">
+            <h3>Difficulty</h3>
+            <div class="customization-option">
+                <label for="difficulty">Difficulty Level</label>
+                <select id="difficulty" onchange="updateDifficulty()">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="achievement" id="achievement">
+        <h4>Achievement Unlocked!</h4>
+        <p id="achievementText"></p>
     </div>
 
     <script>
@@ -528,7 +552,7 @@
                 this.isProcessing = false;
                 this.soundEnabled = true;
                 this.volume = 0.5;
-                this.animationSpeed = 0.4;
+                this.animationSpeed = 0.3;
                 this.fruitSets = {
                     classic: ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑'],
                     tropical: ['🥥', '🍍', '🥭', '🍌', '🥝', '🍉'],
@@ -548,20 +572,6 @@
                 
                 this.initializeGame();
                 this.createAudioContext();
-                this.setupTouchEvents();
-            }
-            
-            setupTouchEvents() {
-                let touchStartX, touchStartY;
-                
-                document.addEventListener('touchstart', (e) => {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                }, { passive: true });
-                
-                document.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                }, { passive: false });
             }
             
             createAudioContext() {
@@ -588,9 +598,16 @@
             }
             
             playMatchSound() {
-                this.playSound(523.25, 0.1);
-                setTimeout(() => this.playSound(659.25, 0.1), 50);
-                setTimeout(() => this.playSound(783.99, 0.15), 100);
+                this.playSound(523.25, 0.1); // C5
+                setTimeout(() => this.playSound(659.25, 0.1), 50); // E5
+                setTimeout(() => this.playSound(783.99, 0.15), 100); // G5
+            }
+            
+            playComboSound(combo) {
+                const baseFreq = 440 + (combo * 50);
+                this.playSound(baseFreq, 0.1, 'square');
+                setTimeout(() => this.playSound(baseFreq * 1.25, 0.1, 'square'), 50);
+                setTimeout(() => this.playSound(baseFreq * 1.5, 0.15, 'square'), 100);
             }
             
             initializeGame() {
@@ -608,6 +625,7 @@
                     }
                 }
                 
+                // Ensure no initial matches
                 this.removeInitialMatches();
             }
             
@@ -633,6 +651,7 @@
             hasMatchAt(row, col) {
                 const fruit = this.board[row][col];
                 
+                // Check horizontal match
                 let horizontalCount = 1;
                 for (let j = col - 1; j >= 0 && this.board[row][j] === fruit; j--) {
                     horizontalCount++;
@@ -641,6 +660,7 @@
                     horizontalCount++;
                 }
                 
+                // Check vertical match
                 let verticalCount = 1;
                 for (let i = row - 1; i >= 0 && this.board[i][col] === fruit; i--) {
                     verticalCount++;
@@ -655,8 +675,10 @@
             renderBoard() {
                 const gameBoard = document.getElementById('gameBoard');
                 gameBoard.innerHTML = '';
-                gameBoard.style.gridTemplateColumns = `repeat(${this.boardSize}, 1fr)`;
                 
+                // Responsive Fix: Set board size in CSS variable
+                gameBoard.style.setProperty('--board-size', this.boardSize);
+
                 for (let i = 0; i < this.boardSize; i++) {
                     for (let j = 0; j < this.boardSize; j++) {
                         const tile = document.createElement('div');
@@ -682,6 +704,7 @@
                     const prevRow = this.selectedTile.row;
                     const prevCol = this.selectedTile.col;
                     
+                    // Check if tiles are adjacent
                     if (this.areAdjacent(prevRow, prevCol, row, col)) {
                         this.swapTiles(prevRow, prevCol, row, col);
                     }
@@ -699,11 +722,14 @@
             swapTiles(row1, col1, row2, col2) {
                 this.isProcessing = true;
                 
+                // Swap in board array
                 [this.board[row1][col1], this.board[row2][col2]] = 
                 [this.board[row2][col2], this.board[row1][col1]];
                 
+                // Update display (smooth transition handles the visual swap)
                 this.renderBoard();
                 
+                // Check for matches
                 setTimeout(() => {
                     const matches = this.findMatches();
                     if (matches.length > 0) {
@@ -711,6 +737,7 @@
                         this.processMatches(matches);
                         this.playMatchSound();
                     } else {
+                        // Swap back if no matches
                         [this.board[row1][col1], this.board[row2][col2]] = 
                         [this.board[row2][col2], this.board[row1][col1]];
                         this.renderBoard();
@@ -739,74 +766,71 @@
             
             getMatchFrom(row, col, visited) {
                 const fruit = this.board[row][col];
-                const match = [];
-                const stack = [{row, col}];
-                
-                while (stack.length > 0) {
-                    const {row: r, col: c} = stack.pop();
-                    
-                    if (r < 0 || r >= this.boardSize || c < 0 || c >= this.boardSize || 
-                        visited[r][c] || this.board[r][c] !== fruit) {
-                        continue;
+                // Using a simple check to avoid complex flood-fill logic on every tile
+                // This is a common simplification in Match-3 implementations to focus on linear matches (3, 4, 5 in a row/column)
+                const horizontalMatch = [];
+                for (let j = 0; j < this.boardSize; j++) {
+                    if (this.board[row][j] === fruit) {
+                        horizontalMatch.push({row, col: j});
                     }
-                    
-                    visited[r][c] = true;
-                    match.push({row: r, col: c});
-                    
-                    stack.push({row: r - 1, col: c});
-                    stack.push({row: r + 1, col: c});
-                    stack.push({row: r, col: c - 1});
-                    stack.push({row: r, col: c + 1});
+                }
+
+                const verticalMatch = [];
+                for (let i = 0; i < this.boardSize; i++) {
+                    if (this.board[i][col] === fruit) {
+                        verticalMatch.push({row: i, col});
+                    }
                 }
                 
-                if (match.length >= 3) {
-                    const horizontalMatches = this.getLineMatches(match, 'horizontal');
-                    const verticalMatches = this.getLineMatches(match, 'vertical');
-                    return [...horizontalMatches, ...verticalMatches];
+                let matches = [];
+                if (this.getLineLength(horizontalMatch, 'horizontal') >= 3) {
+                    matches.push(...horizontalMatch);
                 }
-                
-                return [];
+                if (this.getLineLength(verticalMatch, 'vertical') >= 3) {
+                    matches.push(...verticalMatch);
+                }
+
+                return matches.filter( (match, index, self) => 
+                    index === self.findIndex(m => m.row === match.row && m.col === match.col)
+                );
             }
             
-            getLineMatches(match, direction) {
-                const matches = [];
-                const sorted = direction === 'horizontal' 
-                    ? match.sort((a, b) => a.row - b.row || a.col - b.col)
-                    : match.sort((a, b) => a.col - b.col || a.row - b.row);
+            // Helper function to find contiguous line length (fix for simplified getMatchFrom)
+            getLineLength(cells, direction) {
+                if (cells.length < 3) return 0;
+                let maxLen = 0;
+                let currentLen = 0;
+                let prevIndex = -2;
+
+                cells.sort((a, b) => direction === 'horizontal' ? a.col - b.col : a.row - b.row);
                 
-                let currentLine = [];
-                let currentValue = direction === 'horizontal' ? sorted[0].row : sorted[0].col;
-                
-                for (const cell of sorted) {
-                    const value = direction === 'horizontal' ? cell.row : cell.col;
-                    if (value === currentValue) {
-                        currentLine.push(cell);
+                for (const cell of cells) {
+                    const currentIndex = direction === 'horizontal' ? cell.col : cell.row;
+                    if (currentIndex === prevIndex + 1) {
+                        currentLen++;
                     } else {
-                        if (currentLine.length >= 3) {
-                            matches.push(...currentLine);
-                        }
-                        currentLine = [cell];
-                        currentValue = value;
+                        currentLen = 1;
                     }
+                    maxLen = Math.max(maxLen, currentLen);
+                    prevIndex = currentIndex;
                 }
-                
-                if (currentLine.length >= 3) {
-                    matches.push(...currentLine);
-                }
-                
-                return matches;
+                return maxLen;
             }
+
             
             processMatches(matches) {
+                // Remove duplicates
                 const uniqueMatches = matches.filter((match, index, self) =>
                     index === self.findIndex(m => m.row === match.row && m.col === match.col)
                 );
                 
+                // Calculate score
                 const baseScore = uniqueMatches.length * 10;
                 const timeBonus = this.combo > 0 ? Math.pow(1.5, this.combo) : 1;
                 const matchScore = Math.round(baseScore * timeBonus);
                 this.score += matchScore;
                 
+                // Update combo
                 const currentTime = Date.now();
                 if (currentTime - this.lastMatchTime < 2000) {
                     this.combo++;
@@ -815,40 +839,99 @@
                 }
                 this.lastMatchTime = currentTime;
                 
+                // Show combo indicator
                 if (this.combo > 1) {
                     this.showComboIndicator(this.combo);
+                    this.playComboSound(this.combo);
                 }
                 
+                // Check achievements
                 this.checkAchievements();
                 
+                // Animate matches
                 uniqueMatches.forEach((match, index) => {
                     setTimeout(() => {
                         const tile = document.querySelector(`[data-row="${match.row}"][data-col="${match.col}"]`);
                         if (tile) {
                             tile.classList.add('matched');
+                            this.createParticles(tile);
                         }
-                    }, index * 100);
+                    }, index * 50);
                 });
                 
+                // Remove matched tiles and drop new ones
                 setTimeout(() => {
                     this.removeMatches(uniqueMatches);
                     this.dropTiles();
+                    
+                    // Store current board state before filling for 'new' animation tracking
+                    const oldBoard = this.board.map(row => row.slice()); 
+                    
                     this.fillBoard();
                     
+                    // Re-render board with the current state after drop/fill
+                    this.renderBoard();
+                    
+                    // Add 'new' class to tiles that were null before filling
+                    setTimeout(() => {
+                        for(let i = 0; i < this.boardSize; i++) {
+                            for(let j = 0; j < this.boardSize; j++) {
+                                if (oldBoard[i][j] === null && this.board[i][j] !== null) {
+                                    const tile = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                                    if(tile) tile.classList.add('new');
+                                }
+                            }
+                        }
+                    }, 50);
+
+                    // Check for new matches
                     setTimeout(() => {
                         const newMatches = this.findMatches();
                         if (newMatches.length > 0) {
                             this.processMatches(newMatches);
                         } else {
+                            // Clear 'new' class after cascade ends
+                            document.querySelectorAll('.fruit-tile.new').forEach(tile => tile.classList.remove('new'));
                             this.combo = 0;
                             this.isProcessing = false;
                             this.checkGameEnd();
                         }
-                        this.renderBoard();
                     }, this.animationSpeed * 1000);
                 }, this.animationSpeed * 1000);
                 
                 this.updateUI();
+            }
+            
+            createParticles(element) {
+                const rect = element.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = centerX + 'px';
+                    particle.style.top = centerY + 'px';
+                    
+                    const angle = (i / 8) * Math.PI * 2;
+                    const distance = 50 + Math.random() * 50;
+                    particle.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+                    particle.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+                    
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => particle.remove(), 1000);
+                }
+            }
+            
+            showComboIndicator(combo) {
+                const indicator = document.getElementById('comboIndicator');
+                indicator.textContent = `${combo}x COMBO!`;
+                indicator.classList.add('show');
+                
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 1000);
             }
             
             removeMatches(matches) {
@@ -886,22 +969,22 @@
             checkAchievements() {
                 if (!this.achievements.firstMatch && this.score > 0) {
                     this.achievements.firstMatch = true;
-                    this.showAchievement('🌟 पहला मैच!', 'आपने अपना पहला मैच बनाया!');
+                    this.showAchievement('First Match!', 'You made your first match!');
                 }
                 
                 if (!this.achievements.combo5 && this.combo >= 5) {
                     this.achievements.combo5 = true;
-                    this.showAchievement('🔥 कॉम्बो मास्टर!', 'आपने 5x कॉम्बो बनाया!');
+                    this.showAchievement('Combo Master!', 'You achieved a 5x combo!');
                 }
                 
                 if (!this.achievements.score1000 && this.score >= 1000) {
                     this.achievements.score1000 = true;
-                    this.showAchievement('💯 स्कोर मास्टर!', 'आपने 1000 अंक पार कर लिए!');
+                    this.showAchievement('Score Master!', 'You reached 1000 points!');
                 }
                 
                 if (!this.achievements.level3 && this.level >= 3) {
                     this.achievements.level3 = true;
-                    this.showAchievement('🚀 लेवल एक्सपर्ट!', 'आप लेवल 3 पर पहुंच गए!');
+                    this.showAchievement('Level Expert!', 'You reached level 3!');
                 }
             }
             
@@ -913,6 +996,10 @@
                 achievementText.textContent = text;
                 achievement.classList.add('show');
                 
+                this.playSound(880, 0.1);
+                setTimeout(() => this.playSound(1108.73, 0.1), 100);
+                setTimeout(() => this.playSound(1318.51, 0.15), 200);
+                
                 setTimeout(() => {
                     achievement.classList.remove('show');
                 }, 3000);
@@ -923,22 +1010,22 @@
                     this.level++;
                     this.targetScore = this.level * 1000;
                     this.moves += 10;
-                    this.showAchievement('🎉 लेवल अप!', `लेवल ${this.level} में आपका स्वागत है!`);
+                    this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
                 } else if (this.moves <= 0) {
-                    this.showAchievement('💖 गेम ओवर!', `अंतिम स्कोर: ${this.score}`);
+                    this.showAchievement('Game Over!', `Final Score: ${this.score}`);
                     setTimeout(() => {
-                        if (confirm(`गेम ओवर! आपका स्कोर: ${this.score}\nफिर से खेलें?`)) {
+                        if (confirm('Game Over! Your score: ' + this.score + '\nPlay again?')) {
                             this.newGame();
                         }
-                    }, 2000);
+                    }, 1000);
                 }
             }
             
             newGame() {
                 this.score = 0;
-                this.moves = 30;
+                this.moves = parseInt(document.getElementById('movesLimit').value);
                 this.level = 1;
-                this.targetScore = 1000;
+                this.targetScore = parseInt(document.getElementById('targetScore').value);
                 this.combo = 0;
                 this.achievements = {
                     firstMatch: false,
@@ -954,6 +1041,7 @@
                 
                 this.isProcessing = true;
                 
+                // Fisher-Yates shuffle
                 for (let i = 0; i < this.boardSize; i++) {
                     for (let j = 0; j < this.boardSize; j++) {
                         const randomRow = Math.floor(Math.random() * this.boardSize);
@@ -964,6 +1052,7 @@
                     }
                 }
                 
+                // Ensure no matches after shuffle
                 this.removeInitialMatches();
                 this.renderBoard();
                 
@@ -975,8 +1064,10 @@
             showHint() {
                 if (this.isProcessing) return;
                 
+                // Find a possible move
                 for (let i = 0; i < this.boardSize; i++) {
                     for (let j = 0; j < this.boardSize; j++) {
+                        // Check all adjacent tiles
                         const adjacent = [
                             {row: i - 1, col: j},
                             {row: i + 1, col: j},
@@ -988,15 +1079,18 @@
                             if (adj.row >= 0 && adj.row < this.boardSize && 
                                 adj.col >= 0 && adj.col < this.boardSize) {
                                 
+                                // Simulate swap
                                 [this.board[i][j], this.board[adj.row][adj.col]] = 
                                 [this.board[adj.row][adj.col], this.board[i][j]];
                                 
                                 const matches = this.findMatches();
                                 
+                                // Swap back
                                 [this.board[i][j], this.board[adj.row][adj.col]] = 
                                 [this.board[adj.row][adj.col], this.board[i][j]];
                                 
                                 if (matches.length > 0) {
+                                    // Highlight the hint
                                     const tile1 = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
                                     const tile2 = document.querySelector(`[data-row="${adj.row}"][data-col="${adj.col}"]`);
                                     
@@ -1006,7 +1100,7 @@
                                     setTimeout(() => {
                                         tile1.style.boxShadow = '';
                                         tile2.style.boxShadow = '';
-                                    }, 3000);
+                                    }, 2000);
                                     
                                     return;
                                 }
@@ -1019,7 +1113,7 @@
             pauseGame() {
                 this.isProcessing = !this.isProcessing;
                 const btn = event.target;
-                btn.textContent = this.isProcessing ? 'चालू करें' : 'रोकें';
+                btn.textContent = this.isProcessing ? 'Resume' : 'Pause';
             }
             
             updateUI() {
@@ -1033,8 +1127,10 @@
             }
         }
         
+        // Global game instance
         const game = new FruitPuzzleGame();
         
+        // Customization functions
         function toggleCustomization() {
             const panel = document.getElementById('customizationPanel');
             const toggle = document.querySelector('.toggle-panel');
@@ -1046,6 +1142,10 @@
         function updateBoardSize() {
             const size = parseInt(document.getElementById('boardSize').value);
             game.boardSize = size;
+            
+            // Responsive Fix: Update CSS grid columns dynamically 
+            document.getElementById('gameBoard').style.setProperty('grid-template-columns', `repeat(${size}, 1fr)`);
+            
             game.initializeGame();
         }
         
@@ -1061,6 +1161,19 @@
             document.getElementById('targetScoreValue').textContent = target;
             game.targetScore = parseInt(target);
             game.updateUI();
+        }
+        
+        function updateBackgroundColor() {
+            const color = document.getElementById('backgroundColor').value;
+            document.body.style.background = `linear-gradient(135deg, ${color} 0%, ${adjustColor(color, -20)} 100%)`;
+        }
+        
+        function adjustColor(color, amount) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+            const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+            const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+            return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
         }
         
         function updateFruitSet() {
@@ -1084,6 +1197,33 @@
             game.volume = volume;
         }
         
+        function updateDifficulty() {
+            const difficulty = document.getElementById('difficulty').value;
+            
+            switch(difficulty) {
+                case 'easy':
+                    game.moves = 50;
+                    game.targetScore = 500;
+                    break;
+                case 'medium':
+                    game.moves = 30;
+                    game.targetScore = 1000;
+                    break;
+                case 'hard':
+                    game.moves = 20;
+                    game.targetScore = 2000;
+                    break;
+            }
+            
+            document.getElementById('movesLimit').value = game.moves;
+            document.getElementById('movesLimitValue').textContent = game.moves;
+            document.getElementById('targetScore').value = game.targetScore;
+            document.getElementById('targetScoreValue').textContent = game.targetScore;
+            
+            game.updateUI();
+        }
+        
+        // Initialize audio on first user interaction
         document.addEventListener('click', function initAudio() {
             if (game.audioContext && game.audioContext.state === 'suspended') {
                 game.audioContext.resume();
