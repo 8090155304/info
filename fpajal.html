@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>Fruit Puzzle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 90vw;
+            position: relative;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .score-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .score-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .fruit-tile {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fruit-tile:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .fruit-tile.selected {
+            transform: scale(1.15);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            border: 3px solid #ffd700;
+        }
+
+        .fruit-tile.matched {
+            animation: matchAnimation 0.6s ease-out;
+        }
+
+        @keyframes matchAnimation {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.3) rotate(180deg);
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .customization-panel {
+            position: fixed;
+            right: -350px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            background: white;
+            border-radius: 20px 0 0 20px;
+            padding: 20px;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
+            transition: right 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .customization-panel.active {
+            right: 0;
+        }
+
+        .toggle-panel {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 10px;
+            border-radius: 10px 0 0 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+            transition: right 0.3s ease;
+        }
+
+        .toggle-panel.active {
+            right: 300px;
+        }
+
+        .customization-section {
+            margin-bottom: 20px;
+        }
+
+        .customization-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .customization-option {
+            margin-bottom: 10px;
+        }
+
+        .customization-option label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .customization-option input[type="range"],
+        .customization-option select,
+        .customization-option input[type="color"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .combo-indicator.show {
+            animation: comboAnimation 1s ease-out;
+        }
+
+        @keyframes comboAnimation {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleAnimation 1s ease-out forwards;
+        }
+
+        @keyframes particleAnimation {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            
+            .fruit-tile {
+                width: 45px;
+                height: 45px;
+                font-size: 1.5em;
+            }
+            
+            .game-title {
+                font-size: 2em;
+            }
+            
+            .customization-panel {
+                width: 250px;
+                right: -250px;
+            }
+            
+            .toggle-panel.active {
+                right: 250px;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: -300px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transition: right 0.5s ease;
+            z-index: 1000;
+        }
+
+        .achievement.show {
+            right: 20px;
+        }
+
+        .achievement h4 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">🍓 Fruit Puzzle Paradise 🍊</h1>
+            <div class="score-board">
+                <div class="score-item">
+                    <span>Score: </span>
+                    <span id="score">0</span>
+                </div>
+                <div class="score-item">
+                    <span>Moves: </span>
+                    <span id="moves">30</span>
+                </div>
+                <div class="score-item">
+                    <span>Level: </span>
+                    <span id="level">1</span>
+                </div>
+                <div class="score-item">
+                    <span>Target: </span>
+                    <span id="target">1000</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="game-board" id="gameBoard"></div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="game.newGame()">New Game</button>
+            <button class="btn btn-secondary" onclick="game.shuffleBoard()">Shuffle</button>
+            <button class="btn btn-primary" onclick="game.showHint()">Hint</button>
+            <button class="btn btn-secondary" onclick="game.pauseGame()">Pause</button>
+        </div>
+        
+        <div class="combo-indicator" id="comboIndicator"></div>
+    </div>
+    
+    <button class="toggle-panel" onclick="toggleCustomization()">⚙️</button>
+    
+    <div class="customization-panel" id="customizationPanel">
+        <h2>🎨 Customization</h2>
+        
+        <div class="customization-section">
+            <h3>Game Settings</h3>
+            <div class="customization-option">
+                <label for="boardSize">Board Size</label>
+                <select id="boardSize" onchange="updateBoardSize()">
+                    <option value="6">6x6</option>
+                    <option value="8" selected>8x8</option>
+                    <option value="10">10x10</option>
+                </select>
+            </div>
+            <div class="customization-option">
+                <label for="movesLimit">Moves Limit</label>
+                <input type="range" id="movesLimit" min="10" max="50" value="30" onchange="updateMovesLimit()">
+                <span id="movesLimitValue">30</span>
+            </div>
+            <div class="customization-option">
+                <label for="targetScore">Target Score</label>
+                <input type="range" id="targetScore" min="500" max="5000" value="1000" step="100" onchange="updateTargetScore()">
+                <span id="targetScoreValue">1000</span>
+            </div>
+        </div>
+        
+        <div class="customization-section">
+            <h3>Visual Theme</h3>
+            <div class="customization-option">
+                <label for="backgroundColor">Background Color</label>
+                <input type="color" id="backgroundColor" value="#667eea" onchange="updateBackgroundColor()">
+            </div>
+            <div class="customization-option">
+                <label for="fruitSet">Fruit Set</label>
+                <select id="fruitSet" onchange="updateFruitSet()">
+                    <option value="classic">Classic Fruits</option>
+                    <option value="tropical">Tropical Fruits</option>
+                    <option value="emoji">Emoji Style</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="customization-option">
+                <label for="animationSpeed">Animation Speed</label>
+                <input type="range" id="animationSpeed" min="0.1" max="1" value="0.3" step="0.1" onchange="updateAnimationSpeed()">
+            </div>
+        </div>
+        
+        <div class="customization-section">
+            <h3>Sound Effects</h3>
+            <div class="customization-option">
+                <label>
+                    <input type="checkbox" id="soundEnabled" checked onchange="toggleSound()">
+                    Enable Sound
+                </label>
+            </div>
+            <div class="customization-option">
+                <label for="soundVolume">Volume</label>
+                <input type="range" id="soundVolume" min="0" max="100" value="50" onchange="updateVolume()">
+            </div>
+        </div>
+        
+        <div class="customization-section">
+            <h3>Difficulty</h3>
+            <div class="customization-option">
+                <label for="difficulty">Difficulty Level</label>
+                <select id="difficulty" onchange="updateDifficulty()">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="achievement" id="achievement">
+        <h4>Achievement Unlocked!</h4>
+        <p id="achievementText"></p>
+    </div>
+
+    <script>
+        class FruitPuzzleGame {
+            constructor() {
+                this.board = [];
+                this.boardSize = 8;
+                this.score = 0;
+                this.moves = 30;
+                this.level = 1;
+                this.targetScore = 1000;
+                this.selectedTile = null;
+                this.isProcessing = false;
+                this.soundEnabled = true;
+                this.volume = 0.5;
+                this.animationSpeed = 0.3;
+                this.fruitSets = {
+                    classic: ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑'],
+                    tropical: ['🥥', '🍍', '🥭', '🍌', '🥝', '🍉'],
+                    emoji: ['😀', '😍', '🤩', '😎', '🥳', '😋'],
+                    custom: ['⭐', '💎', '🔥', '⚡', '🌟', '✨']
+                };
+                this.currentFruitSet = 'classic';
+                this.fruits = this.fruitSets[this.currentFruitSet];
+                this.combo = 0;
+                this.lastMatchTime = 0;
+                this.achievements = {
+                    firstMatch: false,
+                    combo5: false,
+                    score1000: false,
+                    level3: false
+                };
+                
+                this.initializeGame();
+                this.createAudioContext();
+            }
+            
+            createAudioContext() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            playSound(frequency, duration, type = 'sine') {
+                if (!this.soundEnabled || !this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(this.volume * 0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+            
+            playMatchSound() {
+                this.playSound(523.25, 0.1); // C5
+                setTimeout(() => this.playSound(659.25, 0.1), 50); // E5
+                setTimeout(() => this.playSound(783.99, 0.15), 100); // G5
+            }
+            
+            playComboSound(combo) {
+                const baseFreq = 440 + (combo * 50);
+                this.playSound(baseFreq, 0.1, 'square');
+                setTimeout(() => this.playSound(baseFreq * 1.25, 0.1, 'square'), 50);
+                setTimeout(() => this.playSound(baseFreq * 1.5, 0.15, 'square'), 100);
+            }
+            
+            initializeGame() {
+                this.board = [];
+                this.generateBoard();
+                this.renderBoard();
+                this.updateUI();
+            }
+            
+            generateBoard() {
+                for (let i = 0; i < this.boardSize; i++) {
+                    this.board[i] = [];
+                    for (let j = 0; j < this.boardSize; j++) {
+                        this.board[i][j] = this.getRandomFruit();
+                    }
+                }
+                
+                // Ensure no initial matches
+                this.removeInitialMatches();
+            }
+            
+            removeInitialMatches() {
+                let hasMatches = true;
+                while (hasMatches) {
+                    hasMatches = false;
+                    for (let i = 0; i < this.boardSize; i++) {
+                        for (let j = 0; j < this.boardSize; j++) {
+                            if (this.hasMatchAt(i, j)) {
+                                this.board[i][j] = this.getRandomFruit();
+                                hasMatches = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            getRandomFruit() {
+                return this.fruits[Math.floor(Math.random() * this.fruits.length)];
+            }
+            
+            hasMatchAt(row, col) {
+                const fruit = this.board[row][col];
+                
+                // Check horizontal match
+                let horizontalCount = 1;
+                for (let j = col - 1; j >= 0 && this.board[row][j] === fruit; j--) {
+                    horizontalCount++;
+                }
+                for (let j = col + 1; j < this.boardSize && this.board[row][j] === fruit; j++) {
+                    horizontalCount++;
+                }
+                
+                // Check vertical match
+                let verticalCount = 1;
+                for (let i = row - 1; i >= 0 && this.board[i][col] === fruit; i--) {
+                    verticalCount++;
+                }
+                for (let i = row + 1; i < this.boardSize && this.board[i][col] === fruit; i++) {
+                    verticalCount++;
+                }
+                
+                return horizontalCount >= 3 || verticalCount >= 3;
+            }
+            
+            renderBoard() {
+                const gameBoard = document.getElementById('gameBoard');
+                gameBoard.innerHTML = '';
+                gameBoard.style.gridTemplateColumns = `repeat(${this.boardSize}, 1fr)`;
+                
+                for (let i = 0; i < this.boardSize; i++) {
+                    for (let j = 0; j < this.boardSize; j++) {
+                        const tile = document.createElement('div');
+                        tile.className = 'fruit-tile';
+                        tile.textContent = this.board[i][j];
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        tile.onclick = () => this.handleTileClick(i, j);
+                        gameBoard.appendChild(tile);
+                    }
+                }
+            }
+            
+            handleTileClick(row, col) {
+                if (this.isProcessing || this.moves <= 0) return;
+                
+                const tile = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                
+                if (!this.selectedTile) {
+                    this.selectedTile = { row, col, element: tile };
+                    tile.classList.add('selected');
+                } else {
+                    const prevRow = this.selectedTile.row;
+                    const prevCol = this.selectedTile.col;
+                    
+                    // Check if tiles are adjacent
+                    if (this.areAdjacent(prevRow, prevCol, row, col)) {
+                        this.swapTiles(prevRow, prevCol, row, col);
+                    }
+                    
+                    this.selectedTile.element.classList.remove('selected');
+                    this.selectedTile = null;
+                }
+            }
+            
+            areAdjacent(row1, col1, row2, col2) {
+                return (Math.abs(row1 - row2) === 1 && col1 === col2) ||
+                       (Math.abs(col1 - col2) === 1 && row1 === row2);
+            }
+            
+            swapTiles(row1, col1, row2, col2) {
+                this.isProcessing = true;
+                
+                // Swap in board array
+                [this.board[row1][col1], this.board[row2][col2]] = 
+                [this.board[row2][col2], this.board[row1][col1]];
+                
+                // Update display
+                this.renderBoard();
+                
+                // Check for matches
+                setTimeout(() => {
+                    const matches = this.findMatches();
+                    if (matches.length > 0) {
+                        this.moves--;
+                        this.processMatches(matches);
+                        this.playMatchSound();
+                    } else {
+                        // Swap back if no matches
+                        [this.board[row1][col1], this.board[row2][col2]] = 
+                        [this.board[row2][col2], this.board[row1][col1]];
+                        this.renderBoard();
+                        this.isProcessing = false;
+                    }
+                }, this.animationSpeed * 1000);
+            }
+            
+            findMatches() {
+                const matches = [];
+                const visited = Array(this.boardSize).fill().map(() => Array(this.boardSize).fill(false));
+                
+                for (let i = 0; i < this.boardSize; i++) {
+                    for (let j = 0; j < this.boardSize; j++) {
+                        if (!visited[i][j]) {
+                            const match = this.getMatchFrom(i, j, visited);
+                            if (match.length >= 3) {
+                                matches.push(...match);
+                            }
+                        }
+                    }
+                }
+                
+                return matches;
+            }
+            
+            getMatchFrom(row, col, visited) {
+                const fruit = this.board[row][col];
+                const match = [];
+                const stack = [{row, col}];
+                
+                while (stack.length > 0) {
+                    const {row: r, col: c} = stack.pop();
+                    
+                    if (r < 0 || r >= this.boardSize || c < 0 || c >= this.boardSize || 
+                        visited[r][c] || this.board[r][c] !== fruit) {
+                        continue;
+                    }
+                    
+                    visited[r][c] = true;
+                    match.push({row: r, col: c});
+                    
+                    // Check all four directions
+                    stack.push({row: r - 1, col: c});
+                    stack.push({row: r + 1, col: c});
+                    stack.push({row: r, col: c - 1});
+                    stack.push({row: r, col: c + 1});
+                }
+                
+                // Only return matches of 3 or more in a line
+                if (match.length >= 3) {
+                    const horizontalMatches = this.getLineMatches(match, 'horizontal');
+                    const verticalMatches = this.getLineMatches(match, 'vertical');
+                    return [...horizontalMatches, ...verticalMatches];
+                }
+                
+                return [];
+            }
+            
+            getLineMatches(match, direction) {
+                const matches = [];
+                const sorted = direction === 'horizontal' 
+                    ? match.sort((a, b) => a.row - b.row || a.col - b.col)
+                    : match.sort((a, b) => a.col - b.col || a.row - b.row);
+                
+                let currentLine = [];
+                let currentValue = direction === 'horizontal' ? sorted[0].row : sorted[0].col;
+                
+                for (const cell of sorted) {
+                    const value = direction === 'horizontal' ? cell.row : cell.col;
+                    if (value === currentValue) {
+                        currentLine.push(cell);
+                    } else {
+                        if (currentLine.length >= 3) {
+                            matches.push(...currentLine);
+                        }
+                        currentLine = [cell];
+                        currentValue = value;
+                    }
+                }
+                
+                if (currentLine.length >= 3) {
+                    matches.push(...currentLine);
+                }
+                
+                return matches;
+            }
+            
+            processMatches(matches) {
+                // Remove duplicates
+                const uniqueMatches = matches.filter((match, index, self) =>
+                    index === self.findIndex(m => m.row === match.row && m.col === match.col)
+                );
+                
+                // Calculate score
+                const baseScore = uniqueMatches.length * 10;
+                const timeBonus = this.combo > 0 ? Math.pow(1.5, this.combo) : 1;
+                const matchScore = Math.round(baseScore * timeBonus);
+                this.score += matchScore;
+                
+                // Update combo
+                const currentTime = Date.now();
+                if (currentTime - this.lastMatchTime < 2000) {
+                    this.combo++;
+                } else {
+                    this.combo = 1;
+                }
+                this.lastMatchTime = currentTime;
+                
+                // Show combo indicator
+                if (this.combo > 1) {
+                    this.showComboIndicator(this.combo);
+                    this.playComboSound(this.combo);
+                }
+                
+                // Check achievements
+                this.checkAchievements();
+                
+                // Animate matches
+                uniqueMatches.forEach((match, index) => {
+                    setTimeout(() => {
+                        const tile = document.querySelector(`[data-row="${match.row}"][data-col="${match.col}"]`);
+                        if (tile) {
+                            tile.classList.add('matched');
+                            this.createParticles(tile);
+                        }
+                    }, index * 50);
+                });
+                
+                // Remove matched tiles and drop new ones
+                setTimeout(() => {
+                    this.removeMatches(uniqueMatches);
+                    this.dropTiles();
+                    this.fillBoard();
+                    
+                    // Check for new matches
+                    setTimeout(() => {
+                        const newMatches = this.findMatches();
+                        if (newMatches.length > 0) {
+                            this.processMatches(newMatches);
+                        } else {
+                            this.combo = 0;
+                            this.isProcessing = false;
+                            this.checkGameEnd();
+                        }
+                        this.renderBoard();
+                    }, this.animationSpeed * 1000);
+                }, this.animationSpeed * 1000);
+                
+                this.updateUI();
+            }
+            
+            createParticles(element) {
+                const rect = element.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = centerX + 'px';
+                    particle.style.top = centerY + 'px';
+                    
+                    const angle = (i / 8) * Math.PI * 2;
+                    const distance = 50 + Math.random() * 50;
+                    particle.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+                    particle.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+                    
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => particle.remove(), 1000);
+                }
+            }
+            
+            showComboIndicator(combo) {
+                const indicator = document.getElementById('comboIndicator');
+                indicator.textContent = `${combo}x COMBO!`;
+                indicator.classList.add('show');
+                
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 1000);
+            }
+            
+            removeMatches(matches) {
+                matches.forEach(match => {
+                    this.board[match.row][match.col] = null;
+                });
+            }
+            
+            dropTiles() {
+                for (let j = 0; j < this.boardSize; j++) {
+                    let emptyRow = this.boardSize - 1;
+                    
+                    for (let i = this.boardSize - 1; i >= 0; i--) {
+                        if (this.board[i][j] !== null) {
+                            if (i !== emptyRow) {
+                                this.board[emptyRow][j] = this.board[i][j];
+                                this.board[i][j] = null;
+                            }
+                            emptyRow--;
+                        }
+                    }
+                }
+            }
+            
+            fillBoard() {
+                for (let i = 0; i < this.boardSize; i++) {
+                    for (let j = 0; j < this.boardSize; j++) {
+                        if (this.board[i][j] === null) {
+                            this.board[i][j] = this.getRandomFruit();
+                        }
+                    }
+                }
+            }
+            
+            checkAchievements() {
+                if (!this.achievements.firstMatch && this.score > 0) {
+                    this.achievements.firstMatch = true;
+                    this.showAchievement('First Match!', 'You made your first match!');
+                }
+                
+                if (!this.achievements.combo5 && this.combo >= 5) {
+                    this.achievements.combo5 = true;
+                    this.showAchievement('Combo Master!', 'You achieved a 5x combo!');
+                }
+                
+                if (!this.achievements.score1000 && this.score >= 1000) {
+                    this.achievements.score1000 = true;
+                    this.showAchievement('Score Master!', 'You reached 1000 points!');
+                }
+                
+                if (!this.achievements.level3 && this.level >= 3) {
+                    this.achievements.level3 = true;
+                    this.showAchievement('Level Expert!', 'You reached level 3!');
+                }
+            }
+            
+            showAchievement(title, text) {
+                const achievement = document.getElementById('achievement');
+                const achievementText = document.getElementById('achievementText');
+                
+                achievement.querySelector('h4').textContent = title;
+                achievementText.textContent = text;
+                achievement.classList.add('show');
+                
+                this.playSound(880, 0.1);
+                setTimeout(() => this.playSound(1108.73, 0.1), 100);
+                setTimeout(() => this.playSound(1318.51, 0.15), 200);
+                
+                setTimeout(() => {
+                    achievement.classList.remove('show');
+                }, 3000);
+            }
+            
+            checkGameEnd() {
+                if (this.score >= this.targetScore) {
+                    this.level++;
+                    this.targetScore = this.level * 1000;
+                    this.moves += 10;
+                    this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
+                } else if (this.moves <= 0) {
+                    this.showAchievement('Game Over!', `Final Score: ${this.score}`);
+                    setTimeout(() => {
+                        if (confirm('Game Over! Your score: ' + this.score + '\nPlay again?')) {
+                            this.newGame();
+                        }
+                    }, 1000);
+                }
+            }
+            
+            newGame() {
+                this.score = 0;
+                this.moves = parseInt(document.getElementById('movesLimit').value);
+                this.level = 1;
+                this.targetScore = parseInt(document.getElementById('targetScore').value);
+                this.combo = 0;
+                this.achievements = {
+                    firstMatch: false,
+                    combo5: false,
+                    score1000: false,
+                    level3: false
+                };
+                this.initializeGame();
+            }
+            
+            shuffleBoard() {
+                if (this.isProcessing) return;
+                
+                this.isProcessing = true;
+                
+                // Fisher-Yates shuffle
+                for (let i = 0; i < this.boardSize; i++) {
+                    for (let j = 0; j < this.boardSize; j++) {
+                        const randomRow = Math.floor(Math.random() * this.boardSize);
+                        const randomCol = Math.floor(Math.random() * this.boardSize);
+                        
+                        [this.board[i][j], this.board[randomRow][randomCol]] = 
+                        [this.board[randomRow][randomCol], this.board[i][j]];
+                    }
+                }
+                
+                // Ensure no matches after shuffle
+                this.removeInitialMatches();
+                this.renderBoard();
+                
+                setTimeout(() => {
+                    this.isProcessing = false;
+                }, 500);
+            }
+            
+            showHint() {
+                if (this.isProcessing) return;
+                
+                // Find a possible move
+                for (let i = 0; i < this.boardSize; i++) {
+                    for (let j = 0; j < this.boardSize; j++) {
+                        // Check all adjacent tiles
+                        const adjacent = [
+                            {row: i - 1, col: j},
+                            {row: i + 1, col: j},
+                            {row: i, col: j - 1},
+                            {row: i, col: j + 1}
+                        ];
+                        
+                        for (const adj of adjacent) {
+                            if (adj.row >= 0 && adj.row < this.boardSize && 
+                                adj.col >= 0 && adj.col < this.boardSize) {
+                                
+                                // Simulate swap
+                                [this.board[i][j], this.board[adj.row][adj.col]] = 
+                                [this.board[adj.row][adj.col], this.board[i][j]];
+                                
+                                const matches = this.findMatches();
+                                
+                                // Swap back
+                                [this.board[i][j], this.board[adj.row][adj.col]] = 
+                                [this.board[adj.row][adj.col], this.board[i][j]];
+                                
+                                if (matches.length > 0) {
+                                    // Highlight the hint
+                                    const tile1 = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                                    const tile2 = document.querySelector(`[data-row="${adj.row}"][data-col="${adj.col}"]`);
+                                    
+                                    tile1.style.boxShadow = '0 0 20px #00ff00';
+                                    tile2.style.boxShadow = '0 0 20px #00ff00';
+                                    
+                                    setTimeout(() => {
+                                        tile1.style.boxShadow = '';
+                                        tile2.style.boxShadow = '';
+                                    }, 2000);
+                                    
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            pauseGame() {
+                this.isProcessing = !this.isProcessing;
+                const btn = event.target;
+                btn.textContent = this.isProcessing ? 'Resume' : 'Pause';
+            }
+            
+            updateUI() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('moves').textContent = this.moves;
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('target').textContent = this.targetScore;
+                
+                const progress = Math.min((this.score / this.targetScore) * 100, 100);
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+        }
+        
+        // Global game instance
+        const game = new FruitPuzzleGame();
+        
+        // Customization functions
+        function toggleCustomization() {
+            const panel = document.getElementById('customizationPanel');
+            const toggle = document.querySelector('.toggle-panel');
+            
+            panel.classList.toggle('active');
+            toggle.classList.toggle('active');
+        }
+        
+        function updateBoardSize() {
+            const size = parseInt(document.getElementById('boardSize').value);
+            game.boardSize = size;
+            game.initializeGame();
+        }
+        
+        function updateMovesLimit() {
+            const limit = document.getElementById('movesLimit').value;
+            document.getElementById('movesLimitValue').textContent = limit;
+            game.moves = parseInt(limit);
+            game.updateUI();
+        }
+        
+        function updateTargetScore() {
+            const target = document.getElementById('targetScore').value;
+            document.getElementById('targetScoreValue').textContent = target;
+            game.targetScore = parseInt(target);
+            game.updateUI();
+        }
+        
+        function updateBackgroundColor() {
+            const color = document.getElementById('backgroundColor').value;
+            document.body.style.background = `linear-gradient(135deg, ${color} 0%, ${adjustColor(color, -20)} 100%)`;
+        }
+        
+        function adjustColor(color, amount) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+            const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+            const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+            return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+        }
+        
+        function updateFruitSet() {
+            const set = document.getElementById('fruitSet').value;
+            game.currentFruitSet = set;
+            game.fruits = game.fruitSets[set];
+            game.renderBoard();
+        }
+        
+        function updateAnimationSpeed() {
+            const speed = parseFloat(document.getElementById('animationSpeed').value);
+            game.animationSpeed = speed;
+        }
+        
+        function toggleSound() {
+            game.soundEnabled = document.getElementById('soundEnabled').checked;
+        }
+        
+        function updateVolume() {
+            const volume = parseInt(document.getElementById('soundVolume').value) / 100;
+            game.volume = volume;
+        }
+        
+        function updateDifficulty() {
+            const difficulty = document.getElementById('difficulty').value;
+            
+            switch(difficulty) {
+                case 'easy':
+                    game.moves = 50;
+                    game.targetScore = 500;
+                    break;
+                case 'medium':
+                    game.moves = 30;
+                    game.targetScore = 1000;
+                    break;
+                case 'hard':
+                    game.moves = 20;
+                    game.targetScore = 2000;
+                    break;
+            }
+            
+            document.getElementById('movesLimit').value = game.moves;
+            document.getElementById('movesLimitValue').textContent = game.moves;
+            document.getElementById('targetScore').value = game.targetScore;
+            document.getElementById('targetScoreValue').textContent = game.targetScore;
+            
+            game.updateUI();
+        }
+        
+        // Initialize audio on first user interaction
+        document.addEventListener('click', function initAudio() {
+            if (game.audioContext && game.audioContext.state === 'suspended') {
+                game.audioContext.resume();
+            }
+            document.removeEventListener('click', initAudio);
+        }, { once: true });
+    </script>
+</body>
+</html>
