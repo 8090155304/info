@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/png" href="SHIV.png">
     <title>Fruit Puzzle</title>
-    <link rel="icon" type="image/png" href="SHIV.png">
     <style>
         * {
             margin: 0;
@@ -23,12 +23,12 @@
         }
 
         .game-container {
-            background: rgba(255, 255, 255, 0.99);
+            background: rgba(235, 255, 255, 0.99);
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 95vw;
-            width: 98%; 
+            width: 98%;
             position: relative;
         }
 
@@ -51,15 +51,15 @@
             justify-content: space-around;
             margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 3px;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(240, 255, 0, 0.9);
         }
 
         .score-item {
             background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
-            padding: 10px 15px;
+            color: red;
+            padding: 10px 18px;
             border-radius: 18px;
             font-size: 1.1em;
             font-weight: bold;
@@ -70,8 +70,8 @@
         }
 
         .score-item:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 0 #1B5E20, 0 12px 20px rgba(0, 0, 0, 0.4);
+            transform: translateY(-9px);
+            box-shadow: 0 15px 0 #1B5E20, 0 12px 20px rgba(0, 0, 0, 0.4);
         }
         
         .game-board {
@@ -93,17 +93,17 @@
             max-width: 60px;
             max-height: 60px;
             
-            border-radius: 12px;
+            border-radius: 30px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0); 
             display: flex;
             align-items: center;
             justify-content: center;
             
-            font-size: 2.5em; 
+            font-size: 3.1em; 
             
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background: #DBF595;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
             position: relative;
             overflow: hidden;
         }
@@ -115,13 +115,59 @@
 
         .fruit-tile.selected {
             transform: scale(1.15);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 20px rgba(255, 225, 0, 0.8);
             border: 4px solid #ffd700;
         }
 
         .fruit-tile.matched {
-            animation: matchAnimation 0.9s ease-out;
+            animation: matchAnimation 0.20s ease-out;
         }
+
+        /* ---------------------------------
+           NEW: Hard Level Lock Styling
+           --------------------------------- */
+        .fruit-tile.locked {
+            /* Locked tiles cannot be selected for the first click */
+            cursor: not-allowed; 
+            border: 4px dashed #ff4500;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 255, 0, 0.7); /* Dark semi-transparent overlay */
+            border-radius: 8px;
+            font-size: 2.5em; /* Lock emoji size */
+            z-index: 10;
+            text-shadow: 0 0 5px black;
+        }
+
+        .lock-overlay.lock-2 {
+            background: rgba(139, 0, 0, 0.8); /* Darker for 2 layers (Chains) */
+        }
+        
+        .lock-overlay.lock-3 {
+            background: rgba(75, 0, 130, 0.9); /* Darker for 3 layers */
+        }
+        
+        /* NEW: Visual Feedback on Lock Hit */
+        .fruit-tile.lock-hit {
+            animation: shake 0.3s ease-in-out;
+            box-shadow: 0 0 20px #ff0000;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        /* --------------------------------- */
 
         @keyframes matchAnimation {
             0% {
@@ -201,7 +247,7 @@
         }
 
         /* ---------------------------------
-           New Customization Panel (Modal Style)
+           Customization Panel (Modal Style) - Fixed position back
            --------------------------------- */
         .customization-panel {
             position: fixed;
@@ -231,10 +277,6 @@
             opacity: 1;
             visibility: visible;
         }
-        
-        /* ---------------------------------
-           Removed old .toggle-panel CSS as it's no longer fixed on the side
-           --------------------------------- */
 
         .customization-section {
             margin-bottom: 20px;
@@ -369,8 +411,6 @@
             .customization-panel {
                 width: 90vw;
             }
-            
-            /* No need for .toggle-panel CSS here */
         }
 
         .progress-bar {
@@ -453,10 +493,10 @@
     </div>
     
     <div class="customization-panel" id="customizationPanel">
-        <h2>🎨Game Setting</h2>
+        <h2>🎨 Customization</h2>
         
         <div class="customization-section">
-            <h3>Costomization</h3>
+            <h3>Game Settings</h3>
             <div class="customization-option">
                 <label for="boardSize">Board Size</label>
                 <select id="boardSize" onchange="updateBoardSize()">
@@ -561,6 +601,11 @@
             level3: false
         };
         
+        // --- HARD LEVEL PROPERTIES ---
+        this.isHardLevel = false; 
+        this.lockState = []; // Stores the lock layer (0, 1, 2, or 3)
+        // ----------------------------------
+        
         this.initializeGame();
         this.createAudioContext();
     }
@@ -610,17 +655,42 @@
     generateBoard() {
         // बोर्ड को पूरी तरह से रीसेट और नए सिरे से उत्पन्न करें
         this.board = [];
+        this.lockState = [];
         for (let i = 0; i < this.boardSize; i++) {
             this.board[i] = [];
+            this.lockState[i] = new Array(this.boardSize).fill(0); // Default: 0 locks
             for (let j = 0; j < this.boardSize; j++) {
                 this.board[i][j] = this.getRandomFruit();
             }
         }
+        this.isHardLevel = false; // Reset the flag for normal levels
         
-        // सुनिश्चित करें कि कोई प्रारंभिक मैच न हो
         this.removeInitialMatches();
     }
     
+    // --- Hard Level Logic: Apply Locks ---
+    applyLocks() {
+        // Calculate lock chance and max layers based on level
+        const baseLevel = Math.floor(this.level / 4) * 4; // Get the base level for hard levels (4, 8, 12, etc.)
+        const hardLevelNumber = baseLevel / 4; // 1 for level 4, 2 for level 8, etc.
+        
+        // Increase lock chance and max layers with each hard level
+        const lockChance = 0.2 + (hardLevelNumber * 0.1); // 30% at level 4, 40% at level 8, etc.
+        const maxLayers = Math.min(1 + hardLevelNumber, 3); // Max 3 layers
+        
+        for (let i = 0; i < this.boardSize; i++) {
+            for (let j = 0; j < this.boardSize; j++) {
+                if (Math.random() < lockChance) {
+                    // Randomly assign 1 to maxLayers lock layers
+                    this.lockState[i][j] = Math.floor(Math.random() * maxLayers) + 1; 
+                } else {
+                    this.lockState[i][j] = 0;
+                }
+            }
+        }
+    }
+    // ------------------------------------------
+
     removeInitialMatches() {
         let hasMatches = true;
         while (hasMatches) {
@@ -678,6 +748,22 @@
                 tile.dataset.row = i;
                 tile.dataset.col = j;
                 tile.onclick = () => this.handleTileClick(i, j);
+                
+                // --- Display Lock ---
+                const lockLayer = this.lockState[i][j];
+                if (lockLayer > 0) {
+                    tile.classList.add('locked');
+                    tile.dataset.lock = lockLayer;
+                    
+                    let lockSymbol;
+                    if (lockLayer === 1) lockSymbol = '🔒';
+                    else if (lockLayer === 2) lockSymbol = '⛓️';
+                    else lockSymbol = '🔐';
+                    
+                    tile.innerHTML += `<div class="lock-overlay lock-${lockLayer}">${lockSymbol}</div>`;
+                }
+                // -------------------------
+                
                 gameBoard.appendChild(tile);
             }
         }
@@ -688,6 +774,13 @@
         
         const tile = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
         
+        // If clicking a locked tile as first selection, show feedback and return
+        if (!this.selectedTile && this.lockState[row][col] > 0) {
+            tile.classList.add('lock-hit');
+            setTimeout(() => tile.classList.remove('lock-hit'), 500);
+            return;
+        }
+        
         if (!this.selectedTile) {
             this.selectedTile = { row, col, element: tile };
             tile.classList.add('selected');
@@ -697,6 +790,23 @@
             
             // Check if tiles are adjacent
             if (this.areAdjacent(prevRow, prevCol, row, col)) {
+                // Check if either tile is locked
+                if (this.lockState[prevRow][prevCol] > 0 || this.lockState[row][col] > 0) {
+                    // Show feedback for locked tiles
+                    if (this.lockState[prevRow][prevCol] > 0) {
+                        this.selectedTile.element.classList.add('lock-hit');
+                        setTimeout(() => this.selectedTile.element.classList.remove('lock-hit'), 500);
+                    }
+                    if (this.lockState[row][col] > 0) {
+                        tile.classList.add('lock-hit');
+                        setTimeout(() => tile.classList.remove('lock-hit'), 500);
+                    }
+                    
+                    this.selectedTile.element.classList.remove('selected');
+                    this.selectedTile = null;
+                    return;
+                }
+                
                 this.swapTiles(prevRow, prevCol, row, col);
             }
             
@@ -717,6 +827,10 @@
         [this.board[row1][col1], this.board[row2][col2]] = 
         [this.board[row2][col2], this.board[row1][col1]];
         
+        // Swap lock state too
+        [this.lockState[row1][col1], this.lockState[row2][col2]] = 
+        [this.lockState[row2][col2], this.lockState[row1][col1]];
+
         // Update display (smooth transition handles the visual swap)
         this.renderBoard();
         
@@ -728,9 +842,12 @@
                 this.processMatches(matches);
                 this.playMatchSound();
             } else {
-                // Swap back if no matches
+                // Swap back if no matches (including lock state swap back)
                 [this.board[row1][col1], this.board[row2][col2]] = 
                 [this.board[row2][col2], this.board[row1][col1]];
+                [this.lockState[row1][col1], this.lockState[row2][col2]] = 
+                [this.lockState[row2][col2], this.lockState[row1][col1]];
+                
                 this.renderBoard();
                 this.isProcessing = false;
             }
@@ -817,20 +934,68 @@
         // Check achievements
         this.checkAchievements();
         
-        // Animate matches
+        let shouldCascade = false;
+
+        // Animate matches AND reduce locks
         uniqueMatches.forEach((match, index) => {
-            setTimeout(() => {
-                const tile = document.querySelector(`[data-row="${match.row}"][data-col="${match.col}"]`);
-                if (tile) {
+            const { row, col } = match;
+            const tile = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            
+            if (!tile) return; // safety check
+            
+            if (this.lockState[row][col] > 0) {
+                // --- FIXED: Locked Match Logic ---
+                setTimeout(() => {
+                    this.lockState[row][col]--; // Reduce lock layer
+                    shouldCascade = true;
+
+                    // Add visual feedback
+                    tile.classList.add('lock-hit');
+                    setTimeout(() => tile.classList.remove('lock-hit'), 500);
+                    
+                    // Immediately update lock symbol and class in DOM
+                    const lockLayer = this.lockState[row][col];
+                    const overlay = tile.querySelector('.lock-overlay');
+                    
+                    if (lockLayer === 0) {
+                        // Lock cleared!
+                        tile.classList.remove('locked');
+                        tile.dataset.lock = 0;
+                        if (overlay) overlay.remove();
+                    } else if (overlay) {
+                        // Lock reduced
+                        let lockSymbol;
+                        if (lockLayer === 1) lockSymbol = '🔒';
+                        else if (lockLayer === 2) lockSymbol = '⛓️';
+                        else lockSymbol = '🔐';
+                        
+                        overlay.textContent = lockSymbol;
+                        overlay.className = `lock-overlay lock-${lockLayer}`;
+                        tile.dataset.lock = lockLayer;
+                    }
+                }, index * 50);
+                // --------------------------------
+            } else {
+                // Not locked: Proceed with normal match animation.
+                setTimeout(() => {
                     tile.classList.add('matched');
                     this.createParticles(tile);
-                }
-            }, index * 50);
+                    shouldCascade = true;
+                }, index * 50);
+            }
         });
         
         // Remove matched tiles and drop new ones
         setTimeout(() => {
-            this.removeMatches(uniqueMatches);
+            if (!shouldCascade) {
+                this.isProcessing = false;
+                this.checkGameEnd();
+                return;
+            }
+
+            // Only remove UNLOCKED tiles that were part of the match set
+            this.removeUnlockedMatches(uniqueMatches); 
+            
             this.dropTiles();
             
             // Store current board state before filling for 'new' animation tracking
@@ -866,11 +1031,22 @@
                     this.checkGameEnd();
                 }
             }, this.animationSpeed * 1000);
-        }, this.animationSpeed * 1000);
+        }, this.animationSpeed * 1000 + 100); // Wait for match animations/lock hits to finish
         
         this.updateUI();
     }
     
+    // --- Helper to only remove unlocked fruits ---
+    removeUnlockedMatches(matches) {
+        matches.forEach(match => {
+            // Only remove the fruit if its lock layer is 0
+            if (this.lockState[match.row][match.col] === 0) {
+                this.board[match.row][match.col] = null;
+            }
+        });
+    }
+    // ------------------------------------------------
+
     createParticles(element) {
         const rect = element.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -903,12 +1079,6 @@
         }, 1000);
     }
     
-    removeMatches(matches) {
-        matches.forEach(match => {
-            this.board[match.row][match.col] = null;
-        });
-    }
-    
     dropTiles() {
         for (let j = 0; j < this.boardSize; j++) {
             let emptyRow = this.boardSize - 1;
@@ -918,6 +1088,10 @@
                     if (i !== emptyRow) {
                         this.board[emptyRow][j] = this.board[i][j];
                         this.board[i][j] = null;
+                        
+                        // Lock state must also drop with the fruit
+                        this.lockState[emptyRow][j] = this.lockState[i][j];
+                        this.lockState[i][j] = 0;
                     }
                     emptyRow--;
                 }
@@ -930,6 +1104,8 @@
             for (let j = 0; j < this.boardSize; j++) {
                 if (this.board[i][j] === null) {
                     this.board[i][j] = this.getRandomFruit();
+                    // New tiles start with 0 locks
+                    this.lockState[i][j] = 0;
                 }
             }
         }
@@ -975,8 +1151,25 @@
     }
     
     checkGameEnd() {
-        if (this.score >= this.targetScore) {
-            this.isProcessing = true;
+        
+        // --- HARD LEVEL CHECK ---
+        if (this.isHardLevel) {
+            // Check if all locks are cleared
+            const totalLocks = this.lockState.flat().reduce((sum, lock) => sum + lock, 0);
+            
+            if (totalLocks === 0) {
+                 this.isProcessing = true;
+                 this.showAchievement('HARD LEVEL CLEARED!', `All locks removed! Score: ${this.score}`);
+                 
+                 setTimeout(() => this.showLevelUpAnimation(), 1500); 
+                 return;
+            }
+        }
+        // ------------------------------
+        
+        // Normal level check (Score Target)
+        if (this.score >= this.targetScore && !this.isHardLevel) {
+            this.isProcessing = true; 
             this.showLevelUpAnimation();
         } else if (this.moves <= 0) {
             this.showAchievement('Game Over!', `Final Score: ${this.score}`);
@@ -992,6 +1185,10 @@
         const container = document.querySelector('.game-container');
         const levelUpOverlay = document.createElement('div');
         levelUpOverlay.id = 'levelUpOverlay';
+        
+        const overlayText = this.isHardLevel ? 'HARD LEVEL CLEARED!' : 'LEVEL UP!';
+        const detailText = `Starting Level ${this.level + 1}`;
+        
         levelUpOverlay.innerHTML = `
             <style>
                 #levelUpOverlay {
@@ -1027,8 +1224,8 @@
                     100% { transform: scale(1.1); }
                 }
             </style>
-            <div class="level-up-text">LEVEL UP!</div>
-            <div class="level-detail">Starting Level ${this.level + 1}</div>
+            <div class="level-up-text">${overlayText}</div>
+            <div class="level-detail">${detailText}</div>
         `;
         container.appendChild(levelUpOverlay);
 
@@ -1038,7 +1235,7 @@
         // After delay, remove overlay and start new level
         setTimeout(() => {
             levelUpOverlay.style.opacity = '0';
-            this.levelUp(); // नया स्तर शुरू करें
+            this.levelUp(); 
             
             setTimeout(() => {
                 levelUpOverlay.remove();
@@ -1047,13 +1244,25 @@
         }, 2000);
     }
 
+    // 🔄 लेवल अप लॉजिक
     levelUp() {
         this.level++;
         this.targetScore = this.level * 1000;
         this.moves += 10;
-        this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
         
-        this.generateBoard(); 
+        // --- Check for Hard Level (every 4 levels) ---
+        this.isHardLevel = (this.level % 4 === 0);
+        
+        this.generateBoard(); // Re-initializes lockState to 0 and board fruits
+        
+        if (this.isHardLevel) {
+            this.applyLocks(); // Apply locks if it's a hard level
+            this.showAchievement('HARD LEVEL', `Level ${this.level}: Clear all locks to win!`);
+        } else {
+            this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
+        }
+        // ----------------------------------
+        
         this.renderBoard(); 
         this.updateUI();
     }
@@ -1070,6 +1279,7 @@
             score1000: false,
             level3: false
         };
+        this.isHardLevel = false; 
         this.initializeGame();
     }
     
@@ -1078,14 +1288,19 @@
         
         this.isProcessing = true;
         
-        // Fisher-Yates shuffle
+        // Fisher-Yates shuffle (must shuffle both board and lockState)
         for (let i = 0; i < this.boardSize; i++) {
             for (let j = 0; j < this.boardSize; j++) {
                 const randomRow = Math.floor(Math.random() * this.boardSize);
                 const randomCol = Math.floor(Math.random() * this.boardSize);
                 
+                // Swap fruit
                 [this.board[i][j], this.board[randomRow][randomCol]] = 
                 [this.board[randomRow][randomCol], this.board[i][j]];
+                
+                // Swap lock state
+                [this.lockState[i][j], this.lockState[randomRow][randomCol]] = 
+                [this.lockState[randomRow][randomCol], this.lockState[i][j]];
             }
         }
         
@@ -1101,9 +1316,10 @@
     showHint() {
         if (this.isProcessing) return;
         
-        // Find a possible move (logic remains the same)
         for (let i = 0; i < this.boardSize; i++) {
             for (let j = 0; j < this.boardSize; j++) {
+                // Hint logic for tiles that are NOT fully locked (they can be moved into)
+                
                 const adjacent = [
                     {row: i - 1, col: j}, {row: i + 1, col: j},
                     {row: i, col: j - 1}, {row: i, col: j + 1}
@@ -1113,15 +1329,25 @@
                     if (adj.row >= 0 && adj.row < this.boardSize && 
                         adj.col >= 0 && adj.col < this.boardSize) {
                         
+                        // Save original states
+                        const originalFruit1 = this.board[i][j];
+                        const originalFruit2 = this.board[adj.row][adj.col];
+                        const originalLock1 = this.lockState[i][j];
+                        const originalLock2 = this.lockState[adj.row][adj.col];
+
                         // Simulate swap
-                        [this.board[i][j], this.board[adj.row][adj.col]] = 
-                        [this.board[adj.row][adj.col], this.board[i][j]];
+                        this.board[i][j] = originalFruit2;
+                        this.board[adj.row][adj.col] = originalFruit1;
+                        this.lockState[i][j] = originalLock2;
+                        this.lockState[adj.row][adj.col] = originalLock1;
                         
                         const matches = this.findMatches();
                         
                         // Swap back
-                        [this.board[i][j], this.board[adj.row][adj.col]] = 
-                        [this.board[adj.row][adj.col], this.board[i][j]];
+                        this.board[i][j] = originalFruit1;
+                        this.board[adj.row][adj.col] = originalFruit2;
+                        this.lockState[i][j] = originalLock1;
+                        this.lockState[adj.row][adj.col] = originalLock2;
                         
                         if (matches.length > 0) {
                             // Highlight the hint
@@ -1154,9 +1380,21 @@
         document.getElementById('score').textContent = this.score;
         document.getElementById('moves').textContent = this.moves;
         document.getElementById('level').textContent = this.level;
-        document.getElementById('target').textContent = this.targetScore;
         
-        const progress = Math.min((this.score / this.targetScore) * 100, 100);
+        // Update Target text based on Hard Level
+        document.getElementById('target').textContent = this.isHardLevel ? 'Clear Locks' : this.targetScore;
+        
+        // Progress bar for Hard Level shows progress towards clearing locks
+        let progress = 0;
+        if (this.isHardLevel) {
+             const totalTiles = this.boardSize * this.boardSize;
+             const lockedTiles = this.lockState.flat().filter(l => l > 0).length;
+             const clearedTiles = totalTiles - lockedTiles;
+             progress = (clearedTiles / totalTiles) * 100;
+        } else {
+            progress = Math.min((this.score / this.targetScore) * 100, 100);
+        }
+        
         document.getElementById('progressFill').style.width = progress + '%';
     }
 }
@@ -1168,13 +1406,8 @@ const game = new FruitPuzzleGame();
 
 function toggleCustomization() {
     const panel = document.getElementById('customizationPanel');
-    // .toggle-panel class को हटा दिया गया है
     
     panel.classList.toggle('active');
-    
-    // यदि आप चाहते हैं कि Settings पैनल पर क्लिक करने पर गेम पॉज हो जाए, तो आप यहाँ यह कोड जोड़ सकते हैं:
-    // game.isProcessing = panel.classList.contains('active');
-    // document.querySelector('.controls button:last-child').textContent = game.isProcessing ? '⚙️ Settings (Open)' : '⚙️ Settings';
 }
 
 function updateBoardSize() {
