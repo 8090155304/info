@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="SHIV.png">
     <title>Fruit Puzzle</title>
+    <link rel="icon" type="image/png" href="SHIV.png">
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow-x: hidden; /* Mobile Fix: Horizontal scrollbar को रोकें */
+            overflow-x: hidden;
         }
 
         .game-container {
@@ -56,7 +56,6 @@
             text-shadow: 2px 2px 4px rgba(240, 255, 0, 0.9);
         }
 
-        /* UI/Animation Improvement: Score Item */
         .score-item {
             background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             color: white;
@@ -75,31 +74,23 @@
             box-shadow: 0 10px 0 #1B5E20, 0 12px 20px rgba(0, 0, 0, 0.4);
         }
         
-        /* ---------------------------------
-           Responsive Fix: Game Board - Grid Control
-           --------------------------------- */
         .game-board {
             display: grid;
             grid-template-columns: repeat(var(--board-size), 1fr);
-            gap: 2px; /* Fixed gap */
+            gap: 2px;
             margin: 0 auto;
-            padding: 5px; /* Reduced padding */
+            padding: 5px;
             background: rgba(255, 255, 150, 0.5);
             border-radius: 15px;
             box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 100%; 
+            max-width: 550px; 
         }
 
-        /* ---------------------------------
-           Responsive Fix: Fruit Tile - Dynamic Sizing
-           --------------------------------- */
         .fruit-tile {
-            /* Core Fix: Let grid control size (100%) and maintain square aspect */
             width: 100%; 
             height: 100%;
-            aspect-ratio: 1 / 1; /* Tile will always be square */
-            
-            max-width: 60px; /* Set max size for large monitors */
+            aspect-ratio: 1 / 1;
+            max-width: 60px;
             max-height: 60px;
             
             border-radius: 12px;
@@ -109,7 +100,7 @@
             align-items: center;
             justify-content: center;
             
-            font-size: 4vw; /* Font size based on viewport */
+            font-size: 2.5em; 
             
             background: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -145,7 +136,6 @@
             }
         }
         
-        /* UI/Animation Improvement: New Tile Appearance */
         @keyframes appearAnimation {
             0% {
                 opacity: 0;
@@ -169,7 +159,6 @@
             flex-wrap: wrap;
         }
 
-        /* UI/Animation Improvement: 3D Buttons */
         .btn {
             padding: 12px 25px;
             border: none;
@@ -211,52 +200,42 @@
             box-shadow: 0 2px 0 #9e3650, 0 3px 6px rgba(0,0,0,0.3);
         }
 
-
+        /* ---------------------------------
+           New Customization Panel (Modal Style)
+           --------------------------------- */
         .customization-panel {
             position: fixed;
-            right: -350px;
             top: 50%;
-            transform: translateY(-50%);
-            width: 300px;
+            left: 50%;
+            /* Initial state: Hidden and scaled down */
+            transform: translate(-50%, -50%) scale(0.9); 
+            opacity: 0;
+            visibility: hidden; 
+
+            width: 350px;
+            max-width: 90vw;
+            
             background: white;
-            border-radius: 20px 0 0 20px;
+            border-radius: 20px;
             padding: 20px;
-            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.2);
-            transition: right 0.3s ease;
-            max-height: 80vh;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease-in-out; 
+            max-height: 90vh; 
             overflow-y: auto;
+            z-index: 2000;
         }
 
         .customization-panel.active {
-            right: 0;
-        }
-
-        .toggle-panel {
-            position: fixed;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 10px;
-            border-radius: 10px 0 0 10px;
-            cursor: pointer;
-            font-size: 1.2em;
-            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-            transition: right 0.3s ease;
-        }
-
-        .toggle-panel.active {
-            right: 300px;
-        }
-        /* Responsive Fix: Toggle Panel on Small Screen */
-        @media (max-width: 768px) {
-            .toggle-panel.active {
-                right: 250px;
-            }
+            /* Active state: Visible and full size */
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
         }
         
+        /* ---------------------------------
+           Removed old .toggle-panel CSS as it's no longer fixed on the side
+           --------------------------------- */
+
         .customization-section {
             margin-bottom: 20px;
         }
@@ -342,23 +321,24 @@
         }
 
         /* ---------------------------------
-           Responsive Fixes for Mobile (max-width: 768px) - FINAL FIX
+           Responsive Fixes for Mobile (max-width: 768px) 
            --------------------------------- */
         @media (max-width: 768px) {
             .game-container {
-                padding: 10px; /* Container padding कम करें */
+                padding: 10px;
             }
             
             .game-board {
                 width: 100%; 
-                gap: 1px; /* गैप को बहुत कम करें */
-                padding: 2px; /* बोर्ड की पैडिंग को भी बहुत कम करें */
+                max-width: 100%;
+                gap: 1px;
+                padding: 2px;
             }
             
             .fruit-tile {
-                font-size: 5vw; /* फल का साइज़ (font-size) */
+                font-size: 5vw;
                 border-radius: 8px; 
-                max-width: none; /* मोबाइल पर max-width को हटाने से बेहतर फिटिंग */
+                max-width: none; 
                 max-height: none;
             }
             
@@ -387,13 +367,10 @@
             }
             
             .customization-panel {
-                width: 250px;
-                right: -250px;
+                width: 90vw;
             }
             
-            .toggle-panel.active {
-                right: 250px;
-            }
+            /* No need for .toggle-panel CSS here */
         }
 
         .progress-bar {
@@ -469,18 +446,17 @@
             <button class="btn btn-secondary" onclick="game.shuffleBoard()">Shuffle</button>
             <button class="btn btn-primary" onclick="game.showHint()">Hint</button>
             <button class="btn btn-secondary" onclick="game.pauseGame()">Pause</button>
+            <button class="btn btn-primary" onclick="toggleCustomization()">⚙️ Settings</button>
         </div>
         
         <div class="combo-indicator" id="comboIndicator"></div>
     </div>
     
-    <button class="toggle-panel" onclick="toggleCustomization()">⚙️</button>
-    
     <div class="customization-panel" id="customizationPanel">
-        <h2>🎨 Customization</h2>
+        <h2>🎨Game Setting</h2>
         
         <div class="customization-section">
-            <h3>Game Settings</h3>
+            <h3>Costomization</h3>
             <div class="customization-option">
                 <label for="boardSize">Board Size</label>
                 <select id="boardSize" onchange="updateBoardSize()">
@@ -1000,7 +976,7 @@
     
     checkGameEnd() {
         if (this.score >= this.targetScore) {
-            this.isProcessing = true; // गेम को पॉज करें
+            this.isProcessing = true;
             this.showLevelUpAnimation();
         } else if (this.moves <= 0) {
             this.showAchievement('Game Over!', `Final Score: ${this.score}`);
@@ -1012,7 +988,6 @@
         }
     }
     
-    // 🔥 नया Level Up एनीमेशन फ़ंक्शन
     showLevelUpAnimation() {
         const container = document.querySelector('.game-container');
         const levelUpOverlay = document.createElement('div');
@@ -1072,14 +1047,12 @@
         }, 2000);
     }
 
-    // 🔄 लेवल अप लॉजिक
     levelUp() {
         this.level++;
         this.targetScore = this.level * 1000;
         this.moves += 10;
         this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
         
-        // 🌟 महत्वपूर्ण सुधार: नए स्तर पर बोर्ड को बेतरतीब ढंग से पुनः उत्पन्न करें
         this.generateBoard(); 
         this.renderBoard(); 
         this.updateUI();
@@ -1195,10 +1168,13 @@ const game = new FruitPuzzleGame();
 
 function toggleCustomization() {
     const panel = document.getElementById('customizationPanel');
-    const toggle = document.querySelector('.toggle-panel');
+    // .toggle-panel class को हटा दिया गया है
     
     panel.classList.toggle('active');
-    toggle.classList.toggle('active');
+    
+    // यदि आप चाहते हैं कि Settings पैनल पर क्लिक करने पर गेम पॉज हो जाए, तो आप यहाँ यह कोड जोड़ सकते हैं:
+    // game.isProcessing = panel.classList.contains('active');
+    // document.querySelector('.controls button:last-child').textContent = game.isProcessing ? '⚙️ Settings (Open)' : '⚙️ Settings';
 }
 
 function updateBoardSize() {
