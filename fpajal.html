@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="icon" type="image/png" href="SHIV.png">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="icon" type="image/png" href="SHIV.png">
     <title>Fruit Puzzle</title>
     <style>
         * {
@@ -363,6 +363,39 @@
         }
 
         /* ---------------------------------
+           NEW: Save/Load Game Buttons
+           --------------------------------- */
+        .save-load-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .save-load-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+
+        .save-load-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .save-load-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* ---------------------------------
            Responsive Fixes for Mobile (max-width: 768px) 
            --------------------------------- */
         @media (max-width: 768px) {
@@ -411,6 +444,15 @@
             .customization-panel {
                 width: 90vw;
             }
+            
+            .save-load-controls {
+                gap: 5px;
+            }
+            
+            .save-load-btn {
+                padding: 6px 12px;
+                font-size: 0.8em;
+            }
         }
 
         .progress-bar {
@@ -449,6 +491,30 @@
             color: #667eea;
             margin-bottom: 5px;
         }
+
+        /* Close button position inside customization panel */
+        .customization-close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            z-index: 2100;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Simple overlay to detect outside clicks (optional visual) */
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1990;
+            background: rgba(0,0,0,0.2);
+            display: none;
+        }
+        .settings-overlay.show {
+            display: block;
+        }
+
     </style>
 <base target="_blank">
 </head>
@@ -489,10 +555,23 @@
             <button class="btn btn-primary" onclick="toggleCustomization()">⚙️ Settings</button>
         </div>
         
+        <!-- NEW: Save/Load Game Buttons -->
+        <div class="save-load-controls">
+            <button class="save-load-btn" onclick="game.saveGame()">💾 Save Game</button>
+            <button class="save-load-btn" onclick="game.loadGame()">📂 Load Game</button>
+            <button class="save-load-btn" onclick="game.deleteSavedGame()">🗑️ Delete Save</button>
+        </div>
+        
         <div class="combo-indicator" id="comboIndicator"></div>
     </div>
     
-    <div class="customization-panel" id="customizationPanel">
+    <!-- overlay for outside-click detection -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="closeCustomization()"></div>
+
+    <div class="customization-panel" id="customizationPanel" role="dialog" aria-modal="true" aria-hidden="true">
+        <!-- Close Button added -->
+        <button class="btn btn-secondary customization-close" id="closeSettingsBtn" onclick="closeCustomization()">Close ✕</button>
+
         <h2>🎨 Customization</h2>
         
         <div class="customization-section">
@@ -563,6 +642,21 @@
                 </select>
             </div>
         </div>
+        
+        <!-- NEW: Auto-Save Settings -->
+        <div class="customization-section">
+            <h3>Game Save</h3>
+            <div class="customization-option">
+                <label>
+                    <input type="checkbox" id="autoSaveEnabled" checked onchange="toggleAutoSave()">
+                    Enable Auto-Save
+                </label>
+            </div>
+            <div class="customization-option">
+                <label>Last Saved: </label>
+                <span id="lastSavedTime">Never</span>
+            </div>
+        </div>
     </div>
     
     <div class="achievement" id="achievement">
@@ -585,7 +679,7 @@
         this.volume = 0.5;
         this.animationSpeed = 0.3;
         this.fruitSets = {
-            classic: ['🍎', '🍊', '🍋', '🍇', '🍓', '🍑'],
+            classic: ['🍎','🍇', '🍓', '🍑','🍒', '🥑','🍅','🍈'],
             tropical: ['🥥', '🍍', '🥭', '🍌', '🥝', '🍉'],
             emoji: ['😀', '😍', '🤩', '😎', '🥳', '😋'],
             custom: ['⭐', '💎', '🔥', '⚡', '🌟', '✨']
@@ -606,9 +700,170 @@
         this.lockState = []; // Stores the lock layer (0, 1, 2, or 3)
         // ----------------------------------
         
+        // --- NEW: Auto-Save Properties ---
+        this.autoSaveEnabled = true;
+        this.autoSaveInterval = null;
+        this.SAVE_KEY = 'fruitPuzzleSaveData_v2';
+        // ----------------------------------
+        
         this.initializeGame();
         this.createAudioContext();
+        this.setupAutoSave();
     }
+    
+    // --- NEW: Auto-Save Setup ---
+    setupAutoSave() {
+        // Load auto-save setting
+        try {
+            const settings = JSON.parse(localStorage.getItem('fruitGameSettings_v1') || '{}');
+            this.autoSaveEnabled = settings.autoSaveEnabled !== undefined ? settings.autoSaveEnabled : true;
+            document.getElementById('autoSaveEnabled').checked = this.autoSaveEnabled;
+        } catch (e) {
+            console.warn('Could not load auto-save setting:', e);
+        }
+        
+        // Setup auto-save interval (every 30 seconds)
+        if (this.autoSaveEnabled) {
+            this.autoSaveInterval = setInterval(() => {
+                if (!this.isProcessing && this.score > 0) {
+                    this.saveGame(true); // Silent auto-save
+                }
+            }, 30000);
+        }
+        
+        // Try to load saved game on startup
+        this.loadGame(true); // Silent load attempt
+    }
+    
+    // --- NEW: Save Game Function ---
+    saveGame(silent = false) {
+        if (!this.autoSaveEnabled && silent) return;
+        
+        try {
+            const saveData = {
+                version: '2.0',
+                timestamp: Date.now(),
+                board: this.board,
+                boardSize: this.boardSize,
+                score: this.score,
+                moves: this.moves,
+                level: this.level,
+                targetScore: this.targetScore,
+                isHardLevel: this.isHardLevel,
+                lockState: this.lockState,
+                currentFruitSet: this.currentFruitSet,
+                achievements: this.achievements,
+                combo: this.combo,
+                lastMatchTime: this.lastMatchTime
+            };
+            
+            localStorage.setItem(this.SAVE_KEY, JSON.stringify(saveData));
+            
+            if (!silent) {
+                this.showAchievement('Game Saved!', 'Your progress has been saved locally.');
+                this.updateLastSavedTime();
+            }
+            
+            return true;
+        } catch (e) {
+            console.error('Failed to save game:', e);
+            if (!silent) {
+                alert('Failed to save game. Please try again.');
+            }
+            return false;
+        }
+    }
+    
+    // --- NEW: Load Game Function ---
+    loadGame(silent = false) {
+        try {
+            const savedData = localStorage.getItem(this.SAVE_KEY);
+            if (!savedData) {
+                if (!silent) {
+                    alert('No saved game found.');
+                }
+                return false;
+            }
+            
+            const data = JSON.parse(savedData);
+            
+            // Basic validation
+            if (!data.board || !data.boardSize) {
+                if (!silent) {
+                    alert('Saved game data is corrupted.');
+                }
+                return false;
+            }
+            
+            // Restore game state
+            this.board = data.board;
+            this.boardSize = data.boardSize;
+            this.score = data.score || 0;
+            this.moves = data.moves || 30;
+            this.level = data.level || 1;
+            this.targetScore = data.targetScore || 1000;
+            this.isHardLevel = data.isHardLevel || false;
+            this.lockState = data.lockState || [];
+            this.currentFruitSet = data.currentFruitSet || 'classic';
+            this.achievements = data.achievements || {
+                firstMatch: false, combo5: false, score1000: false, level3: false
+            };
+            this.combo = data.combo || 0;
+            this.lastMatchTime = data.lastMatchTime || 0;
+            
+            // Update fruits based on saved set
+            this.fruits = this.fruitSets[this.currentFruitSet] || this.fruitSets['classic'];
+            
+            // Update UI elements
+            document.getElementById('fruitSet').value = this.currentFruitSet;
+            document.getElementById('boardSize').value = this.boardSize;
+            
+            // Re-render everything
+            this.renderBoard();
+            this.updateUI();
+            this.updateLastSavedTime();
+            
+            if (!silent) {
+                this.showAchievement('Game Loaded!', `Welcome back! Level ${this.level}, Score: ${this.score}`);
+            }
+            
+            return true;
+        } catch (e) {
+            console.error('Failed to load game:', e);
+            if (!silent) {
+                alert('Failed to load saved game. Data might be corrupted.');
+            }
+            return false;
+        }
+    }
+    
+    // --- NEW: Delete Saved Game ---
+    deleteSavedGame() {
+        if (confirm('Are you sure you want to delete your saved game? This cannot be undone.')) {
+            localStorage.removeItem(this.SAVE_KEY);
+            this.updateLastSavedTime();
+            this.showAchievement('Save Deleted', 'Your saved game has been deleted.');
+        }
+    }
+    
+    // --- NEW: Update Last Saved Time Display ---
+    updateLastSavedTime() {
+        try {
+            const savedData = localStorage.getItem(this.SAVE_KEY);
+            const lastSaved = document.getElementById('lastSavedTime');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const date = new Date(data.timestamp);
+                lastSaved.textContent = date.toLocaleString();
+            } else {
+                lastSaved.textContent = 'Never';
+            }
+        } catch (e) {
+            console.warn('Could not update last saved time:', e);
+        }
+    }
+    // ------------------------------------------
     
     createAudioContext() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -650,6 +905,7 @@
         this.generateBoard();
         this.renderBoard();
         this.updateUI();
+        this.updateLastSavedTime(); // NEW: Initialize last saved time display
     }
     
     generateBoard() {
@@ -841,6 +1097,11 @@
                 this.moves--;
                 this.processMatches(matches);
                 this.playMatchSound();
+                
+                // NEW: Auto-save after successful move
+                if (this.autoSaveEnabled) {
+                    setTimeout(() => this.saveGame(true), 100);
+                }
             } else {
                 // Swap back if no matches (including lock state swap back)
                 [this.board[row1][col1], this.board[row2][col2]] = 
@@ -895,7 +1156,7 @@
             verticalLine.unshift({row: i, col});
         }
         for (let i = row + 1; i < this.boardSize && this.board[i][col] === fruit; i++) {
-            verticalLine.push({row: i, col});
+            verticalLine.push({row, col: col});
         }
         if (verticalLine.length >= 3) {
             matches.push(...verticalLine);
@@ -1029,6 +1290,11 @@
                     this.combo = 0;
                     this.isProcessing = false;
                     this.checkGameEnd();
+                    
+                    // NEW: Auto-save after cascade ends
+                    if (this.autoSaveEnabled) {
+                        setTimeout(() => this.saveGame(true), 100);
+                    }
                 }
             }, this.animationSpeed * 1000);
         }, this.animationSpeed * 1000 + 100); // Wait for match animations/lock hits to finish
@@ -1161,6 +1427,11 @@
                  this.isProcessing = true;
                  this.showAchievement('HARD LEVEL CLEARED!', `All locks removed! Score: ${this.score}`);
                  
+                 // NEW: Save game before level up
+                 if (this.autoSaveEnabled) {
+                     this.saveGame(true);
+                 }
+                 
                  setTimeout(() => this.showLevelUpAnimation(), 1500); 
                  return;
             }
@@ -1170,9 +1441,21 @@
         // Normal level check (Score Target)
         if (this.score >= this.targetScore && !this.isHardLevel) {
             this.isProcessing = true; 
+            
+            // NEW: Save game before level up
+            if (this.autoSaveEnabled) {
+                this.saveGame(true);
+            }
+            
             this.showLevelUpAnimation();
         } else if (this.moves <= 0) {
             this.showAchievement('Game Over!', `Final Score: ${this.score}`);
+            
+            // NEW: Save final score
+            if (this.autoSaveEnabled) {
+                this.saveGame(true);
+            }
+            
             setTimeout(() => {
                 if (confirm('Game Over! Your score: ' + this.score + '\nPlay again?')) {
                     this.newGame();
@@ -1265,6 +1548,11 @@
         
         this.renderBoard(); 
         this.updateUI();
+        
+        // NEW: Auto-save after level up
+        if (this.autoSaveEnabled) {
+            setTimeout(() => this.saveGame(true), 100);
+        }
     }
     
     newGame() {
@@ -1281,6 +1569,11 @@
         };
         this.isHardLevel = false; 
         this.initializeGame();
+        
+        // NEW: Save new game state
+        if (this.autoSaveEnabled) {
+            setTimeout(() => this.saveGame(true), 100);
+        }
     }
     
     shuffleBoard() {
@@ -1310,6 +1603,11 @@
         
         setTimeout(() => {
             this.isProcessing = false;
+            
+            // NEW: Auto-save after shuffle
+            if (this.autoSaveEnabled) {
+                this.saveGame(true);
+            }
         }, 500);
     }
     
@@ -1374,6 +1672,11 @@
         this.isProcessing = !this.isProcessing;
         const btn = event.target;
         btn.textContent = this.isProcessing ? 'Resume' : 'Pause';
+        
+        // NEW: Auto-save when pausing
+        if (this.isProcessing && this.autoSaveEnabled) {
+            this.saveGame(true);
+        }
     }
     
     updateUI() {
@@ -1402,13 +1705,173 @@
 // Global game instance
 const game = new FruitPuzzleGame();
 
-// Customization functions
+/* ========================
+   Settings persistence
+   ======================== */
+
+const SETTINGS_KEY = 'fruitGameSettings_v1';
+
+function saveSettings() {
+    try {
+        const settings = {
+            boardSize: parseInt(document.getElementById('boardSize').value),
+            movesLimit: parseInt(document.getElementById('movesLimit').value),
+            targetScore: parseInt(document.getElementById('targetScore').value),
+            backgroundColor: document.getElementById('backgroundColor').value,
+            fruitSet: document.getElementById('fruitSet').value,
+            animationSpeed: parseFloat(document.getElementById('animationSpeed').value),
+            soundEnabled: document.getElementById('soundEnabled').checked,
+            soundVolume: parseInt(document.getElementById('soundVolume').value),
+            difficulty: document.getElementById('difficulty').value,
+            autoSaveEnabled: document.getElementById('autoSaveEnabled').checked // NEW
+        };
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+        console.warn('Could not save settings:', e);
+    }
+}
+
+function loadSettings() {
+    try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+
+        if (s.boardSize) {
+            document.getElementById('boardSize').value = s.boardSize;
+            game.boardSize = s.boardSize;
+            document.getElementById('gameBoard').style.setProperty('grid-template-columns', `repeat(${s.boardSize}, 1fr)`);
+        }
+        if (s.movesLimit) {
+            document.getElementById('movesLimit').value = s.movesLimit;
+            document.getElementById('movesLimitValue').textContent = s.movesLimit;
+            game.moves = s.movesLimit;
+        }
+        if (s.targetScore) {
+            document.getElementById('targetScore').value = s.targetScore;
+            document.getElementById('targetScoreValue').textContent = s.targetScore;
+            game.targetScore = s.targetScore;
+        }
+        if (s.backgroundColor) {
+            document.getElementById('backgroundColor').value = s.backgroundColor;
+            document.body.style.background = `linear-gradient(135deg, ${s.backgroundColor} 0%, ${adjustColor(s.backgroundColor, -20)} 100%)`;
+        }
+        if (s.fruitSet) {
+            document.getElementById('fruitSet').value = s.fruitSet;
+            game.currentFruitSet = s.fruitSet;
+            game.fruits = game.fruitSets[s.fruitSet] || game.fruitSets['classic'];
+        }
+        if (s.animationSpeed) {
+            document.getElementById('animationSpeed').value = s.animationSpeed;
+            game.animationSpeed = s.animationSpeed;
+        }
+        if (typeof s.soundEnabled !== 'undefined') {
+            document.getElementById('soundEnabled').checked = s.soundEnabled;
+            game.soundEnabled = s.soundEnabled;
+        }
+        if (typeof s.soundVolume !== 'undefined') {
+            document.getElementById('soundVolume').value = s.soundVolume;
+            game.volume = s.soundVolume / 100;
+        }
+        if (s.difficulty) {
+            document.getElementById('difficulty').value = s.difficulty;
+            // apply difficulty to UI + game values
+            updateDifficulty(); // this reads DOM values and applies them & saves
+        }
+        // NEW: Load auto-save setting
+        if (typeof s.autoSaveEnabled !== 'undefined') {
+            document.getElementById('autoSaveEnabled').checked = s.autoSaveEnabled;
+            game.autoSaveEnabled = s.autoSaveEnabled;
+            
+            // Update auto-save interval
+            if (game.autoSaveInterval) {
+                clearInterval(game.autoSaveInterval);
+            }
+            if (game.autoSaveEnabled) {
+                game.autoSaveInterval = setInterval(() => {
+                    if (!game.isProcessing && game.score > 0) {
+                        game.saveGame(true);
+                    }
+                }, 30000);
+            }
+        }
+
+        // Re-init board to reflect possibly changed boardSize/fruitset
+        game.initializeGame();
+        game.renderBoard();
+        game.updateUI();
+    } catch (e) {
+        console.warn('Could not load settings:', e);
+    }
+}
+
+// NEW: Toggle Auto-Save Function
+function toggleAutoSave() {
+    game.autoSaveEnabled = document.getElementById('autoSaveEnabled').checked;
+    
+    // Update auto-save interval
+    if (game.autoSaveInterval) {
+        clearInterval(game.autoSaveInterval);
+    }
+    if (game.autoSaveEnabled) {
+        game.autoSaveInterval = setInterval(() => {
+            if (!game.isProcessing && game.score > 0) {
+                game.saveGame(true);
+            }
+        }, 30000);
+    }
+    
+    saveSettings();
+}
+
+/* ========================
+   Open/Close customization + outside click + Esc
+   ======================== */
+
+function openCustomization() {
+    const panel = document.getElementById('customizationPanel');
+    const overlay = document.getElementById('settingsOverlay');
+    panel.classList.add('active');
+    overlay.classList.add('show');
+    panel.setAttribute('aria-hidden', 'false');
+
+    // add key listener for Esc
+    document.addEventListener('keydown', escCloseHandler);
+}
+
+function closeCustomization() {
+    const panel = document.getElementById('customizationPanel');
+    const overlay = document.getElementById('settingsOverlay');
+    panel.classList.remove('active');
+    overlay.classList.remove('show');
+    panel.setAttribute('aria-hidden', 'true');
+
+    // Save current settings when closing
+    saveSettings();
+
+    // remove esc handler
+    document.removeEventListener('keydown', escCloseHandler);
+}
+
+function escCloseHandler(e) {
+    if (e.key === 'Escape') {
+        closeCustomization();
+    }
+}
 
 function toggleCustomization() {
     const panel = document.getElementById('customizationPanel');
-    
-    panel.classList.toggle('active');
+    if (panel.classList.contains('active')) {
+        closeCustomization();
+    } else {
+        openCustomization();
+    }
 }
+
+/* ========================
+   Hook saveSettings into all update functions
+   (we call saveSettings at end of each update)
+   ======================== */
 
 function updateBoardSize() {
     const size = parseInt(document.getElementById('boardSize').value);
@@ -1417,6 +1880,8 @@ function updateBoardSize() {
     document.getElementById('gameBoard').style.setProperty('grid-template-columns', `repeat(${size}, 1fr)`);
     
     game.initializeGame();
+
+    saveSettings();
 }
 
 function updateMovesLimit() {
@@ -1424,6 +1889,8 @@ function updateMovesLimit() {
     document.getElementById('movesLimitValue').textContent = limit;
     game.moves = parseInt(limit);
     game.updateUI();
+
+    saveSettings();
 }
 
 function updateTargetScore() {
@@ -1431,11 +1898,15 @@ function updateTargetScore() {
     document.getElementById('targetScoreValue').textContent = target;
     game.targetScore = parseInt(target);
     game.updateUI();
+
+    saveSettings();
 }
 
 function updateBackgroundColor() {
     const color = document.getElementById('backgroundColor').value;
     document.body.style.background = `linear-gradient(135deg, ${color} 0%, ${adjustColor(color, -20)} 100%)`;
+
+    saveSettings();
 }
 
 function adjustColor(color, amount) {
@@ -1451,20 +1922,27 @@ function updateFruitSet() {
     game.currentFruitSet = set;
     game.fruits = game.fruitSets[set];
     game.renderBoard();
+
+    saveSettings();
 }
 
 function updateAnimationSpeed() {
     const speed = parseFloat(document.getElementById('animationSpeed').value);
     game.animationSpeed = speed;
+
+    saveSettings();
 }
 
 function toggleSound() {
     game.soundEnabled = document.getElementById('soundEnabled').checked;
+    saveSettings();
 }
 
 function updateVolume() {
     const volume = parseInt(document.getElementById('soundVolume').value) / 100;
     game.volume = volume;
+
+    saveSettings();
 }
 
 function updateDifficulty() {
@@ -1491,7 +1969,34 @@ function updateDifficulty() {
     document.getElementById('targetScoreValue').textContent = game.targetScore;
     
     game.updateUI();
+
+    saveSettings();
 }
+
+/* ========================
+   Initialize: load settings (if any)
+   ======================== */
+document.addEventListener('DOMContentLoaded', () => {
+    // Try to load previously saved settings
+    loadSettings();
+
+    // If user clicks outside panel we already attached overlay click to closeCustomization.
+    // But to be safe, also detect clicks on document when panel active and close when clicked outside:
+    document.addEventListener('click', (ev) => {
+        const panel = document.getElementById('customizationPanel');
+        if (!panel.classList.contains('active')) return;
+        const target = ev.target;
+        if (panel.contains(target) || target.closest('.btn')) {
+            // inside panel or a button; do nothing
+            return;
+        }
+        // if clicked outside panel (but not overlay) -> close
+        // small delay so buttons that opened the panel don't immediately close it
+        setTimeout(() => {
+            if (panel.classList.contains('active')) closeCustomization();
+        }, 50);
+    });
+});
 
 // Initialize audio on first user interaction
 document.addEventListener('click', function initAudio() {
