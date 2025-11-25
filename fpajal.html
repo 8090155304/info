@@ -521,7 +521,7 @@
 <body>
     <div class="game-container">
         <div class="game-header">
-            <h1 class="game-title">🍓 Fruit Puzzle Paradise 🍊</h1>
+            <h1 class="game-title">🍓Fruit Puzzle🍊</h1>
             <div class="score-board">
                 <div class="score-item">
                     <span>Score: </span>
@@ -572,7 +572,7 @@
         <!-- Close Button added -->
         <button class="btn btn-secondary customization-close" id="closeSettingsBtn" onclick="closeCustomization()">Close ✕</button>
 
-        <h2>🎨 Customization</h2>
+        <h2>🎨Setting</h2>
         
         <div class="customization-section">
             <h3>Game Settings</h3>
@@ -679,7 +679,7 @@
         this.volume = 0.5;
         this.animationSpeed = 0.3;
         this.fruitSets = {
-            classic: ['🍎','🍇', '🍓', '🍑','🍒', '🥑','🍅','🍈'],
+            classic: ['🍎','🍇', '🍓', '🍑','🥑','🍅','🍈'],
             tropical: ['🥥', '🍍', '🥭', '🍌', '🥝', '🍉'],
             emoji: ['😀', '😍', '🤩', '😎', '🥳', '😋'],
             custom: ['⭐', '💎', '🔥', '⚡', '🌟', '✨']
@@ -1527,33 +1527,33 @@
         }, 2000);
     }
 
-    // 🔄 लेवल अप लॉजिक
-    levelUp() {
-        this.level++;
-        this.targetScore = this.level * 1000;
-        this.moves += 10;
-        
-        // --- Check for Hard Level (every 4 levels) ---
-        this.isHardLevel = (this.level % 4 === 0);
-        
-        this.generateBoard(); // Re-initializes lockState to 0 and board fruits
-        
-        if (this.isHardLevel) {
-            this.applyLocks(); // Apply locks if it's a hard level
-            this.showAchievement('HARD LEVEL', `Level ${this.level}: Clear all locks to win!`);
-        } else {
-            this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
-        }
-        // ----------------------------------
-        
-        this.renderBoard(); 
-        this.updateUI();
-        
-        // NEW: Auto-save after level up
-        if (this.autoSaveEnabled) {
-            setTimeout(() => this.saveGame(true), 100);
-        }
+// 🔄 लेवल अप लॉजिक
+levelUp() {
+    this.level++;
+    this.targetScore = this.level * 1000;
+    this.moves += 10;
+    
+    // --- Check for Hard Level (every 4 levels) ---
+    this.isHardLevel = (this.level % 4 === 0);
+    
+    this.generateBoard(); // Re-initializes lockState to 0 and board fruits
+    
+    if (this.isHardLevel) {
+        this.applyLocks(); // Apply locks if it's a hard level
+        this.showAchievement('HARD LEVEL', `Level ${this.level}: Clear all locks to win!`);
+    } else {
+        this.showAchievement('Level Up!', `Welcome to level ${this.level}!`);
     }
+    // ----------------------------------
+    
+    this.renderBoard(); 
+    this.updateUI();
+    
+    // NEW: Auto-save after level up
+    if (this.autoSaveEnabled) {
+        setTimeout(() => this.saveGame(true), 100);
+    }
+}
     
     newGame() {
         this.score = 0;
