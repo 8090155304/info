@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Dictation - SHIV COMPUTER</title>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ANIMATION */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        :root {
+            --bg-color: #eef2f7;
+            --text-color: #333;
+            --container-bg: #fff;
+            --shadow: rgba(0,0,0,0.15);
+            --footer-bg: #000;
+            --footer-text: #fff;
+        }
+
+        body.dark {
+            --bg-color: #1f1f1f;
+            --text-color: #ddd;
+            --container-bg: #2a2a2a;
+            --shadow: rgba(255,255,255,0.1);
+            --footer-bg: #000;
+            --footer-text: #fcbc04;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            animation: fadeIn 0.5s ease;
+            transition: 0.4s;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 40px auto;
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px var(--shadow);
+            animation: fadeIn 0.6s ease;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        textarea {
+            width: 100%;
+            height: 320px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+            outline: none;
+            resize: vertical;
+            font-size: 18px;
+            background: #fff;
+            transition: border-color .3s;
+        }
+        textarea:focus {
+            border-color: #1a73e8;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        select, button {
+            padding: 12px 18px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #startButton { background:#34a853; color:#fff; }
+        #startButton:hover { background:#2e8a44; }
+
+        #stopButton { background:#ea4335; color:#fff; }
+        #stopButton:hover { background:#cc372c; }
+
+        #copyButton { background:#1a73e8; color:#fff; }
+        #copyButton:hover { background:#1659bb; }
+
+        #clearButton { background:#e0ad05; }
+        #clearButton:hover { background:#cd9900; }
+
+        #pdfButton { background:#6a1b9a; color:#fff; }
+        #pdfButton:hover { background:#57177f; }
+
+        #docButton { background:#0086d4; color:#fff; }
+        #docButton:hover { background:#006eb0; }
+
+        #themeButton { background:#444; color:#fff; }
+        #themeButton:hover { background:#000; }
+
+        .status {
+            margin-left:auto;
+            padding:8px 12px;
+            font-weight:700;
+            color:#1a73e8;
+        }
+
+        footer {
+            background: var(--footer-bg);
+            text-align:center;
+            padding:18px;
+            color: var(--footer-text);
+            margin-top:30px;
+            font-size:14px;
+        }
+
+        @media(max-width:768px){
+            textarea{ height: 250px; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🎙 Voice Dictation Tool</h1>
+
+    <div class="controls">
+        <select id="languageSelect">
+            <option value="en-US">English</option>
+            <option value="hi-IN">Hindi</option>
+        </select>
+
+        <button id="startButton">🎤 Start</button>
+        <button id="stopButton" disabled>🛑 Stop</button>
+        <button id="copyButton">📋 Copy</button>
+        <button id="clearButton">🧹 Clear</button>
+        <button id="pdfButton">📄 Export PDF</button>
+        <button id="docButton">📝 Export DOC</button>
+        <button id="themeButton">🌙 Dark Mode</button>
+
+        <span class="status" id="status">Idle</span>
+    </div>
+
+    <textarea id="output" placeholder="Start speaking..."></textarea>
+
+</div>
+
+<footer>
+    Powered By <strong>SHIV COMPUTER</strong>
+</footer>
+
+<script>
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const output = document.getElementById("output");
+    const startBtn = document.getElementById("startButton");
+    const stopBtn = document.getElementById("stopButton");
+    const langSelect = document.getElementById("languageSelect");
+    const statusBox = document.getElementById("status");
+
+    let recognition;
+    let finalText = "";
+    let lineNo = 1;
+
+    /* ========= AUTO LOAD SAVED TEXT ========= */
+    if(localStorage.getItem("saved_text")){
+        finalText = localStorage.getItem("saved_text");
+        output.value = finalText;
+    }
+
+    /* ========= SPEECH SETUP ========= */
+    if(SpeechRecognition){
+        recognition = new SpeechRecognition();
+        recognition.interimResults = true;
+        recognition.continuous = false;
+
+        recognition.onresult = e => {
+            let temp = "";
+
+            for(let i = e.resultIndex; i < e.results.length; i++){
+                let spoken = e.results[i][0].transcript;
+
+                if(e.results[i].isFinal){
+                    finalText += `\n${lineNo++}. ${spoken}`;
+                } else {
+                    temp += spoken;
+                }
+            }
+
+            output.value = finalText + (temp ? `\n${lineNo}. ${temp}` : "");
+
+            localStorage.setItem("saved_text", output.value);
+        };
+
+        recognition.onstart = () => {
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            statusBox.innerText = "Listening...";
+        };
+
+        recognition.onend = () => {
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusBox.innerText = "Idle";
+        };
+    } else {
+        alert("Browser does not support Speech Recognition.");
+    }
+
+    /* ========= BUTTONS ========= */
+    startBtn.onclick = () => {
+        recognition.lang = langSelect.value;
+        recognition.start();
+    };
+
+    stopBtn.onclick = () => recognition.stop();
+
+    document.getElementById("copyButton").onclick = () => {
+        output.select();
+        document.execCommand("copy");
+        alert("Copied!");
+    };
+
+    document.getElementById("clearButton").onclick = () => {
+        finalText = "";
+        output.value = "";
+        lineNo = 1;
+        localStorage.removeItem("saved_text");
+    };
+
+    /* ========= THEME TOGGLE ========= */
+    document.getElementById("themeButton").onclick = () => {
+        document.body.classList.toggle("dark");
+    };
+
+    /* ========= EXPORT PDF ========= */
+    document.getElementById("pdfButton").onclick = () => {
+        const file = new Blob([output.value], {type:"application/pdf"});
+        const url = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Voice-Typed.pdf";
+        a.click();
+    };
+
+    /* ========= EXPORT DOC ========= */
+    document.getElementById("docButton").onclick = () => {
+        const file = new Blob(['\ufeff', output.value], {
+            type: 'application/msword'
+        });
+        const url = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Voice-Typed.doc";
+        a.click();
+    };
+    
+</script>
+
+</body>
+</html>
