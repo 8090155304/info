@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/png" href="SHIV.png">
+  <title>लेजर और अकाउंट प्रबंधन</title>
+
+  <script src="https://apis.google.com/js/api.js" defer></script>
+  <script src="https://accounts.google.com/gsi/client" defer></script>
+
+  <style>
+    /* --- Basic Reset --- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html,body { height: 100%; }
+    body {
+      font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+      background: linear-gradient(180deg,#f6fbf6 0%, #eef7ee 100%);
+      color: #102012;
+      padding: 18px;
+    }
+
+    /* --- Container --- */
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header {
+      background: linear-gradient(90deg,#0b6b2b,#2aa24a);
+      color: white;
+      padding: 18px 22px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(12,88,34,0.12);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    header h1 { font-size:1.25rem; letter-spacing:0.4px; display:flex;align-items:center;gap:10px; }
+    header .sub { font-size:0.9rem; opacity:0.95; }
+
+    main { margin-top:18px; display: grid; grid-template-columns: 1fr; gap:18px; }
+
+    /* --- Dashboard card --- */
+    .card {
+      background: #fff;
+      padding: 14px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(10,20,10,0.06);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(8,30,10,0.08); }
+
+    .flex { display:flex; gap:12px; align-items:center; }
+    .space-between { display:flex; justify-content:space-between; align-items:center; }
+
+    /* --- Summary tiles --- */
+    .summary { display:flex; gap:12px; flex-wrap:wrap; }
+    .tile {
+      flex:1;
+      min-width:180px;
+      padding:12px;
+      border-radius:8px;
+      color:white;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .tile .title { font-size:0.9rem; opacity:0.95; }
+    .tile .value { font-size:1.15rem; font-weight:700; }
+
+    .tile.in { background:linear-gradient(90deg,#2aa24a,#179b2f); }
+    .tile.out { background:linear-gradient(90deg,#c83e3e,#e04f4f); }
+    .tile.balance { background:linear-gradient(90deg,#0b6b2b,#2aa24a); }
+
+    /* --- Navigation panels --- */
+    .nav-panels { display:grid; grid-template-columns: 280px 1fr; gap:12px; }
+    .panel { background:#fff; padding:12px; border-radius:8px; min-height:120px; overflow:auto; }
+    .panel h2 { font-size:1rem; margin-bottom:8px; color:#0b4f20; }
+    .group-list button,
+    .account-list button {
+      display:block; width:100%; text-align:left; padding:8px 10px; margin-bottom:8px;
+      border-radius:6px; border:none; background:#f1f6f1; cursor:pointer;
+      transition:background .12s, transform .08s;
+    }
+    .group-list button.active,
+    .account-list button.active { background: linear-gradient(90deg,#eaf7eb,#dff3df); box-shadow: inset 0 0 0 2px rgba(11,107,43,0.08); transform: translateY(-1px); }
+
+    /* --- Forms --- */
+    form.add-form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    input[type="text"], input[type="date"], input[type="number"], select {
+      padding:8px 10px; border-radius:6px; border:1px solid #d7e8d7; min-width:140px;
+    }
+    button.btn { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
+    button.primary { background: #157a2f; color:white; }
+    button.ghost { background:transparent; border:1px solid #d7e8d7; color:#0b4f20; }
+    button.warn { background:#e04f4f; color:white; }
+
+    /* --- Tables --- */
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th, td { padding:8px 10px; border-bottom:1px solid #f0f4f0; font-size:0.92rem; }
+    th { text-align:left; background:linear-gradient(90deg,#f3fbf3,#eef7ee); color:#0b4f20; }
+    
+    /* --- Transaction Column Layout FIX (New CSS) --- */
+    table.transaction-table th, table.transaction-table td {
+        text-align: right; /* Default align right for amount columns */
+    }
+    table.transaction-table th:nth-child(1), /* Sr */
+    table.transaction-table th:nth-child(2), /* Date */
+    table.transaction-table th:nth-child(3), /* Desc */
+    table.transaction-table th:nth-child(4) /* Receipt */
+    {
+        text-align: left; /* Keep non-amount columns left-aligned */
+    }
+    table.transaction-table th:nth-child(5), table.transaction-table td:nth-child(5), /* IN */
+    table.transaction-table th:nth-child(6), table.transaction-table td:nth-child(6), /* OUT */
+    table.transaction-table th:nth-child(7), table.transaction-table td:nth-child(7) /* Balance */
+    {
+        width: 14%; 
+        font-weight: 500;
+    }
+    table.transaction-table th:nth-child(8), table.transaction-table td:nth-child(8) /* Actions */
+    {
+        width: 10%; 
+        text-align: center;
+    }
+    td.credit-cell { background-color: #f1f6f1; color: #157a2f; }
+    td.debit-cell { background-color: #fcebeb; color: #c83e3e; }
+
+    /* --- Action buttons small --- */
+    .action-small { display: flex; justify-content: center; align-items: center; gap: 4px; }
+    .action-small button { padding:6px 8px; border-radius:6px; font-size:0.85rem; }
+
+    /* --- Print styles FIX (Blank Report Fix) --- */
+    @media print {
+      /* Hide everything first */
+      body * { visibility: hidden !important; } 
+
+      /* Show only the container */
+      #ledgerContainer, #ledgerContainer * { visibility: visible !important; }
+      #ledgerContainer { 
+          position: absolute !important; 
+          left:0 !important; 
+          top:0 !important; 
+          width:100% !important; 
+          box-shadow: none !important;
+          background-color: white !important;
+          padding: 0 !important;
+      }
+      
+      /* Hide non-report elements like buttons and forms */
+      .space-between, .summary, .add-form, h3, button, input, select, .action-small {
+          display: none !important;
+      }
+      
+      /* Only show the currently active detail block */
+      .ledger-detail { display: none !important; }
+      .ledger-detail.active-for-print { 
+          display: block !important; 
+          box-shadow: none !important;
+          padding: 10px !important;
+      }
+
+      /* Ensure table headers and background colors print */
+      th { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #f3fbf3 !important; color: #0b4f20 !important; }
+      td.credit-cell, td.debit-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* --- Footer --- */
+    footer { margin-top:16px; text-align:center; font-size:0.9rem; color:#0b4f20; opacity:0.9; }
+
+    /* --- small screens --- */
+    @media (max-width:900px) {
+      .nav-panels { grid-template-columns: 1fr; }
+      .summary { flex-direction:column; }
+    }
+
+    /* --- subtle animations --- */
+    .fade-in { animation: fadeIn .28s ease both; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="display:flex;flex-direction:column;">
+        <h1>SHIV COMPUTER — लेजर और अकाउंट प्रबंधन</h1>
+        <div class="sub">Accounting ● Your Personal & Loacal data No Sharing on any Other Server●</div>
+      </div>
+      <div class="flex">
+        <div id="authStatus" style="background:rgba(255,255,255,0.12); padding:6px 10px; border-radius:6px;">Local</div>
+        <button id="googleSignBtn" class="btn ghost" title="Google Drive integration" disabled>☁️ Google</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card summary fade-in">
+        <div class="space-between" style="align-items:center;">
+          <h2 style="color:#0b4f20;">📊 सारांश</h2>
+          <div>
+            <button onclick="showManagementForm('backupRestoreSection')" class="btn ghost">💾 Backup/Restore</button>
+            <button onclick="printCurrentReport()" class="btn ghost">🖨️ प्रिंट</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;" class="summary">
+          <div class="tile in"><div class="title">कुल IN (क्रेडिट)</div><div id="totalCredit" class="value">₹ 0.00</div></div>
+          <div class="tile out"><div class="title">कुल OUT (डेबिट)</div><div id="totalDebit" class="value">₹ 0.00</div></div>
+          <div class="tile balance"><div class="title">नेट बैलेंस</div><div id="netBalance" class="value">₹ 0.00</div></div>
+        </div>
+      </section>
+
+      <section class="nav-panels">
+        <aside class="panel fade-in">
+          <h2>लेजर ग्रुप्स</h2>
+          <div class="group-list" id="ledgerNavGroups"></div>
+          <hr style="margin:10px 0;">
+          <h2>Actions</h2>
+          <div class="flex" style="gap:8px;">
+            <button onclick="showManagementForm('addLedgerGroupSection')" class="btn primary">➕ नया ग्रुप</button>
+            <button onclick="showManagementForm('addAccountSection')" class="btn ghost">➕ नया अकाउंट</button>
+          </div>
+        </aside>
+
+        <div>
+          <div id="ledgerContainer" class="card fade-in">
+            <div class="ledger-detail" id="addLedgerGroupSection" style="display:none;">
+              <h2>➕ नया लेजर ग्रुप</h2>
+              <form id="manageLedgerGroupForm" class="add-form" style="margin-top:10px;">
+                <input type="hidden" id="ledgerGroupKeyToEdit" />
+                <input id="newLedgerGroupName" type="text" placeholder="लेजर ग्रुप का नाम (उदा. Customers)" required />
+                <button class="btn primary" id="ledgerGroupSubmitBtn" type="submit">बनाएं</button>
+                <button type="button" onclick="renderDashboard()" class="btn ghost">कैंसिल</button>
+              </form>
+            </div>
+
+            <div class="ledger-detail" id="addAccountSection" style="display:none;">
+              <h2>➕ नया अकाउंट जोड़ें</h2>
+              <form id="manageAccountForm" class="add-form" style="margin-top:10px;">
+                <input type="hidden" id="accountKeyToEdit" />
+                <select id="parentLedgerGroup" required></select>
+                <input id="newAccountName" type="text" placeholder="खाता नाम (उदा. राम ट्रेडर्स)" required />
+                <input id="newAccountContact" type="text" placeholder="संपर्क (optional)" />
+                <button class="btn primary" id="accountSubmitBtn" type="submit">अकाउंट बनाएं</button>
+                <button type="button" onclick="renderDashboard()" class="btn ghost">कैंसिल</button>
+              </form>
+            </div>
+
+            <div class="ledger-detail" id="editTransactionSection" style="display:none;">
+              <h2>📝 लेनदेन संपादित करें</h2>
+              <form id="editTransactionForm" class="add-form" style="margin-top:10px;">
+                <input type="hidden" id="editTransAccountKey" />
+                <input type="hidden" id="editTransId" />
+                <input id="editTransDate" type="date" required />
+                <input id="editTransDesc" type="text" placeholder="विवरण" required />
+                <input id="editTransReceipt" type="text" placeholder="रसीद नं." />
+                <input id="editTransCredit" type="number" step="0.01" placeholder="IN (क्रेडिट)" />
+                <input id="editTransDebit" type="number" step="0.01" placeholder="OUT (डेबिट)" />
+                <button class="btn primary" type="submit">सेव करें</button>
+                <button type="button" onclick="showAccountDetail(document.getElementById('editTransAccountKey').value)" class="btn ghost">रद्द करें</button>
+              </form>
+            </div>
+
+            <div class="ledger-detail" id="backupRestoreSection" style="display:none;">
+              <h2>💾 बैकअप और रीस्टोर</h2>
+              <div style="margin-top:10px;">
+                <h3>स्थानीय बैकअप</h3>
+                <p>यह आपकी डेटा को JSON फ़ाइल में डाउनलोड करेगा।</p>
+                <div class="flex" style="margin-top:8px;">
+                  <button onclick="downloadBackupFile()" class="btn primary">JSON डाउनलोड करें</button>
+                  <button onclick="exportCSVAll()" class="btn ghost">CSV एक्सपोर्ट (सभी)</button>
+                </div>
+              </div>
+
+              <div style="margin-top:12px;">
+                <h3>स्थानीय रीस्टोर</h3>
+                <p style="color:#802020;">चेतावनी: रीस्टोर करने पर वर्तमान डेटा हट जाएगा।</p>
+                <div class="flex" style="margin-top:8px;">
+                  <input id="restoreFileInput" type="file" accept=".json" />
+                  <button onclick="restoreFromFile()" class="btn warn">रीस्टोर करें</button>
+                </div>
+              </div>
+
+              <div style="margin-top:12px;">
+                <h3>Google Drive (Optional)</h3>
+                <p>Google integration सक्षम करने के लिए CLIENT_ID और API_KEY कोड में भरें।</p>
+                <div class="flex" style="margin-top:8px;">
+                  <button id="uploadToDriveBtn" class="btn ghost" onclick="uploadToDrive()" disabled>अपलोड Drive</button>
+                  <button id="downloadFromDriveBtn" class="btn ghost" onclick="downloadFromDrive()" disabled>डाउनलोड Drive</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="dynamicAccountSections"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <h2>अकाउंट्स</h2>
+            <div class="account-list" id="ledgerNavAccounts"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div>© <strong>SHIV COMPUTER</strong> — All rights reserved. &nbsp;|&nbsp; Powered By SHIV COMPUTER</div>
+      </footer>
+    </main>
+  </div>
+<script>
+/* -------------------- CONFIG -------------------- */
+const LOCAL_STORAGE_KEY = 'ledgerAccountsHierarchyData';
+let accountingData = {};
+let currentActiveKey = null;
+
+/* Default sample data (kept small) */
+const defaultAccountingData = {
+  customers: {
+    name: 'ग्राहक (Customers)',
+    accounts: {
+      PatelBrothers: {
+        name: 'पटेल ब्रदर्स',
+        contact: '9998887777',
+        transactions: [
+          // UPDATED: All 22 transactions from the image have been added here, including the initial balance.
+          { id: 1, date: '2023-04-01', desc: 'शुरुआती शेष', receipt: '', credit: 0.00, debit: 0.00 },
+        ]
+      }
+    }
+  },
+  suppliers: {
+    name: 'सप्लायर्स (Suppliers)',
+    accounts: {
+      ShyamTraders: {
+        name: 'श्याम ट्रेडर्स',
+        contact: '8888999900',
+        transactions: [
+          { id: 23, date: '2024-04-01', desc: 'शुरुआती शेष', receipt: '', credit: 0.00, debit: 0.00 }
+        ]
+      }
+    }
+  }
+};
+
+/* -------------------- STORAGE -------------------- */
+function loadData(){
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if(raw) accountingData = JSON.parse(raw);
+    else { accountingData = defaultAccountingData; saveData(); }
+  } catch(e) {
+    console.error('LoadData error', e);
+    accountingData = defaultAccountingData; saveData();
+  }
+}
+
+function saveData(){
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(accountingData));
+}
+
+/* -------------------- UTIL -------------------- */
+function formatCurrency(amount){
+  const sign = amount < 0 ? '-' : '';
+  const absAmount = Math.abs(Number(amount) || 0);
+  return `${sign}₹ ${absAmount.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+}
+
+function generateKey(name){
+  return (name || 'k').toString().replace(/[^a-z0-9]/ig,'').slice(0,12) + Date.now().toString().slice(-4);
+}
+
+/* Validate restored data structure */
+function isValidAccountingStructure(data){
+  if(!data || typeof data !== 'object') return false;
+  const groups = Object.values(data);
+  if(groups.length === 0) return false;
+  return groups.every(g => g && typeof g === 'object' && g.accounts && typeof g.accounts === 'object');
+}
+
+/* -------------------- CALCULATIONS -------------------- */
+function calculateTotals(transactions){
+  let totalCredit = 0, totalDebit = 0;
+  (transactions || []).forEach(t => { totalCredit += Number(t.credit)||0; totalDebit += Number(t.debit)||0; });
+  return { totalCredit, totalDebit, balance: totalCredit - totalDebit };
+}
+
+function calculateLedgerGroupTotals(ledgerKey){
+  const group = accountingData[ledgerKey];
+  if(!group) return { totalCredit:0, totalDebit:0, balance:0 };
+  let tc=0, td=0;
+  for(const ak in group.accounts) {
+    const { totalCredit, totalDebit } = calculateTotals(group.accounts[ak].transactions || []);
+    tc += totalCredit; td += totalDebit;
+  }
+  return { totalCredit: tc, totalDebit: td, balance: tc-td };
+}
+
+/* Find account by accountKey */
+function findAccount(accountKey){
+  for(const ledgerKey in accountingData){
+    if(accountingData[ledgerKey].accounts && accountingData[ledgerKey].accounts[accountKey]){
+      return { ledgerKey, account: accountingData[ledgerKey].accounts[accountKey] };
+    }
+  }
+  return null;
+}
+
+/* -------------------- RENDERING -------------------- */
+function renderDashboard(){
+  const navGroups = document.getElementById('ledgerNavGroups');
+  const navAccounts = document.getElementById('ledgerNavAccounts');
+  const dynamicSections = document.getElementById('dynamicAccountSections');
+  const parentLedgerSelect = document.getElementById('parentLedgerGroup');
+
+  navGroups.innerHTML = '';
+  navAccounts.innerHTML = '';
+  dynamicSections.innerHTML = '';
+  parentLedgerSelect.innerHTML = '<option value="">--- लेजर ग्रुप चुनें ---</option>';
+
+  let combinedCredit = 0, combinedDebit = 0;
+
+  for(const ledgerKey in accountingData){
+    const group = accountingData[ledgerKey];
+    const gTotals = calculateLedgerGroupTotals(ledgerKey);
+    combinedCredit += gTotals.totalCredit; combinedDebit += gTotals.totalDebit;
+
+    // group button in nav
+    const gb = document.createElement('button');
+    gb.textContent = `${group.name} (${formatCurrency(gTotals.balance)})`;
+    gb.onclick = () => showLedgerGroupSummary(ledgerKey);
+    gb.setAttribute('data-target', ledgerKey);
+    if(currentActiveKey === ledgerKey) gb.classList.add('active');
+    navGroups.appendChild(gb);
+
+    // ledger group summary section
+    dynamicSections.appendChild(createLedgerGroupSummaryElement(ledgerKey, group));
+
+    // add option for parent select
+    const opt = document.createElement('option');
+    opt.value = ledgerKey; opt.textContent = group.name;
+    parentLedgerSelect.appendChild(opt);
+
+    // accounts
+    for(const accountKey in group.accounts){
+      const acc = group.accounts[accountKey];
+      const aTotals = calculateTotals(acc.transactions || []);
+      // account button
+      const ab = document.createElement('button');
+      ab.textContent = `${acc.name} (${formatCurrency(aTotals.balance)})`;
+      ab.onclick = () => showAccountDetail(accountKey);
+      ab.setAttribute('data-target', accountKey);
+      if(currentActiveKey === accountKey) ab.classList.add('active');
+      navAccounts.appendChild(ab);
+
+      // account detail section
+      dynamicSections.appendChild(createAccountDetailElement(accountKey, acc));
+      // populate transactions table for the account
+      renderAccountTransactions(accountKey);
+    }
+  }
+
+  document.getElementById('totalCredit').textContent = formatCurrency(combinedCredit);
+  document.getElementById('totalDebit').textContent = formatCurrency(combinedDebit);
+  document.getElementById('netBalance').textContent = formatCurrency(combinedCredit - combinedDebit);
+
+  // attach add transaction listeners to dynamic forms
+  document.querySelectorAll('form[id^="addTransactionForm"]').forEach(form => {
+    form.onsubmit = handleAddTransaction;
+  });
+
+  // If nothing selected, show group add form
+  if(!currentActiveKey) showManagementForm('addLedgerGroupSection');
+}
+
+/* Create ledger group summary DOM element */
+function createLedgerGroupSummaryElement(ledgerKey, data){
+  const div = document.createElement('div');
+  div.id = `ledgerGroupSummary${ledgerKey}`;
+  div.className = 'ledger-detail';
+  div.style.display = 'none';
+  const totals = calculateLedgerGroupTotals(ledgerKey);
+
+  let accountRows = '';
+  for(const accountKey in data.accounts){
+    const acc = data.accounts[accountKey];
+    const aTotals = calculateTotals(acc.transactions || []);
+    accountRows += `
+      <tr>
+        <td>${acc.name}</td>
+        <td style="text-align:right">${formatCurrency(aTotals.totalCredit)}</td>
+        <td style="text-align:right">${formatCurrency(aTotals.totalDebit)}</td>
+        <td style="text-align:right;font-weight:700">${formatCurrency(aTotals.balance)}</td>
+        <td style="text-align:right"><button class="btn ghost" onclick="showAccountDetail('${accountKey}')">विवरण</button></td>
+      </tr>
+    `;
+  }
+
+  div.innerHTML = `
+    <h2>लेजर ग्रुप: ${data.name}
+      <span style="float:right">
+        <button class="btn ghost" onclick="editLedgerGroup('${ledgerKey}')">📝 एडिट</button>
+        <button class="btn warn" onclick="deleteLedgerGroup('${ledgerKey}')">🗑️ डिलीट</button>
+      </span>
+    </h2>
+    <div class="summary" style="margin-top:10px;">
+      <div class="tile in"><div class="title">Group IN</div><div class="value">${formatCurrency(totals.totalCredit)}</div></div>
+      <div class="tile out"><div class="title">Group OUT</div><div class="value">${formatCurrency(totals.totalDebit)}</div></div>
+      <div class="tile balance"><div class="title">Group Balance</div><div class="value">${formatCurrency(totals.balance)}</div></div>
+    </div>
+
+    <h3 style="margin-top:14px;">Accounts</h3>
+    <table><thead><tr><th>Account</th><th>IN</th><th>OUT</th><th>Balance</th><th>Action</th></tr></thead>
+    <tbody>${accountRows}</tbody></table>
+  `;
+  return div;
+}
+
+/* Create account detail DOM element */
+function createAccountDetailElement(accountKey, data){
+  const div = document.createElement('div');
+  div.id = `accountDetail${accountKey}`;
+  div.className = 'ledger-detail';
+  div.style.display = 'none';
+
+  const totals = calculateTotals(data.transactions || []);
+  // ADDED class 'transaction-table' for column alignment and coloring
+  div.innerHTML = `
+    <h2>खाता: ${data.name} <small style="font-weight:600;color:#0b4f20">(${data.contact || 'N/A'})</small>
+      <span style="float:right">
+        <button class="btn ghost" onclick="editAccount('${accountKey}')">📝 एडिट</button>
+        <button class="btn warn" onclick="deleteAccount('${accountKey}')">🗑️ डिलीट</button>
+      </span>
+    </h2>
+
+    <div class="summary" style="margin-top:10px;">
+      <div class="tile in"><div class="title">IN</div><div id="${accountKey}Credit" class="value">${formatCurrency(totals.totalCredit)}</div></div>
+      <div class="tile out"><div class="title">OUT</div><div id="${accountKey}Debit" class="value">${formatCurrency(totals.totalDebit)}</div></div>
+      <div class="tile balance"><div class="title">Balance</div><div id="${accountKey}Balance" class="value">${formatCurrency(totals.balance)}</div></div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <h3>नया लेनदेन जोड़ें</h3>
+      <form id="addTransactionForm${accountKey}" data-account-key="${accountKey}" class="add-form">
+        <input type="date" name="date" required value="${new Date().toISOString().slice(0,10)}" />
+        <input type="text" name="desc" placeholder="विवरण" required />
+        <input type="text" name="receipt" placeholder="रसीद नं." />
+        <input type="number" name="credit" placeholder="IN" step="0.01" value="0.00" />
+        <input type="number" name="debit" placeholder="OUT" step="0.01" value="0.00" />
+        <button type="submit" class="btn primary">जोड़ें</button>
+      </form>
+    </div>
+
+    <table class="transaction-table" style="margin-top:10px;">
+      <thead><tr><th>Sr</th><th>Date</th><th>Desc</th><th>Receipt</th><th>IN</th><th>OUT</th><th>Balance</th><th>Actions</th></tr></thead>
+      <tbody id="transactions${accountKey}"></tbody>
+    </table>
+  `;
+  return div;
+}
+
+/* render transactions table */
+function renderAccountTransactions(accountKey){
+  const accountInfo = findAccount(accountKey);
+  const tableBody = document.getElementById(`transactions${accountKey}`);
+  if(!accountInfo || !tableBody) return;
+  // Sorting transactions by date then by id for correct running balance
+  const trans = (accountInfo.account.transactions || []).slice().sort((a,b)=>{
+    if(a.date === b.date) return (a.id||0) - (b.id||0);
+    return new Date(a.date) - new Date(b.date);
+  });
+
+  tableBody.innerHTML = '';
+  let balance = 0; let sr = 1;
+  trans.forEach(t => {
+    balance += Number(t.credit)||0;
+    balance -= Number(t.debit)||0;
+    const tr = document.createElement('tr');
+    // ADDED class 'credit-cell' and 'debit-cell' for styling
+    tr.innerHTML = `
+      <td>${sr++}</td>
+      <td>${t.date}</td>
+      <td>${t.desc}</td>
+      <td>${t.receipt || ''}</td>
+      <td class="credit-cell">${t.credit>0? formatCurrency(t.credit): ''}</td>
+      <td class="debit-cell">${t.debit>0? formatCurrency(t.debit): ''}</td>
+      <td>${formatCurrency(balance)}</td>
+      <td class="action-small">
+        <button class="btn ghost" onclick="editTransaction('${accountKey}', ${t.id})">📝</button>
+        <button class="btn warn" onclick="deleteTransaction('${accountKey}', ${t.id})">🗑️</button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+  // update account summary tiles
+  const totals = calculateTotals(accountInfo.account.transactions || []);
+  document.getElementById(`${accountKey}Credit`).textContent = formatCurrency(totals.totalCredit);
+  document.getElementById(`${accountKey}Debit`).textContent = formatCurrency(totals.totalDebit);
+  document.getElementById(`${accountKey}Balance`).textContent = formatCurrency(totals.balance);
+}
+
+/* -------------------- SHOW / NAVIGATION -------------------- */
+function hideAllDetails(){
+  document.querySelectorAll('.ledger-detail').forEach(d => {
+    d.style.display = 'none';
+    d.classList.remove('active-for-print'); // FIX: Ensure class is removed
+  });
+  document.querySelectorAll('.group-list button, .account-list button').forEach(b => b.classList.remove('active'));
+}
+
+/* Show management form or section by id */
+function showManagementForm(formId, isEdit=false){
+  hideAllDetails();
+  const el = document.getElementById(formId);
+  if(!el) return;
+  el.style.display = 'block';
+  currentActiveKey = formId;
+  // set active nav button if present
+  document.querySelectorAll(`.group-list button[data-target="${formId}"], .account-list button[data-target="${formId}"]`).forEach(b => b.classList.add('active'));
+}
+
+/* Show ledger group summary */
+function showLedgerGroupSummary(ledgerKey){
+  hideAllDetails();
+  const el = document.getElementById(`ledgerGroupSummary${ledgerKey}`);
+  if(el) {
+    el.style.display = 'block';
+    el.classList.add('active-for-print'); // FIX: Add class for printing
+  }
+  currentActiveKey = ledgerKey;
+  // active button
+  document.querySelectorAll('.group-list button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.group-list button[data-target="${ledgerKey}"]`)?.classList.add('active');
+}
+
+/* Show account details */
+function showAccountDetail(accountKey){
+  hideAllDetails();
+  const el = document.getElementById(`accountDetail${accountKey}`);
+  if(el) {
+    el.style.display = 'block';
+    el.classList.add('active-for-print'); // FIX: Add class for printing
+  }
+  currentActiveKey = accountKey;
+  document.querySelectorAll('.account-list button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.account-list button[data-target="${accountKey}"]`)?.classList.add('active');
+}
+
+/* -------------------- CRUD: Ledger Group -------------------- */
+document.getElementById('manageLedgerGroupForm').onsubmit = function(e){
+  e.preventDefault();
+  const editKey = document.getElementById('ledgerGroupKeyToEdit').value;
+  const name = document.getElementById('newLedgerGroupName').value.trim();
+  if(!name) return alert('कृपया ग्रुप का नाम दर्ज करें।');
+
+  if(editKey){
+    // edit existing
+    if(!accountingData[editKey]) return alert('ग्रुप नहीं मिला।');
+    accountingData[editKey].name = name;
+    saveData();
+    renderDashboard();
+    alert('ग्रुप अपडेट हो गया।');
+  } else {
+    // add new
+    const key = generateKey(name);
+    accountingData[key] = { name, accounts: {} };
+    saveData();
+    renderDashboard();
+    alert('नया ग्रुप बनाया गया।');
+  }
+  // reset form
+  document.getElementById('manageLedgerGroupForm').reset();
+};
+
+/* edit ledger group */
+function editLedgerGroup(ledgerKey){
+  if(!accountingData[ledgerKey]) return alert('ग्रुप नहीं मिला।');
+  document.getElementById('ledgerGroupKeyToEdit').value = ledgerKey;
+  document.getElementById('newLedgerGroupName').value = accountingData[ledgerKey].name;
+  showManagementForm('addLedgerGroupSection', true);
+}
+
+/* delete ledger group */
+function deleteLedgerGroup(ledgerKey){
+  if(!confirm('क्या आप वाकई इस लेजर ग्रुप और इसके सभी अकाउंट्स हटाना चाहते हैं?')) return;
+  delete accountingData[ledgerKey];
+  saveData();
+  renderDashboard();
+  alert('ग्रुप हट गया।');
+}
+
+/* -------------------- CRUD: Account -------------------- */
+document.getElementById('manageAccountForm').onsubmit = function(e){
+  e.preventDefault();
+  const editKey = document.getElementById('accountKeyToEdit').value;
+  const parent = document.getElementById('parentLedgerGroup').value;
+  const name = document.getElementById('newAccountName').value.trim();
+  const contact = document.getElementById('newAccountContact').value.trim();
+
+  if(!parent) return alert('कृपया लेजर ग्रुप चुनें।');
+  if(!name) return alert('कृपया अकाउंट का नाम डालें।');
+
+  if(editKey){
+    // update existing account (may move to new parent)
+    // find current holder
+    const found = findAccount(editKey);
+    if(!found) return alert('अकाउंट नहीं मिला।');
+    delete accountingData[found.ledgerKey].accounts[editKey];
+    accountingData[parent].accounts[editKey] = { name, contact, transactions: found.account.transactions || [] };
+    saveData();
+    renderDashboard();
+    alert('अकाउंट अपडेट हो गया।');
+  } else {
+    const key = generateKey(name);
+    accountingData[parent].accounts[key] = { name, contact, transactions: [] };
+    saveData();
+    renderDashboard();
+    alert('नया अकाउंट बनाया गया।');
+  }
+  document.getElementById('manageAccountForm').reset();
+};
+
+/* edit account */
+function editAccount(accountKey){
+  const found = findAccount(accountKey);
+  if(!found) return alert('अकाउंट नहीं मिला।');
+  document.getElementById('accountKeyToEdit').value = accountKey;
+  document.getElementById('newAccountName').value = found.account.name;
+  document.getElementById('newAccountContact').value = found.account.contact || '';
+  document.getElementById('parentLedgerGroup').value = found.ledgerKey;
+  showManagementForm('addAccountSection', true);
+}
+
+/* delete account */
+function deleteAccount(accountKey){
+  if(!confirm('क्या आप वाकई यह अकाउंट और इसकी सभी लेनदेन हटाना चाहते हैं?')) return;
+  const found = findAccount(accountKey);
+  if(!found) return alert('अकाउंट नहीं मिला।');
+  delete accountingData[found.ledgerKey].accounts[accountKey];
+  saveData();
+  renderDashboard();
+  alert('अकाउंट हटाया गया।');
+}
+
+/* -------------------- TRANSACTIONS -------------------- */
+function handleAddTransaction(evt){
+  evt.preventDefault();
+  const form = evt.target;
+  const accountKey = form.getAttribute('data-account-key');
+  const date = form.date.value;
+  const desc = form.desc.value.trim();
+  const receipt = form.receipt.value.trim();
+  const credit = parseFloat(form.credit.value) || 0;
+  const debit = parseFloat(form.debit.value) || 0;
+
+  if(credit === 0 && debit === 0) return alert('कृपया IN या OUT में राशि डालें।');
+
+  const found = findAccount(accountKey);
+  if(!found) return alert('अकाउंट नहीं मिला।');
+
+  const tx = { id: Date.now(), date, desc, receipt, credit, debit };
+  found.account.transactions.push(tx);
+  saveData();
+  renderAccountTransactions(accountKey);
+  renderDashboard();
+  form.reset();
+  form.date.value = new Date().toISOString().slice(0,10);
+}
+
+/* edit transaction - populate edit form */
+function editTransaction(accountKey, transactionId){
+  const found = findAccount(accountKey);
+  if(!found) return alert('अकाउंट नहीं मिला।');
+  const tx = (found.account.transactions || []).find(t => t.id === transactionId);
+  if(!tx) return alert('ट्रांज़ैक्शन नहीं मिला।');
+
+  document.getElementById('editTransAccountKey').value = accountKey;
+  document.getElementById('editTransId').value = tx.id;
+  document.getElementById('editTransDate').value = tx.date;
+  document.getElementById('editTransDesc').value = tx.desc;
+  document.getElementById('editTransReceipt').value = tx.receipt;
+  document.getElementById('editTransCredit').value = tx.credit;
+  document.getElementById('editTransDebit').value = tx.debit;
+
+  showManagementForm('editTransactionSection', true);
+}
+
+/* save edited transaction */
+document.getElementById('editTransactionForm').onsubmit = function(e){
+  e.preventDefault();
+  const accountKey = document.getElementById('editTransAccountKey').value;
+  const id = parseInt(document.getElementById('editTransId').value);
+  const date = document.getElementById('editTransDate').value;
+  const desc = document.getElementById('editTransDesc').value.trim();
+  const receipt = document.getElementById('editTransReceipt').value.trim();
+  const credit = parseFloat(document.getElementById('editTransCredit').value) || 0;
+  const debit = parseFloat(document.getElementById('editTransDebit').value) || 0;
+
+  if(credit === 0 && debit === 0) return alert('कृपया IN या OUT में राशि डालें।');
+
+  const found = findAccount(accountKey);
+  if(!found) return alert('अकाउंट नहीं मिला।');
+
+  const idx = (found.account.transactions || []).findIndex(t => t.id === id);
+  if(idx === -1) return alert('लेनदेन नहीं मिला।');
+
+  found.account.transactions[idx] = { id, date, desc, receipt, credit, debit };
+  saveData();
+  renderAccountTransactions(accountKey);
+  renderDashboard();
+  alert('लेनदेन अपडेट हो गया।');
+  showAccountDetail(accountKey);
+};
+
+/* delete transaction */
+function deleteTransaction(accountKey, transactionId){
+  if(!confirm('क्या आप वाकई इस ट्रांज़ैक्शन को हटाना चाहते हैं?')) return;
+  const found = findAccount(accountKey);
+  if(!found) return alert('अकाउंट नहीं मिला।');
+  found.account.transactions = (found.account.transactions||[]).filter(t => t.id !== transactionId);
+  saveData();
+  renderAccountTransactions(accountKey);
+  renderDashboard();
+  alert('ट्रांज़ैक्शन हट गया।');
+}
+
+/* -------------------- BACKUP / RESTORE -------------------- */
+function downloadBackupFile(){
+  const dataStr = JSON.stringify(accountingData, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `accounting_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  alert('बैकअप फ़ाइल डाउनलोड हो गई है।');
+}
+
+function restoreFromFile(){
+  if(!confirm('रीस्टोर करने पर वर्तमान डेटा हट जाएगा। क्या जारी रखना चाहते हैं?')) return;
+  const fi = document.getElementById('restoreFileInput');
+  if(!fi.files || fi.files.length === 0) return alert('कृपया JSON फ़ाइल चुनें।');
+  const file = fi.files[0];
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try {
+      const parsed = JSON.parse(evt.target.result);
+      if(!isValidAccountingStructure(parsed)) return alert('अमान्य JSON स्ट्रक्चर। कृपया सही बैकअप फ़ाइल चुनें।');
+      accountingData = parsed;
+      saveData();
+      renderDashboard();
+      alert('डेटा सफलतापूर्वक रीस्टोर हुआ।');
+    } catch(e){
+      console.error(e);
+      alert('JSON पार्सिंग में त्रुटि।');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* Export CSV for all accounts (simple combined) */
+function exportCSVAll(){
+  let rows = [['Ledger Group','Account','Date','Desc','Receipt','IN','OUT']];
+  for(const gk in accountingData){
+    const group = accountingData[gk];
+    for(const ak in group.accounts){
+      const acc = group.accounts[ak];
+      (acc.transactions || []).forEach(tx => {
+        rows.push([group.name, acc.name, tx.date, tx.desc, tx.receipt || '', tx.credit || 0, tx.debit || 0]);
+      });
+    }
+  }
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `accounts_export_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  alert('CSV एक्सपोर्ट तैयार है।');
+}
+
+/* -------------------- GOOGLE DRIVE PLACEHOLDERS -------------------- */
+/* Safe placeholders: these buttons remains disabled unless user adds keys in code */
+const CLIENT_ID = 'YOUR_CLIENT_ID_HERE';
+const API_KEY = 'YOUR_API_KEY_HERE';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+function updateGoogleButtons(){
+  const enable = CLIENT_ID !== 'YOUR_CLIENT_ID_HERE' && API_KEY !== 'YOUR_API_KEY_HERE';
+  document.getElementById('googleSignBtn').disabled = !enable;
+  document.getElementById('uploadToDriveBtn').disabled = !enable;
+  document.getElementById('downloadFromDriveBtn').disabled = !enable;
+  document.getElementById('authStatus').textContent = enable ? '(Google Drive Enabled)' : '(स्थानीय मोड)';
+}
+updateGoogleButtons();
+
+function uploadToDrive(){
+  if(document.getElementById('uploadToDriveBtn').disabled) return alert('Google API keys फ़ाइल में जोड़ें।');
+  alert('Drive upload flow placeholder — implement with OAuth client and Drive API.');
+}
+
+function downloadFromDrive(){
+  if(document.getElementById('downloadFromDriveBtn').disabled) return alert('Google API keys फ़ाइल में जोड़ें।');
+  alert('Drive download flow placeholder — implement with OAuth client and Drive API.');
+}
+
+/* -------------------- INIT -------------------- */
+function printCurrentReport(){ window.print(); }
+
+function initialize(){
+  loadData();
+  renderDashboard();
+  // make sure google buttons state is correct
+  updateGoogleButtons();
+}
+
+document.addEventListener('DOMContentLoaded', initialize);
+</script>
+</body>
+</html>
