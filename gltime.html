@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Location & Time Calculator</title>
+	<link rel="icon" type="image/png" href="SHIV.png">
+    <style>
+        /* ... (Your original CSS is here) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .location-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .data-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .data-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #fdbb2d;
+        }
+        
+        .data-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .button-container {
+            margin: 30px 0;
+        }
+        
+        button {
+            background: linear-gradient(to right, #fdbb2d, #b21f1f);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .accuracy-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .accuracy-info h3 {
+            color: #fdbb2d;
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+        }
+        
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #fdbb2d;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .success {
+            color: #51cf66;
+            background: rgba(81, 207, 102, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .data-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Device Location & Time Calculator</h1>
+        
+        <p class="description">
+            This application uses your device's GPS to determine your exact longitude and calculates the precise local time based on your geographic location.
+        </p>
+        
+        <div class="location-data">
+            <div class="data-card">
+                <h3>Longitude</h3>
+                <div id="longitude" class="data-value">--</div>
+            </div>
+            
+            <div class="data-card">
+                <h3>Latitude</h3>
+                <div id="latitude" class="data-value">--</div>
+            </div>
+            
+            <div class="data-card">
+                <h3>Local Time</h3>
+                <div id="local-time" class="data-value">--</div>
+            </div>
+            
+            <div class="data-card">
+                <h3>UTC Time</h3>
+                <div id="utc-time" class="data-value">--</div>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button id="get-location">Get My Location & Time</button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Getting your location...</p>
+        </div>
+        
+        <div id="error" class="error">
+            <p>Error: Unable to retrieve your location. Please ensure location services are enabled and try again.</p>
+        </div>
+        
+        <div id="success" class="success">
+            <p>Location data retrieved successfully!</p>
+        </div>
+        
+        <div class="accuracy-info">
+            <h3>About Accuracy</h3>
+            <p>This application uses your device's GPS for maximum accuracy. The time calculation is based on your longitude and uses timezone data to provide precise local time.</p>
+            <p>For best results:</p>
+            <ul>
+                <li>Enable GPS/location services on your device</li>
+                <li>Ensure you have a clear view of the sky for GPS signals</li>
+                <li>Allow the browser to access your location when prompted</li>
+            </ul>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Powered by SHIV COMPUTER</p>
+    </footer>
+
+    <script>
+        // Global variable to store the successfully fetched longitude
+        let fetchedLongitude = null; // <-- NEW: Use a global variable to store the value
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const longitudeElement = document.getElementById('longitude');
+            const latitudeElement = document.getElementById('latitude');
+            const localTimeElement = document.getElementById('local-time');
+            const utcTimeElement = document.getElementById('utc-time');
+            const getLocationButton = document.getElementById('get-location');
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const successElement = document.getElementById('success');
+            
+            // Function to format time with leading zeros
+            function formatTime(date) {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+            }
+            
+            // Function to calculate local time based on longitude
+            function calculateLocalTime(longitude) {
+                // Each 15 degrees of longitude represents 1 hour time difference
+                const utcOffsetHours = longitude / 15;
+                
+                // Get current UTC time
+                const now = new Date();
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                
+                // Calculate local time based on longitude
+                const localTime = new Date(utcTime + (utcOffsetHours * 3600000));
+                
+                return {
+                    localTime: localTime,
+                    utcTime: new Date(utcTime)
+                };
+            }
+            
+            // Function to get location and update display
+            function getLocation() {
+                // Reset display
+                longitudeElement.textContent = '--';
+                latitudeElement.textContent = '--';
+                localTimeElement.textContent = '--';
+                utcTimeElement.textContent = '--';
+                errorElement.style.display = 'none';
+                successElement.style.display = 'none';
+                loadingElement.style.display = 'block';
+                
+                // Check if geolocation is available
+                if (!navigator.geolocation) {
+                    loadingElement.style.display = 'none';
+                    errorElement.style.display = 'block';
+                    errorElement.innerHTML = '<p>Geolocation is not supported by this browser.</p>';
+                    return;
+                }
+                
+                // Get current position with high accuracy
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // Success callback
+                        const longitude = position.coords.longitude;
+                        const latitude = position.coords.latitude;
+                        const accuracy = position.coords.accuracy;
+                        
+                        // NEW: Store the raw longitude value in the global variable
+                        fetchedLongitude = longitude; 
+                        
+                        // Update location display (still displaying the degree symbol)
+                        longitudeElement.textContent = longitude.toFixed(6) + '°';
+                        latitudeElement.textContent = latitude.toFixed(6) + '°';
+                        
+                        // Calculate and update time display (initial run)
+                        const times = calculateLocalTime(fetchedLongitude);
+                        localTimeElement.textContent = formatTime(times.localTime);
+                        utcTimeElement.textContent = formatTime(times.utcTime) + ' UTC';
+                        
+                        // Show success message
+                        loadingElement.style.display = 'none';
+                        successElement.style.display = 'block';
+                        successElement.innerHTML = `<p>Location data retrieved successfully! Accuracy: ${Math.round(accuracy)} meters</p>`;
+                    },
+                    function(error) {
+                        // Error callback
+                        loadingElement.style.display = 'none';
+                        errorElement.style.display = 'block';
+                        
+                        let errorMessage = 'Unknown error occurred.';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Location access denied by user.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'Location request timed out.';
+                                break;
+                        }
+                        
+                        errorElement.innerHTML = `<p>Error: ${errorMessage}</p>`;
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            }
+            
+            // Add event listener to the button
+            getLocationButton.addEventListener('click', getLocation);
+            
+            // Update time every second for the display
+            setInterval(function() {
+                // FIX: Check the global variable instead of reading the DOM element text.
+                if (fetchedLongitude !== null) { 
+                    // Use the stored raw numeric value for calculation
+                    const times = calculateLocalTime(fetchedLongitude); 
+                    localTimeElement.textContent = formatTime(times.localTime);
+                    utcTimeElement.textContent = formatTime(times.utcTime) + ' UTC';
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
