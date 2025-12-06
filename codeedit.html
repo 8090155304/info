@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> वेब कोडर </title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>वेब एडिटर</h1>
+    </header>
+
+    <main class="editor-container">
+        <section class="code-panel">
+            <div class="file-tabs">
+                <button class="tab-button active" data-type="html">HTML</button>
+                <button class="tab-button" data-type="css">CSS</button>
+                <button class="tab-button" data-type="js">JS</button>
+                <button class="pack-button" onclick="downloadCode()">💾 कोड पैक करें</button>
+            </div>
+            
+            <div id="editor-container">
+                <textarea id="html-content" class="code-content"></textarea>
+                <textarea id="css-content" class="code-content hidden"></textarea>
+                <textarea id="js-content" class="code-content hidden"></textarea>
+            </div>
+        </section>
+
+        <section class="preview-panel">
+            <div class="preview-controls">
+                <label for="device-select">डिवाइस चयन:</label>
+                <select id="device-select" onchange="changeDevice()">
+                    <option value="desktop">डेस्कटॉप (100%)</option>
+                    <option value="tablet">टैबलेट (800px)</option>
+                    <option value="mobile">मोबाइल (400px)</option>
+                </select>
+            </div>
+            
+            <div class="preview-window desktop">
+                <iframe id="live-preview" title="लाइव प्रीव्यू"></iframe>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Power By SHIV COMPUTER</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,84 +1,160 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
 body {
-  background: #f1f1f1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f4f4f4;
 }
 
-.chat-container {
-  width: 100%;
-  max-width: 450px;
-  background: #fff;
-  border-radius: 15px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.chat-header {
-  background: #0078ff;
-  color: #fff;
-  padding: 15px;
-  text-align: center;
+/* मुख्य कंटेनर */
+.editor-container {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden; /* अगर कोई तत्व बाहर निकलता है तो छुपा दें */
 }
 
-.chat-box {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-  background: #f9f9f9;
+/* 1. कोड पैनल */
+.code-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    background-color: #1e1e1e; /* CodeMirror थीम से मिलता जुलता */
 }
 
-.message {
-  margin: 8px 0;
-  padding: 10px;
-  border-radius: 10px;
-  max-width: 75%;
-  word-wrap: break-word;
+.file-tabs {
+    background-color: #333;
+    padding: 5px;
+    display: flex;
+    border-bottom: 2px solid #00bcd4;
 }
 
-.user-msg {
-  background: #0078ff;
-  color: #fff;
-  margin-left: auto;
-  border-bottom-right-radius: 0;
+.tab-button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+    margin-right: 2px;
+    font-weight: bold;
+    transition: background-color 0.2s;
 }
 
-.bot-msg {
-  background: #e4e6eb;
-  margin-right: auto;
-  border-bottom-left-radius: 0;
+.tab-button.active {
+    background-color: #1e1e1e;
+    color: #00bcd4;
+    border-top: 3px solid #00bcd4;
 }
 
-.chat-input {
-  display: flex;
-  padding: 10px;
-  background: #eee;
+#editor-container {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
 }
 
-.chat-input input {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 20px;
-  outline: none;
+/* CodeMirror एडिटर को कंटेनर के अंदर पूरी तरह फिट करना */
+.CodeMirror {
+    height: 100%;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
-.chat-input button {
-  margin-left: 10px;
-  padding: 10px 15px;
-  background: #0078ff;
-  border: none;
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
+.hidden {
+    display: none !important;
+}
+
+/* 2. प्रीव्यू पैनल */
+.preview-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    box-sizing: border-box;
+    background-color: #ecf0f1;
+}
+
+.preview-controls {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+#device-select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.preview-window {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+    transition: max-width 0.5s ease-in-out, height 0.5s ease-in-out;
+}
+
+#live-preview {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: white;
+    border-radius: 4px;
+}
+
+/* डिवाइस साइज़ के लिए स्टाइल (प्रीव्यू फ्रेम को छोटा करना) */
+.preview-window.mobile {
+    max-width: 400px;
+    height: 650px;
+}
+
+.preview-window.tablet {
+    max-width: 800px;
+    height: 900px;
+}
+
+.preview-window.desktop {
+    max-width: 100%;
+    height: 100%;
+}
+
+/* पैक बटन स्टाइल */
+.pack-button {
+    margin-left: auto;
+    padding: 8px 15px;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.pack-button:hover {
+    background-color: #27ae60;
+}
+
+/* फ़ूटर */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 0.9em;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
 }
