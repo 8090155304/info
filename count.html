@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Counter</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.2.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+    
+    <style>
+        /* Mobile-First CSS */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        .container { 
+            width: 100%;
+            max-width: 750px; 
+            margin: 0 auto; 
+            padding: 20px 10px; 
+        }
+        h2 { 
+            color: #007bff; 
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px; 
+            margin: 0 auto 20px auto;
+            /* 4:3 Aspect Ratio (वीडियो के लिए सामान्य) */
+            padding-top: 75%; 
+        }
+        #videoFeed { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: 100%;
+            border: 3px solid #007bff; 
+            border-radius: 8px;
+            /* सुनिश्चित करें कि वीडियो पूरी तरह से भर जाए */
+            object-fit: cover; 
+            transform: scaleX(-1); /* सेल्फी मोड में दर्पण प्रभाव के लिए */
+        }
+        #resultCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .controls button { 
+            padding: 12px 15px; 
+            margin: 8px; 
+            font-size: 1rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            border: none; 
+            border-radius: 6px; 
+            transition: background-color 0.3s, opacity 0.3s;
+            flex-grow: 1; /* मोबाइल पर बटन की चौड़ाई बढ़ाने के लिए */
+            min-width: 140px;
+        }
+        .controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #captureTargetBtn { 
+            background-color: #28a745; 
+            color: white; 
+        }
+        #captureTargetBtn:not(:disabled):hover { background-color: #1e7e34; }
+        #startCountBtn { 
+            background-color: #ffc107; 
+            color: #333;
+        }
+        #startCountBtn:not(:disabled):hover { background-color: #e0a800; }
+        #output { 
+            margin-top: 20px; 
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 1.1em; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Object Counter</h2>
+        
+        <div class="video-container">
+            <video id="videoFeed" playsinline autoplay muted></video>
+            <canvas id="resultCanvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="captureTargetBtn" disabled>🎯 स्टेप 1: टारगेट सेट करें</button>
+            <button id="startCountBtn" disabled>🔢 स्टेप 2: गिनती शुरू करें</button>
+        </div>
+
+        <div id="output">
+            <p>स्थिति:लोड हो रहा है... (इंटरनेट ज़रूरी है)</p>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('videoFeed');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const resultCtx = resultCanvas.getContext('2d');
+        const captureTargetBtn = document.getElementById('captureTargetBtn');
+        const startCountBtn = document.getElementById('startCountBtn');
+        const output = document.getElementById('output');
+
+        let model = null;
+        let targetObject = null;
+        let isCounting = false;
+        let animationFrameId = null;
+
+        // --- 1. मॉडल लोड करें ---
+        async function loadModel() {
+            try {
+                output.innerHTML = '<p>⏳ Starat हो रहा है... (यह कुछ सेकंड लेगा)</p>';
+                model = await cocoSsd.load();
+                output.innerHTML = '<p style="color: #28a745; font-weight: bold;">✅ Ready । कृपया कैमरा शुरू होने अनुमति दें ।</p>';
+                startCamera();
+            } catch (err) {
+                output.innerHTML = `<p style="color: red; font-weight: bold;">❌ मॉडल लोडिंग विफल। कृपया इंटरनेट जाँचें।</p>`;
+                console.error("Model loading error:", err);
+            }
+        }
+
+        // --- 2. कैमरा एक्सेस शुरू करना ---
+        async function startCamera() {
+            try {
+                // पीछे के कैमरे को प्राथमिकता दें ताकि ऑब्जेक्ट डिटेक्शन आसान हो
+                const constraints = { video: { facingMode: "environment" } }; 
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+
+                    // कैनवास और वीडियो कंटेनर को वीडियो के वास्तविक आकार पर सेट करें
+                    const videoWidth = video.videoWidth;
+                    const videoHeight = video.videoHeight;
+                    
+                    resultCanvas.width = videoWidth;
+                    resultCanvas.height = videoHeight;
+
+                    // मोबाइल पर सही डिस्प्ले के लिए CSS एडजस्टमेंट
+                    const container = document.querySelector('.video-container');
+                    container.style.paddingTop = `${(videoHeight / videoWidth) * 100}%`;
+
+                    // बटन को सक्षम करें क्योंकि अब मॉडल और कैमरा दोनों तैयार हैं
+                    captureTargetBtn.disabled = false;
+                    output.innerHTML = '<p style="color: #007bff; font-weight: bold;">✅ कैमरा चालू। Set Target</p>';
+                };
+            } catch (err) {
+                output.innerHTML = `<p style="color: red; font-weight: bold;">❌ कैमरा अनुमति विफल।</p>`;
+                console.error("Camera access error:", err);
+            }
+        }
+
+        // --- 3. टारगेट ऑब्जेक्ट सेट करना (पहला स्कैन) ---
+        captureTargetBtn.addEventListener('click', async () => {
+            if (!model || !video.srcObject) return;
+
+            output.innerHTML = '<p>🎯 टारगेट ऑब्जेक्ट को पहचान रहा है...</p>';
+
+            // वीडियो फ़्रेम पर डिटेक्शन चलाएँ
+            const predictions = await model.detect(video);
+
+            if (predictions.length === 0) {
+                output.innerHTML = '<p style="color: orange;">⚠️ कोई ऑब्जेक्ट नहीं मिला। कृपया कैमरा सही से सेट करें और फिर से प्रयास करें।</p>';
+                return;
+            }
+
+            // सबसे कॉन्फिडेंट ऑब्जेक्ट को टारगेट मानें
+            const bestPrediction = predictions.reduce((prev, current) => (prev.score > current.score) ? prev : current);
+            targetObject = bestPrediction.class; 
+            
+            output.innerHTML = `<p style="color: blue; font-weight: bold;">🎯 **टारगेट सेट हो गया:** **${targetObject.toUpperCase()}**। गिनती शुरू करें।</p>`;
+            
+            captureTargetBtn.disabled = true;
+            startCountBtn.disabled = false;
+        });
+
+        // --- 4. गिनती शुरू करना (दूसरा स्कैन) ---
+        startCountBtn.addEventListener('click', () => {
+            if (!targetObject) {
+                output.innerHTML = '<p style="color: red;">पहले टारगेट सेट करें।</p>';
+                return;
+            }
+
+            isCounting = true;
+            output.innerHTML = `<p>🔢 गिनती शुरू। **${targetObject.toUpperCase()}** को ट्रैक किया जा रहा है...</p>`;
+            captureTargetBtn.disabled = true;
+            startCountBtn.disabled = true;
+            
+            // कंटीन्यूअस डिटेक्शन शुरू करें
+            detectFrame();
+        });
+
+        // --- 5. कंटीन्यूअस डिटेक्शन और काउंटिंग लॉजिक ---
+        async function detectFrame() {
+            if (!isCounting || !model) {
+                cancelAnimationFrame(animationFrameId);
+                return;
+            }
+
+            // TF.js मॉडल को वीडियो एलिमेंट पास करें
+            const predictions = await model.detect(video);
+            
+            // कैनवास साफ़ करें
+            resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+
+            let count = 0;
+            
+            predictions.forEach(p => {
+                // सिर्फ़ टारगेट ऑब्जेक्ट को गिनें
+                if (p.class === targetObject) {
+                    count++;
+                    drawBoundingBox(p); // बाउंडिंग बॉक्स ड्रा करें
+                }
+            });
+
+            output.innerHTML = `<p style="font-size: 1.5em; color: #28a745; font-weight: bold;">✅ **${targetObject.toUpperCase()} काउंट:** ${count}</p>`;
+
+            // अगले फ़्रेम के लिए लूप जारी रखें
+            animationFrameId = requestAnimationFrame(detectFrame);
+        }
+
+        // --- 6. बाउंडिंग बॉक्स ड्रा करना ---
+        function drawBoundingBox(prediction) {
+            const [x, y, width, height] = prediction.bbox;
+            
+            resultCtx.beginPath();
+            resultCtx.strokeStyle = 'red'; 
+            resultCtx.lineWidth = 3;
+            resultCtx.rect(x, y, width, height);
+            resultCtx.stroke();
+            
+            // लेबल ड्रा करें
+            resultCtx.fillStyle = 'red';
+            resultCtx.font = '20px Arial';
+            // लेबल को बॉक्स के ऊपर ड्रा करें
+            resultCtx.fillText(prediction.class, x, y > 20 ? y - 5 : 20);
+        }
+
+        // पेज लोड होने पर मॉडल लोड करें
+        window.onload = loadModel;
+    </script>
+</body>
+</html>

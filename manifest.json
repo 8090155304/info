@@ -4,7 +4,7 @@
   "description": "Your go-to Place for Practical Computer Education.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#c4fcb0",
+  "background_color": "#f0f8ff",
   "theme_color": "#93c47d",
   "icons": [
     {
@@ -13,7 +13,7 @@
       "type": "image/png"
     },
     {
-      "src": "shiv.png",
+      "src": "SHIV1.png",
       "sizes": "512x512",
       "type": "image/png"
     }

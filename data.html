@@ -112,8 +112,8 @@
             box-sizing: border-box;
         }
         .id-card {
-            width: 185px; 
-            height: 308px; 
+            width: 192px; 
+            height: 314px; 
             border: 1px solid #007bff;
             border-radius: 8px;
             padding: 8px; 
@@ -230,20 +230,20 @@
         <input type="hidden" id="recordId" value=""> 
 
         <div class="form-fields">
-            <div class="form-group"><label for="name">नाम:</label><input type="text" id="name" required></div>
-            <div class="form-group"><label for="fatherName">पिता का नाम:</label><input type="text" id="fatherName" required></div>
-            <div class="form-group"><label for="motherName">माता का नाम:</label><input type="text" id="motherName" required></div>
-            <div class="form-group"><label for="mobile">मोबाइल नंबर:</label><input type="text" id="mobile" required></div>
-            <div class="form-group"><label for="address">पता:</label><input type="text" id="address" required></div>
-            <div class="form-group"><label for="class">कक्षा:</label><input type="text" id="class" required></div>
+            <div class="form-group"><label for="name">Name:</label><input type="text" id="name" required></div>
+            <div class="form-group"><label for="fatherName">Father's Name:</label><input type="text" id="fatherName" required></div>
+            <div class="form-group"><label for="motherName">Mother's Name:</label><input type="text" id="motherName" required></div>
+            <div class="form-group"><label for="mobile">Contact:</label><input type="text" id="mobile" required></div>
+            <div class="form-group"><label for="address">Address:</label><input type="text" id="address" required></div>
+            <div class="form-group"><label for="class">Class:</label><input type="text" id="class" required></div>
             <div class="form-group"><label for="pen">PEN:</label><input type="text" id="pen" required></div>
-            <div class="form-group"><label for="photo">फोटो अटैच करें (वैकल्पिक):</label><input type="file" id="photo" accept="image/*"></div>
+            <div class="form-group"><label for="photo">फोटो अटैच करें :</label><input type="file" id="photo" accept="image/*"></div>
         </div>
 
         <div class="action-area">
-            <button type="submit" id="saveBtn">डेटा सेव करें 💾</button> 
-            <button type="button" id="updateBtn" style="display:none;">डेटा अपडेट करें ✅</button> 
-            <button type="button" id="clearFormBtn">फ़ॉर्म क्लियर करें 🧹</button> 
+            <button type="submit" id="saveBtn">Save 💾</button> 
+            <button type="button" id="updateBtn" style="display:none;">Update ✅</button> 
+            <button type="button" id="clearFormBtn">Clear 🧹</button> 
         </div>
     </form>
     
@@ -276,17 +276,17 @@
     <table id="dataTable">
         <thead>
             <tr>
-                <th>क्र. सं.</th> 
-                <th>चुनें</th>
-                <th>फोटो</th>
-                <th>नाम</th>
-                <th>पिता का नाम</th>
-                <th>माता का नाम</th>
-                <th>मोबाइल नंबर</th>
-                <th>पता</th>
-                <th>कक्षा</th>
+                <th>S.R.</th> 
+                <th>Select</th>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>Father's Name</th>
+                <th>Mother's Name</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th>Class</th>
                 <th>PEN</th>
-                <th>एक्शन</th> 
+                <th>Action</th> 
             </tr>
         </thead>
         <tbody>
@@ -306,7 +306,7 @@
     let db; 
     let editingRecord = null; 
 
-    // **सुरक्षा के लिए Base64 में एन्कोड किया गया पासवर्ड: 851556**
+    // **सुरक्षा के लिए Base64 में एन्कोड किया गया पासवर्ड: **
     const ENCRYPTED_PASSWORD = 'ODUxNTU2'; 
     // **********************************************
 
@@ -725,7 +725,7 @@
         const doc = new jsPDF('l', 'pt', 'a4'); 
         doc.setFont('NotoSansDevanagari', 'normal');
 
-        const head = [["क्र. सं.", "फोटो", "नाम", "पिता का नाम", "माता का नाम", "मोबाइल नंबर", "पता", "कक्षा", "PEN"]];
+        const head = [["S. R.", "Photo", "Name", "Father's Name", "Mother's Name", "Contact", "Address", "Class", "PEN"]];
         
         const body = filteredRecords.map((record, index) => [
             index + 1, 
@@ -787,7 +787,7 @@
             return;
         }
 
-        const headers = ["क्र. सं.", "नाम", "पिता का नाम", "माता का नाम", "मोबाइल नंबर", "पता", "कक्षा", "PEN"];
+        const headers = ["S. R.", "Name", "Father's Name", "Mother's Name", "Mo. No.", "Address", "Class", "PEN"];
         
         let csv = headers.join(',') + '\n';
         
@@ -965,11 +965,11 @@
                 </div>
                 
                 <div class="card-details-text">
-                    <p><strong>नाम:</strong> ${record.name}</p>
-                    <p><strong>कक्षा:</strong> ${record.class}</p>
-                    <p><strong>पिता का नाम:</strong> ${record.fatherName}</p>
-                    <p><strong>माता का नाम:</strong> ${record.motherName}</p>
-                    <p><strong>मोबाइल:</strong> ${record.mobile}</p>
+                    <p><strong>Name:</strong> ${record.name}</p>
+                    <p><strong>Class:</strong> ${record.class}</p>
+                    <p><strong>Father:</strong> ${record.fatherName}</p>
+                    <p><strong>Mother:</strong> ${record.motherName}</p>
+                    <p><strong>Contact:</strong> ${record.mobile}</p>
                     <p><strong>PEN:</strong> ${record.pen}</p>
                     <p style="margin-top: 8px;"><strong>पता:</strong> ${record.address}</p>
                 </div>
@@ -1050,3 +1050,4 @@
 </script>
 </body>
 </html>
+851556

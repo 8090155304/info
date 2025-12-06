@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Full Tax Calculator – Shiv Computer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body { background:#f2f2f2; transition:.3s; }
+.dark-mode { background:#121212; color:white; }
+.dark-mode input, .dark-mode table { background:#1e1e1e; color:white; border-color:#555; }
+.dark-mode .card { background:#1e1e1e; color:white; }
+footer { background:#222; color:white; padding:10px; margin-top:20px; text-align:center; }
+.dark-mode footer { background:#000; }
+
+.add-btn { font-size:14px; padding:3px 8px; }
+
+/* PRINT ONLY REPORT */
+@media print {
+    body * { visibility: hidden !important; }
+    #reportCard, #reportCard * { visibility: visible !important; }
+    #reportCard {
+        position:absolute; left:0; top:0; width:100%;
+        padding:20px; background:white; color:black;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between">
+        <h2>Advanced Tax Calculator</h2>
+        <button id="darkToggle" class="btn btn-dark">🌙 Dark Mode</button>
+    </div>
+    <hr>
+
+    <!-- ========== OLD REGIME ========== -->
+    <div class="card p-3 mb-4">
+        <div class="d-flex justify-content-between">
+            <h4>Old Regime (Editable)</h4>
+            <button class="btn btn-sm btn-success add-btn" onclick="addSlab('oldRegime')">+ Add Slab</button>
+        </div>
+
+        <table class="table table-bordered" id="oldRegime">
+            <thead class="table-dark"><tr><th>From</th><th>To</th><th>%</th><th>Delete</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><input class="form-control" value="0"></td>
+                    <td><input class="form-control" value="250000"></td>
+                    <td><input class="form-control" value="0"></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td>
+                </tr>
+                <tr>
+                    <td><input class="form-control" value="250001"></td>
+                    <td><input class="form-control" value="500000"></td>
+                    <td><input class="form-control" value="5"></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td>
+                </tr>
+                <tr>
+                    <td><input class="form-control" value="500001"></td>
+                    <td><input class="form-control" value="1000000"></td>
+                    <td><input class="form-control" value="20"></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td>
+                </tr>
+                <tr>
+                    <td><input class="form-control" value="1000001"></td>
+                    <td><input class="form-control" value="999999999"></td>
+                    <td><input class="form-control" value="30"></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========== NEW REGIME ========== -->
+    <div class="card p-3 mb-4">
+        <div class="d-flex justify-content-between">
+            <h4>New Regime (Editable)</h4>
+            <button class="btn btn-sm btn-success add-btn" onclick="addSlab('newRegime')">+ Add Slab</button>
+        </div>
+
+        <table class="table table-bordered" id="newRegime">
+            <thead class="table-dark"><tr><th>From</th><th>To</th><th>%</th><th>Delete</th></tr></thead>
+            <tbody>
+                <tr><td><input class="form-control" value="0"></td><td><input class="form-control" value="300000"></td><td><input class="form-control" value="0"></td><td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td></tr>
+                <tr><td><input class="form-control" value="300001"></td><td><input class="form-control" value="700000"></td><td><input class="form-control" value="5"></td><td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td></tr>
+                <tr><td><input class="form-control" value="700001"></td><td><input class="form-control" value="1000000"></td><td><input class="form-control" value="10"></td><td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td></tr>
+                <tr><td><input class="form-control" value="1000001"></td><td><input class="form-control" value="1200000"></td><td><input class="form-control" value="15"></td><td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td></tr>
+                <tr><td><input class="form-control" value="1200001"></td><td><input class="form-control" value="1500000"></td><td><input class="form-control" value="20"></td><td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td></tr>
+                <tr><td><input class="form-control" value="1500001"></td><td><input class="form-control" value="999999999"></td><td><input class="form-control" value="30"></td><td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========== INCOME & BUTTONS ========== -->
+    <div class="card p-3">
+        <h4>Enter Income (₹)</h4>
+        <input type="number" id="income" class="form-control mb-2" placeholder="Enter income">
+
+        <button class="btn btn-primary mt-2" onclick="generateReport()">Generate Report</button>
+        <button class="btn btn-success mt-2" onclick="window.print()">Print Report</button>
+    </div>
+
+    <!-- ========== SCHOOL-STYLE REPORT ========== -->
+    <div id="reportCard" class="mt-4 p-4 bg-white border rounded" style="display:none;"></div>
+
+</div>
+
+<footer>Powered by Shiv Computer</footer>
+
+<script>
+// DARK MODE
+document.getElementById("darkToggle").onclick = () => {
+    document.body.classList.toggle("dark-mode");
+};
+
+// Delete slab row
+function delRow(btn) {
+    btn.parentNode.parentNode.remove();
+}
+
+// Add new slab row
+function addSlab(tableId) {
+    let tbody = document.querySelector(`#${tableId} tbody`);
+    let row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td><input class="form-control" value="0"></td>
+        <td><input class="form-control" value="0"></td>
+        <td><input class="form-control" value="0"></td>
+        <td><button class="btn btn-danger btn-sm" onclick="delRow(this)">X</button></td>
+    `;
+    tbody.appendChild(row);
+}
+
+// TAX CALCULATION
+function calc(tableId, income) {
+    let rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    let result = [];
+    let total = 0;
+
+    rows.forEach(r => {
+        let from = +r.children[0].children[0].value;
+        let to = +r.children[1].children[0].value;
+        let percent = +r.children[2].children[0].value;
+
+        if (income > from) {
+            let taxable = Math.min(income, to) - from;
+            if (taxable < 0) taxable = 0;
+            let tax = taxable * percent / 100;
+
+            result.push({ from, to, percent, taxable, tax });
+            total += tax;
+        }
+    });
+
+    return { total, result };
+}
+
+// GENERATE REPORT
+function generateReport() {
+    let income = +document.getElementById("income").value;
+    if (income <= 0) return alert("Enter a valid income");
+
+    let old = calc("oldRegime", income);
+    let nw = calc("newRegime", income);
+
+    let h = `
+        <h2 class="text-center">Income Tax Report</h2>
+        <h5>Taxable Income: ₹ ${income.toLocaleString()}</h5>
+        <hr>
+
+        <h4>Old Regime Calculation</h4>
+        <table class="table table-bordered">
+        <thead><tr><th>Slab</th><th>Rate</th><th>Taxable</th><th>Tax</th></tr></thead>
+        <tbody>`;
+
+    old.result.forEach(r => {
+        h += `<tr>
+                <td>${r.from} – ${r.to}</td>
+                <td>${r.percent}%</td>
+                <td>₹ ${r.taxable}</td>
+                <td>₹ ${r.tax.toFixed(2)}</td>
+              </tr>`;
+    });
+
+    h += `</tbody></table><b>Total Old Regime Tax: ₹ ${old.total.toFixed(2)}</b><hr>`;
+
+    h += `
+        <h4>New Regime Calculation</h4>
+        <table class="table table-bordered">
+        <thead><tr><th>Slab</th><th>Rate</th><th>Taxable</th><th>Tax</th></tr></thead>
+        <tbody>`;
+
+    nw.result.forEach(r => {
+        h += `<tr>
+                <td>${r.from} – ${r.to}</td>
+                <td>${r.percent}%</td>
+                <td>₹ ${r.taxable}</td>
+                <td>₹ ${r.tax.toFixed(2)}</td>
+              </tr>`;
+    });
+
+    h += `</tbody></table><b>Total New Regime Tax: ₹ ${nw.total.toFixed(2)}</b><hr>`;
+
+    h += `
+        <h3 class="text-success">
+            ${
+                old.total < nw.total
+                ? "Old Regime is Beneficial"
+                : "New Regime is Beneficial"
+            }
+        </h3>
+        <br>
+        <p><b>Powered by Shiv Computer</b></p>
+    `;
+
+    document.getElementById("reportCard").innerHTML = h;
+    document.getElementById("reportCard").style.display = "block";
+}
+</script>
+
+</body>
+</html>
