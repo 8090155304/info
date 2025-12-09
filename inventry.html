@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="SHIV.png">
+    <title>📦 इन्वेंट्री और इनवॉइस प्रबंधन</title>
+    
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 12px 25px;
+            cursor: pointer;
+            border: none;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background-color 0.3s, color 0.3s;
+            border-radius: 8px 8px 0 0;
+            margin: 0 5px;
+            outline: none;
+        }
+
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.5);
+        }
+
+        .panel {
+            display: none; 
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 8px 8px;
+            background-color: #ffffff;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* Form & Button Styling */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, opacity 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn-primary { background-color: #28a745; color: white; }
+        .btn-primary:hover { background-color: #218838; }
+
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+
+        .btn-info { background-color: #17a2b8; color: white; }
+        .btn-info:hover { background-color: #138496; }
+
+        /* Table Styling */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: 600;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .remaining-quantity {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        /* --- Invoice Panel Styling Improvements --- */
+
+        #invoice-controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f1f8ff; /* Light blue background for controls */
+            margin-bottom: 20px;
+        }
+
+        #invoice-controls button {
+            align-self: end; /* buttons align to the bottom of the grid cell */
+            height: 40px;
+        }
+
+        /* Invoice Preview Area - The printable part */
+        #invoice-preview {
+            border: 1px solid #dee2e6;
+            padding: 30px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            margin-top: 20px;
+        }
+
+        .invoice-header-print {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .invoice-header-print h2 {
+            color: #007bff;
+            margin: 5px 0;
+        }
+        .invoice-header-print p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .invoice-table-print {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .invoice-table-print th, .invoice-table-print td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .invoice-table-print th {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        /* Footer Summary */
+        .invoice-total-summary {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .invoice-total-box {
+            width: 300px;
+            border: 2px solid #28a745;
+            padding: 15px;
+            background-color: #e6ffed;
+            border-radius: 5px;
+            text-align: right;
+        }
+
+        .invoice-total-box h3 {
+            margin: 0;
+            color: #28a745;
+            font-size: 20px;
+        }
+        
+        /* --- Print Media Query (Final professional look) --- */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-panel, #invoice-panel * {
+                visibility: visible;
+                box-shadow: none;
+                border: none;
+            }
+            .container, .panel {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            /* Hide control elements during print */
+            .tabs, .header, #invoice-controls, #invoice-items-table button, h2 {
+                display: none !important;
+            }
+            
+            /* Only print the preview section */
+            #invoice-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                box-shadow: none;
+                border: none;
+            }
+            
+            .invoice-table-print th, .invoice-table-print td {
+                border-color: #aaa;
+            }
+
+            .invoice-total-box {
+                border-color: #28a745;
+                background-color: #ffffff; /* Print in white background */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>📦इन्वेंट्री और इनवॉइस प्रबंधन</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showPanel('inventory')">✅ इन्वेंट्री पैनल</button>
+            <button class="tab-button" onclick="showPanel('invoice')">🧾 इनवॉइस पैनल</button>
+        </div>
+
+        <div id="inventory-panel" class="panel active">
+            <h2>उत्पाद जोड़ें/संपादित करें</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id" value="">
+                <div class="form-group">
+                    <label for="product-name">नाम (Name)</label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-type">टाइप (Type)</label>
+                    <input type="text" id="product-type" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-class">क्लास (Class)</label>
+                    <input type="text" id="product-class" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-quantity">क्वांटिटी (Quantity)</label>
+                    <input type="number" id="product-quantity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-price">कीमत (Price)</label>
+                    <input type="number" id="product-price" min="0.01" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary">➕उत्पाद सहेजें</button>
+                <button type="button" class="btn btn-danger" id="clear-form-btn" style="display: none;">🗑️ साफ़ करें</button>
+            </form>
+
+            <h3 style="margin-top: 30px;">वर्तमान इन्वेंट्री</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Sr.</th>
+                        <th>नाम</th>
+                        <th>टाइप</th>
+                        <th>क्लास</th>
+                        <th>क्वांटिटी</th>
+                        <th>कीमत</th>
+                        <th>एक्शन</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-list">
+                    </tbody>
+            </table>
+        </div>
+        
+        <div id="invoice-panel" class="panel">
+            <h2>इनवॉइस नियंत्रण</h2>
+
+            <div id="invoice-controls">
+                <div class="form-group">
+                    <label for="select-product">उत्पाद चुनें</label>
+                    <select id="select-product">
+                        <option value="">-- उत्पाद चुनें --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="invoice-quantity">क्वांटिटी (अधिकतम: <span id="max-qty-display">0</span>)</label>
+                    <input type="number" id="invoice-quantity" min="1" value="1" max="1">
+                </div>
+                <button type="button" class="btn btn-info" onclick="addItemToInvoice()">🛒 इनवॉइस में जोड़ें</button>
+            </div>
+            
+            <button type="button" class="btn btn-primary" onclick="generateInvoice()" style="margin-bottom: 15px;">🖨️ इनवॉइस बनाएं और प्रिंट/PDF लें</button>
+
+            <div id="invoice-preview">
+                
+                <div class="invoice-header-print">
+                    <h2>🧾 बिक्री इनवॉइस (Sales Invoice)</h2>
+                    <p>इनवॉइस संख्या: INV-<span id="invoice-number">0000</span> | दिनांक: <span id="invoice-date"></span></p>
+                    <p>आपकी कंपनी/स्टोर का नाम यहां</p>
+                </div>
+                
+                <h3>आइटम विवरण</h3>
+                <table class="invoice-table-print">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 45%;">उत्पाद का नाम</th>
+                            <th style="width: 15%;">कीमत/यूनिट</th>
+                            <th style="width: 15%;">मात्रा</th>
+                            <th style="width: 20%; text-align: right;">कुल कीमत</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-items-table">
+                        <tr><td colspan="5" style="text-align: center;">कृपया आइटम जोड़ें</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="invoice-total-summary">
+                    <div class="invoice-total-box">
+                        <h3>कुल देय राशि: <span id="invoice-total">₹ 0.00</span></h3>
+                    </div>
+                </div>
+                <p style="margin-top: 40px; font-size: 14px; color: #555;">**धन्यवाद!** सभी सामानों का स्टॉक रिकॉर्ड में अपडेट कर दिया गया है।</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript Logic (IndexedDB with Dexie.js for Local Persistent Storage)
+
+        // 1. IndexedDB डेटाबेस को परिभाषित करना
+        const db = new Dexie('InventoryInvoiceDB');
+        db.version(1).stores({
+            inventory: 'sr, name, type, class, quantity, price' 
+        });
+
+        let inventory = []; 
+        let invoiceItems = []; 
+        let invoiceCounter = 1; // लोकल इनवॉइस नंबर के लिए
+
+        // Initial setup for invoice date and number
+        document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('hi-IN');
+        document.getElementById('invoice-number').textContent = String(invoiceCounter).padStart(4, '0');
+
+        // --- Utility Functions ---
+
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(`${panelId}-panel`).classList.add('active');
+            document.querySelector(`.tab-button[onclick*="${panelId}"]`).classList.add('active');
+
+            if (panelId === 'invoice') {
+                loadProductOptions(); 
+            }
+            if (panelId === 'inventory') {
+                fetchInventory();
+            }
+        }
+
+        // --- IndexedDB Interaction Functions ---
+
+        async function fetchInventory() {
+            try {
+                inventory = await db.inventory.toArray();
+                renderInventory();
+                return inventory;
+            } catch (error) {
+                console.error("इन्वेंट्री लोड करने में त्रुटि:", error);
+            }
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '';
+
+            inventory.forEach((product, index) => {
+                const row = list.insertRow();
+                
+                row.insertCell().textContent = index + 1; 
+                row.insertCell().textContent = product.name;
+                row.insertCell().textContent = product.type;
+                row.insertCell().textContent = product.class;
+                
+                const quantityCell = row.insertCell();
+                quantityCell.innerHTML = `<span class="remaining-quantity">${product.quantity}</span>`;
+
+                row.insertCell().textContent = `₹ ${product.price.toFixed(2)}`;
+                
+                const actionCell = row.insertCell();
+                actionCell.innerHTML = `
+                    <button class="btn btn-info" onclick="editProduct('${product.sr}')">✏️ एडिट</button>
+                    <button class="btn btn-danger" onclick="removeProduct('${product.sr}')">🗑️ हटाएँ</button>
+                `;
+            });
+        }
+
+        // --- Inventory Form Logic ---
+
+        document.getElementById('product-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const sr = document.getElementById('product-id').value;
+            const name = document.getElementById('product-name').value;
+            const type = document.getElementById('product-type').value;
+            const productClass = document.getElementById('product-class').value;
+            const quantity = parseInt(document.getElementById('product-quantity').value);
+            const price = parseFloat(document.getElementById('product-price').value);
+
+            const newProduct = {
+                sr: sr || 'PROD-' + Date.now(), 
+                name,
+                type,
+                class: productClass,
+                quantity,
+                price
+            };
+
+            try {
+                if (sr) {
+                    await db.inventory.update(sr, newProduct);
+                    alert('उत्पाद सफलतापूर्वक अपडेट किया गया!');
+                } else {
+                    await db.inventory.add(newProduct);
+                    alert('उत्पाद सफलतापूर्वक जोड़ा गया!');
+                }
+                
+                document.getElementById('product-form').reset();
+                document.getElementById('product-id').value = '';
+                document.getElementById('clear-form-btn').style.display = 'none';
+                fetchInventory(); 
+            } catch (error) {
+                console.error("उत्पाद सहेजने में त्रुटि:", error);
+                alert("उत्पाद सहेजने में त्रुटि आई।");
+            }
+        });
+
+        async function editProduct(sr) {
+            const product = await db.inventory.get(sr); 
+            if (!product) return;
+
+            document.getElementById('product-id').value = product.sr;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-type').value = product.type;
+            document.getElementById('product-class').value = product.class;
+            document.getElementById('product-quantity').value = product.quantity;
+            document.getElementById('product-price').value = product.price;
+
+            document.getElementById('clear-form-btn').style.display = 'inline-block';
+            document.querySelector('.tab-button[onclick*="inventory"]').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function removeProduct(sr) {
+            if (confirm('क्या आप वाकई इस उत्पाद को हटाना चाहते हैं?')) {
+                try {
+                    await db.inventory.delete(sr);
+                    fetchInventory(); 
+                    alert('उत्पाद सफलतापूर्वक हटा दिया गया!');
+                } catch (error) {
+                    console.error("उत्पाद हटाने में त्रुटि:", error);
+                }
+            }
+        }
+
+        document.getElementById('clear-form-btn').addEventListener('click', function() {
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            this.style.display = 'none';
+        });
+
+
+        // --- Invoice Panel Functions ---
+        
+        async function loadProductOptions() {
+            await fetchInventory(); 
+            
+            const select = document.getElementById('select-product');
+            select.innerHTML = '<option value="">-- उत्पाद चुनें --</option>';
+
+            inventory.forEach(product => {
+                if (product.quantity > 0) { 
+                    const option = document.createElement('option');
+                    option.value = product.sr;
+                    option.textContent = `${product.name} (शेष: ${product.quantity})`;
+                    select.appendChild(option);
+                }
+            });
+            
+            document.getElementById('invoice-quantity').value = 1;
+            document.getElementById('invoice-quantity').max = 1;
+            document.getElementById('max-qty-display').textContent = 0;
+            renderInvoiceItems();
+        }
+
+        document.getElementById('select-product').addEventListener('change', function() {
+            const sr = this.value;
+            const qtyInput = document.getElementById('invoice-quantity');
+            const maxQtyDisplay = document.getElementById('max-qty-display');
+            
+            if (sr) {
+                const product = inventory.find(p => p.sr === sr);
+                if (product) {
+                    const addedQty = invoiceItems.filter(item => item.sr === sr).reduce((sum, item) => sum + item.quantity, 0);
+                    const maxQty = product.quantity - addedQty;
+
+                    qtyInput.max = maxQty;
+                    maxQtyDisplay.textContent = maxQty;
+                    qtyInput.value = (maxQty > 0) ? 1 : 0;
+                }
+            } else {
+                qtyInput.max = 1;
+                maxQtyDisplay.textContent = 0;
+                qtyInput.value = 1;
+            }
+        });
+
+
+        function addItemToInvoice() {
+            const sr = document.getElementById('select-product').value;
+            const quantity = parseInt(document.getElementById('invoice-quantity').value);
+
+            if (!sr || quantity <= 0) {
+                alert('कृपया उत्पाद चुनें और वैध क्वांटिटी दर्ज करें।');
+                return;
+            }
+
+            const product = inventory.find(p => p.sr === sr);
+            if (!product) return;
+            
+            const addedQty = invoiceItems.filter(item => item.sr === sr).reduce((sum, item) => sum + item.quantity, 0);
+            if ((addedQty + quantity) > product.quantity) {
+                 alert(`अवैध क्वांटिटी। इन्वेंट्री में केवल ${product.quantity - addedQty} और उपलब्ध है।`);
+                return;
+            }
+
+            const invoiceItemId = Date.now(); 
+
+            const item = {
+                id: invoiceItemId,
+                sr: product.sr, 
+                name: product.name,
+                unitPrice: product.price,
+                quantity: quantity,
+                total: product.price * quantity
+            };
+            
+            invoiceItems.push(item);
+            
+            document.getElementById('select-product').value = '';
+            document.getElementById('invoice-quantity').value = 1;
+            document.getElementById('invoice-quantity').max = 1;
+            document.getElementById('max-qty-display').textContent = 0;
+
+            renderInvoiceItems();
+        }
+
+        function renderInvoiceItems() {
+            const list = document.getElementById('invoice-items-table');
+            list.innerHTML = '';
+            let totalAmount = 0;
+
+            if (invoiceItems.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align: center;">कृपया आइटम जोड़ें</td></tr>';
+                document.getElementById('invoice-total').textContent = `₹ 0.00`;
+                return;
+            }
+
+            invoiceItems.forEach((item, index) => {
+                const row = list.insertRow();
+                row.insertCell().textContent = index + 1;
+                row.insertCell().textContent = item.name;
+                row.insertCell().textContent = `₹ ${item.unitPrice.toFixed(2)}`;
+                row.insertCell().textContent = item.quantity;
+                
+                const totalCell = row.insertCell();
+                totalCell.textContent = `₹ ${item.total.toFixed(2)}`;
+                totalCell.style.textAlign = 'right'; // Total price aligned right
+                
+                totalAmount += item.total;
+                
+                // Print mode में 'हटाएँ' बटन न दिखाने के लिए:
+                if (!window.matchMedia('print').matches) {
+                    const actionCell = row.insertCell();
+                    actionCell.innerHTML = `<button class="btn btn-danger" onclick="removeItemFromInvoice(${item.id})">❌ हटाएँ</button>`;
+                }
+            });
+
+            document.getElementById('invoice-total').textContent = `₹ ${totalAmount.toFixed(2)}`;
+            // Make sure the print table headers are consistent with the runtime display
+            // (Note: The print styles handle hiding the action column)
+        }
+
+        function removeItemFromInvoice(id) {
+            invoiceItems = invoiceItems.filter(item => item.id !== id);
+            renderInvoiceItems();
+            loadProductOptions(); 
+        }
+
+        /**
+         * प्रिंट/पीडीएफ जनरेट करता है और IndexedDB में इन्वेंट्री अपडेट करता है
+         */
+        async function generateInvoice() {
+            if (invoiceItems.length === 0) {
+                alert('इनवॉइस बनाने के लिए कम से कम एक उत्पाद जोड़ें।');
+                return;
+            }
+            
+            if (!confirm('क्या आप इनवॉइस बनाना और इन्वेंट्री को अपडेट करना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।')) {
+                return;
+            }
+
+            try {
+                 // 1. Update Inventory (Decrement Quantity) in IndexedDB
+                const productsToUpdate = [];
+                invoiceItems.forEach(invoiceItem => {
+                    const product = inventory.find(p => p.sr === invoiceItem.sr);
+                    if (product) {
+                        const newQuantity = product.quantity - invoiceItem.quantity;
+                        productsToUpdate.push({
+                            sr: product.sr,
+                            changes: { quantity: newQuantity }
+                        });
+                    }
+                });
+
+                await db.transaction('rw', db.inventory, async () => {
+                    for (const item of productsToUpdate) {
+                        await db.inventory.update(item.sr, item.changes);
+                    }
+                });
+                
+                // 2. Generate Printable/PDF (Using Browser Print functionality)
+                invoiceCounter++;
+                document.getElementById('invoice-number').textContent = String(invoiceCounter).padStart(4, '0');
+                window.print();
+
+                // 3. Clear Invoice and Re-render Inventory/Options
+                invoiceItems = [];
+                renderInvoiceItems();
+                await fetchInventory(); 
+                loadProductOptions(); 
+
+                alert('इनवॉइस सफलतापूर्वक बनाया गया और इन्वेंट्री अपडेट कर दी गई है।');
+            } catch (error) {
+                console.error("इनवॉइस बनाने या इन्वेंट्री अपडेट करने में त्रुटि:", error);
+                alert("इनवॉइस बनाने या इन्वेंट्री अपडेट करने में त्रुटि आई।");
+            }
+        }
+
+        // Initial call
+        document.addEventListener('DOMContentLoaded', fetchInventory);
+
+    </script>
+
+</body>
+</html>
