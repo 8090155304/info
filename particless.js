@@ -1,144 +1,208 @@
-/* particles.js */
-
 const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 
-let particlesArray;
-
-// कैनवास का साइज़ सेट करें
+// Initial Canvas Size
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// माउस की पोजीशन ट्रैक करें
-let mouse = {
-  x: null,
-  y: null,
-  radius: (canvas.height / 80) * (canvas.width / 80)
-}
+let particlesArray = [];
+// Mouse settings with detailed properties
+let mouse = { 
+    x: null, 
+    y: null, 
+    radius: 180, 
+    lastMoved: Date.now() 
+};
 
-window.addEventListener('mousemove', function(event) {
-  mouse.x = event.x;
-  mouse.y = event.y;
+// --- Event Listeners ---
+window.addEventListener('mousemove', (e) => { 
+    mouse.x = e.x; 
+    mouse.y = e.y; 
+    mouse.lastMoved = Date.now(); 
 });
 
-// पार्टिकल क्लास
-class Particle {
-  constructor(x, y, directionX, directionY, size, color) {
-    this.x = x;
-    this.y = y;
-    this.directionX = directionX;
-    this.directionY = directionY;
-    this.size = size;
-    this.color = color;
-  }
+window.addEventListener('touchmove', (e) => { 
+    mouse.x = e.touches[0].clientX; 
+    mouse.y = e.touches[0].clientY; 
+    mouse.lastMoved = Date.now(); 
+});
 
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-    
-    // ग्लो इफेक्ट
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = this.color;
-    
-    ctx.fillStyle = this.color;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
+window.addEventListener('resize', () => { 
+    canvas.width = window.innerWidth; 
+    canvas.height = window.innerHeight; 
+    init(); 
+});
 
-  update() {
-    if (this.x > canvas.width || this.x < 0) {
-      this.directionX = -this.directionX;
-    }
-    if (this.y > canvas.height || this.y < 0) {
-      this.directionY = -this.directionY;
-    }
+window.addEventListener('mouseout', () => {
+    mouse.x = null;
+    mouse.y = null;
+});
 
-    // माउस इंटरैक्शन
-    let dx = mouse.x - this.x;
-    let dy = mouse.y - this.y;
-    let distance = Math.sqrt(dx*dx + dy*dy);
-
-    if (distance < mouse.radius + this.size) {
-      if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
-        this.x -= 3;
-      }
-      if (mouse.x > this.x && this.x > this.size * 10) {
-        this.x += 3;
-      }
-      if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
-        this.y -= 3;
-      }
-      if (mouse.y > this.y && this.y > this.size * 10) {
-        this.y += 3;
-      }
-    }
-
-    this.x += this.directionX;
-    this.y += this.directionY;
-
-    this.draw();
-  }
-}
+const colors = [
+    'rgba(0, 247, 255,',  // Cyan
+    'rgba(255, 0, 230,',  // Pink
+    'rgba(111, 0, 255,',  // Purple
+    'rgba(0, 114, 255,'   // Royal Blue
+];
 
 function init() {
-  particlesArray = [];
-  let numberOfParticles = (canvas.height * canvas.width) / 9000;
-  
-  for (let i = 0; i < numberOfParticles; i++) {
-    let size = (Math.random() * 5) + 1;
-    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
-    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
-    let directionX = (Math.random() * 2) - 1;
-    let directionY = (Math.random() * 2) - 1;
+    particlesArray = [];
     
-    let colors = ['#0072ff', '#C309ED', '#005bb5', '#ff0055'];
-    let color = colors[Math.floor(Math.random() * colors.length)];
+    // Detailed Font & Position Scaling
+    let fontSize = window.innerWidth < 600 ? window.innerWidth * 0.15 : 100;
+    if (fontSize > 120) fontSize = 120;
+    let textY = window.innerWidth < 600 ? 180 : 210; 
 
-    particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
-  }
+    ctx.font = 'bold ' + fontSize + 'px Verdana';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'white';
+    
+    // Drawing Text for Scanning
+    ctx.fillText('SHIV', canvas.width / 2, textY);
+    ctx.fillText('COMPUTER', canvas.width / 2, textY + fontSize * 0.9);
+    
+    const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. Scanning Text Particles
+    let gap = window.innerWidth < 600 ? 6 : 5; 
+    for (let y = 0; y < textData.height; y += gap) {
+        for (let x = 0; x < textData.width; x += gap) {
+            if (textData.data[(y * 4 * textData.width) + (x * 4) + 3] > 128) {
+                let colorBase = colors[Math.floor(Math.random() * colors.length)];
+                particlesArray.push(new Particle(x, y, colorBase, true));
+            }
+        }
+    }
+
+    // 2. Extra Filler Bubbles (Full Screen Coverage)
+    let extraParticlesCount = (canvas.width * canvas.height) / 9000;
+    for (let i = 0; i < extraParticlesCount; i++) {
+        let x = Math.random() * canvas.width;
+        let y = Math.random() * canvas.height;
+        let colorBase = colors[Math.floor(Math.random() * colors.length)];
+        particlesArray.push(new Particle(x, y, colorBase, false));
+    }
+}
+
+class Particle {
+    constructor(x, y, color, isText) {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.baseX = x;
+        this.baseY = y;
+        this.color = color;
+        this.isText = isText;
+        
+        // Sizes
+        this.minSize = 2.5; 
+        this.maxSize = isText ? (Math.random() * 8 + 4) : (Math.random() * 25 + 12);
+        this.size = this.maxSize;
+        
+        // Movement Physics
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.vy = (Math.random() - 0.5) * 1.5;
+        this.density = (Math.random() * 30) + 10;
+        this.friction = 0.95;
+        this.ease = 0.1;
+
+        // Letters 'S' and 'C' Logic
+        this.hasLetter = !isText && Math.random() > 0.6; 
+        if (this.hasLetter) {
+            this.letter = Math.random() > 0.5 ? 'S' : 'C';
+            this.alpha = 0;
+            this.fadeSpeed = 0.005 + Math.random() * 0.01;
+            this.fadeDir = 1;
+        }
+    }
+
+    draw() {
+        ctx.beginPath();
+        // Shiny 3D Gradient
+        let gradient = ctx.createRadialGradient(
+            this.x - this.size / 3, this.y - this.size / 3, this.size / 10, 
+            this.x, this.y, this.size
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); 
+        gradient.addColorStop(0.4, this.color + '0.8)'); 
+        gradient.addColorStop(1, this.color + '0.1)'); 
+
+        ctx.fillStyle = gradient;
+        
+        // Glow for text particles
+        if (this.isText && this.size < 5) {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = 'white';
+        }
+
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Draw Fading Letters S & C
+        if (this.hasLetter) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+            ctx.font = `bold ${this.size * 0.8}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.letter, this.x, this.y);
+            
+            // Fading logic
+            this.alpha += this.fadeSpeed * this.fadeDir;
+            if (this.alpha > 0.9 || this.alpha < 0) this.fadeDir *= -1;
+        }
+    }
+
+    update() {
+        let isIdle = (Date.now() - mouse.lastMoved > 2500);
+
+        // --- Mouse Interaction ---
+        if (mouse.x !== null) {
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < mouse.radius) {
+                let force = (mouse.radius - distance) / mouse.radius;
+                let directionX = (dx / distance) * force * this.density;
+                let directionY = (dy / distance) * force * this.density;
+                this.x -= directionX;
+                this.y -= directionY;
+            }
+        }
+
+        // --- Movement States ---
+        if (isIdle && this.isText) {
+            // Smoothly Form Text
+            let dx_home = this.baseX - this.x;
+            let dy_home = this.baseY - this.y;
+            this.x += dx_home * this.ease;
+            this.y += dy_home * this.ease;
+            this.size += (this.minSize - this.size) * this.ease;
+        } else {
+            // Float Freely
+            this.x += this.vx;
+            this.y += this.vy;
+            this.size += (this.maxSize - this.size) * 0.05;
+
+            // Boundary Check
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
+
+        this.draw();
+    }
 }
 
 function animate() {
-  requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, innerWidth, innerHeight);
-
-  for (let i = 0; i < particlesArray.length; i++) {
-    particlesArray[i].update();
-  }
-  connect();
-}
-
-function connect() {
-  let opacityValue = 1;
-  for (let a = 0; a < particlesArray.length; a++) {
-    for (let b = a; b < particlesArray.length; b++) {
-      let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) +
-                     ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
-      
-      if (distance < (canvas.width/7) * (canvas.height/7)) {
-        opacityValue = 1 - (distance/20000);
-        ctx.strokeStyle = 'rgba(0, 114, 255,' + opacityValue + ')';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
-        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
-        ctx.stroke();
-      }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].update();
     }
-  }
+    requestAnimationFrame(animate);
 }
 
-window.addEventListener('resize', function() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
-  mouse.radius = (canvas.height / 80) * (canvas.height / 80);
-  init();
-});
-
-window.addEventListener('mouseout', function() {
-  mouse.x = undefined;
-  mouse.y = undefined;
-});
-
+// Initial start
 init();
 animate();
