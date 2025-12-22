@@ -1,208 +1,239 @@
 const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 
-// Initial Canvas Size
+// Canvas dimensions
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let particlesArray = [];
-// Mouse settings with detailed properties
 let mouse = { 
-    x: null, 
-    y: null, 
+    x: canvas.width / 2, 
+    y: canvas.height / 2, 
     radius: 180, 
-    lastMoved: Date.now() 
+    lastMoved: Date.now(),
+    isActive: false
 };
 
-// --- Event Listeners ---
+// Mouse and touch events
 window.addEventListener('mousemove', (e) => { 
     mouse.x = e.x; 
     mouse.y = e.y; 
-    mouse.lastMoved = Date.now(); 
+    mouse.lastMoved = Date.now();
+    mouse.isActive = true;
 });
 
 window.addEventListener('touchmove', (e) => { 
+    e.preventDefault();
     mouse.x = e.touches[0].clientX; 
     mouse.y = e.touches[0].clientY; 
-    mouse.lastMoved = Date.now(); 
+    mouse.lastMoved = Date.now();
+    mouse.isActive = true;
+}, { passive: false });
+
+// Mouse leave detection
+window.addEventListener('mouseleave', () => {
+    mouse.isActive = false;
 });
 
-window.addEventListener('resize', () => { 
-    canvas.width = window.innerWidth; 
-    canvas.height = window.innerHeight; 
-    init(); 
+// Resize handler
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    mouse.x = canvas.width / 2;
+    mouse.y = canvas.height / 2;
+    init();
 });
 
-window.addEventListener('mouseout', () => {
-    mouse.x = null;
-    mouse.y = null;
-});
-
+// Modern gradient colors
 const colors = [
-    'rgba(0, 247, 255,',  // Cyan
-    'rgba(255, 0, 230,',  // Pink
-    'rgba(111, 0, 255,',  // Purple
-    'rgba(0, 114, 255,'   // Royal Blue
+    'rgba(0, 247, 255,',
+    'rgba(255, 0, 230,',
+    'rgba(111, 0, 255,',
+    'rgba(0, 114, 255,',
+    'rgba(255, 200, 0,',
+    'rgba(0, 255, 150,'
 ];
 
 function init() {
     particlesArray = [];
     
-    // Detailed Font & Position Scaling
-    let fontSize = window.innerWidth < 600 ? window.innerWidth * 0.15 : 100;
-    if (fontSize > 120) fontSize = 120;
-    let textY = window.innerWidth < 600 ? 180 : 210; 
+    // Responsive text sizing
+    let fontSize;
+    if (window.innerWidth < 480) {
+        fontSize = Math.min(window.innerWidth * 0.12, 70);
+    } else if (window.innerWidth < 768) {
+        fontSize = Math.min(window.innerWidth * 0.1, 90);
+    } else {
+        fontSize = Math.min(window.innerWidth * 0.08, 120);
+    }
+    
+    let lineHeight = fontSize * 1.2;
+    let textY = canvas.height * 0.3;
 
-    ctx.font = 'bold ' + fontSize + 'px Verdana';
+    // Draw text for particle extraction
+    ctx.font = `bold ${fontSize}px 'Segoe UI', 'Arial', sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
     ctx.fillStyle = 'white';
     
-    // Drawing Text for Scanning
+    // First line
     ctx.fillText('SHIV', canvas.width / 2, textY);
-    ctx.fillText('COMPUTER', canvas.width / 2, textY + fontSize * 0.9);
     
+    // Second line
+    ctx.fillText('COMPUTER', canvas.width / 2, textY + lineHeight);
+    
+    // Extract text data for particles
     const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Scanning Text Particles
-    let gap = window.innerWidth < 600 ? 6 : 5; 
+    // 1. TEXT PARTICLES with responsive density
+    let gap;
+    if (window.innerWidth < 480) {
+        gap = 8;
+    } else if (window.innerWidth < 768) {
+        gap = 6;
+    } else {
+        gap = 5;
+    }
+    
     for (let y = 0; y < textData.height; y += gap) {
         for (let x = 0; x < textData.width; x += gap) {
-            if (textData.data[(y * 4 * textData.width) + (x * 4) + 3] > 128) {
-                let colorBase = colors[Math.floor(Math.random() * colors.length)];
-                particlesArray.push(new Particle(x, y, colorBase, true));
+            const alpha = textData.data[(y * 4 * textData.width) + (x * 4) + 3];
+            if (alpha > 128) {
+                particlesArray.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)], true));
             }
         }
     }
 
-    // 2. Extra Filler Bubbles (Full Screen Coverage)
-    let extraParticlesCount = (canvas.width * canvas.height) / 9000;
-    for (let i = 0; i < extraParticlesCount; i++) {
+    // 2. FLOATING BACKGROUND PARTICLES
+    let extraCount = Math.floor((canvas.width * canvas.height) / 15000);
+    
+    for (let i = 0; i < extraCount; i++) {
         let x = Math.random() * canvas.width;
         let y = Math.random() * canvas.height;
-        let colorBase = colors[Math.floor(Math.random() * colors.length)];
-        particlesArray.push(new Particle(x, y, colorBase, false));
+        particlesArray.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)], false));
     }
 }
 
 class Particle {
     constructor(x, y, color, isText) {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
         this.baseX = x;
         this.baseY = y;
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
         this.color = color;
         this.isText = isText;
         
-        // Sizes
-        this.minSize = 2.5; 
-        this.maxSize = isText ? (Math.random() * 8 + 4) : (Math.random() * 25 + 12);
+        // Size based on particle type
+        this.minSize = 1.5;
+        this.maxSize = isText 
+            ? (Math.random() * 6 + 3)
+            : (Math.random() * 15 + 8);
+        
         this.size = this.maxSize;
         
-        // Movement Physics
-        this.vx = (Math.random() - 0.5) * 1.5;
-        this.vy = (Math.random() - 0.5) * 1.5;
-        this.density = (Math.random() * 30) + 10;
-        this.friction = 0.95;
-        this.ease = 0.1;
-
-        // Letters 'S' and 'C' Logic
-        this.hasLetter = !isText && Math.random() > 0.6; 
+        // Movement
+        this.vx = (Math.random() - 0.5) * 1.2;
+        this.vy = (Math.random() - 0.5) * 1.2;
+        this.density = (Math.random() * 15) + 5;
+        
+        // Letter effect for floating particles
+        this.hasLetter = !isText && Math.random() > 0.7;
         if (this.hasLetter) {
             this.letter = Math.random() > 0.5 ? 'S' : 'C';
-            this.alpha = 0;
-            this.fadeSpeed = 0.005 + Math.random() * 0.01;
-            this.fadeDir = 1;
+            this.alpha = Math.random() * 0.5;
+            this.fadeSpeed = 0.003 + Math.random() * 0.005;
+            this.fadeDir = Math.random() > 0.5 ? 1 : -1;
         }
     }
 
     draw() {
-        ctx.beginPath();
-        // Shiny 3D Gradient
-        let gradient = ctx.createRadialGradient(
-            this.x - this.size / 3, this.y - this.size / 3, this.size / 10, 
+        // Create gradient for glow effect
+        const gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
             this.x, this.y, this.size
         );
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); 
-        gradient.addColorStop(0.4, this.color + '0.8)'); 
-        gradient.addColorStop(1, this.color + '0.1)'); 
-
-        ctx.fillStyle = gradient;
         
-        // Glow for text particles
-        if (this.isText && this.size < 5) {
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = 'white';
-        }
-
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(0.3, this.color + '0.7)');
+        gradient.addColorStop(1, this.color + '0)');
+        
+        // Draw particle
+        ctx.beginPath();
+        ctx.fillStyle = gradient;
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // Draw Fading Letters S & C
+        
+        // Draw letter inside bubble
         if (this.hasLetter) {
             ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
-            ctx.font = `bold ${this.size * 0.8}px Arial`;
+            ctx.font = `bold ${this.size * 0.7}px 'Segoe UI', Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(this.letter, this.x, this.y);
             
-            // Fading logic
+            // Update fade animation
             this.alpha += this.fadeSpeed * this.fadeDir;
-            if (this.alpha > 0.9 || this.alpha < 0) this.fadeDir *= -1;
+            if (this.alpha > 0.8 || this.alpha < 0.2) {
+                this.fadeDir *= -1;
+            }
         }
     }
 
     update() {
-        let isIdle = (Date.now() - mouse.lastMoved > 2500);
-
-        // --- Mouse Interaction ---
-        if (mouse.x !== null) {
-            let dx = mouse.x - this.x;
-            let dy = mouse.y - this.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
+        const currentTime = Date.now();
+        const timeSinceMouseMove = currentTime - mouse.lastMoved;
+        const isIdle = timeSinceMouseMove > 3000 || !mouse.isActive;
+        
+        // Mouse interaction
+        if (mouse.isActive) {
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < mouse.radius) {
-                let force = (mouse.radius - distance) / mouse.radius;
-                let directionX = (dx / distance) * force * this.density;
-                let directionY = (dy / distance) * force * this.density;
-                this.x -= directionX;
-                this.y -= directionY;
+            if (dist < mouse.radius) {
+                const force = (mouse.radius - dist) / mouse.radius;
+                this.x -= (dx / dist) * force * this.density;
+                this.y -= (dy / dist) * force * this.density;
+                this.size = this.maxSize;
             }
         }
-
-        // --- Movement States ---
+        
+        // Behavior based on state
         if (isIdle && this.isText) {
-            // Smoothly Form Text
-            let dx_home = this.baseX - this.x;
-            let dy_home = this.baseY - this.y;
-            this.x += dx_home * this.ease;
-            this.y += dy_home * this.ease;
-            this.size += (this.minSize - this.size) * this.ease;
+            // Return to text position
+            this.x += (this.baseX - this.x) * 0.05;
+            this.y += (this.baseY - this.y) * 0.05;
+            this.size += (this.minSize - this.size) * 0.05;
         } else {
-            // Float Freely
+            // Floating movement
             this.x += this.vx;
             this.y += this.vy;
-            this.size += (this.maxSize - this.size) * 0.05;
-
-            // Boundary Check
+            this.size += (this.maxSize - this.size) * 0.03;
+            
+            // Screen boundary with bounce
             if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
             if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
         }
-
+        
         this.draw();
     }
 }
 
 function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear with subtle fade effect for trails
+    ctx.fillStyle = 'rgba(10, 10, 20, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Update particles
     for (let i = 0; i < particlesArray.length; i++) {
         particlesArray[i].update();
     }
+    
     requestAnimationFrame(animate);
 }
 
-// Initial start
-init();
-animate();
+// Initialize when page loads
+window.addEventListener('load', () => {
+    init();
+    animate();
+});
