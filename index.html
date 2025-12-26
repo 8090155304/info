@@ -149,6 +149,7 @@
       margin-top: 0;
       border-bottom: 8px solid #0072ff;
       padding-bottom: 10px;
+      font-size: 28px; /* थोड़ा बड़ा किया */
     }
 
     .popup-content p {
@@ -209,9 +210,7 @@
       }
     }
 
-    /* NEW ANIMATIONS - Bina kuch hataye add kiye */
-    
-    /* Colorful background animation */
+    /* Animations */
     .color-blocks {
       position: absolute;
       top: 0;
@@ -232,75 +231,22 @@
       animation: float 5s infinite linear;
     }
 
-    .block:nth-child(1) {
-      background: #ff0055;
-      top: 20%;
-      left: 10%;
-      animation-delay: 0s;
-    }
-
-    .block:nth-child(2) {
-      background: #00aaff;
-      top: 60%;
-      left: 80%;
-      animation-delay: 2s;
-    }
-
-    .block:nth-child(3) {
-      background: #ffcc00;
-      top: 40%;
-      left: 70%;
-      animation-delay: 4s;
-    }
-
-    .block:nth-child(4) {
-      background: #00ff99;
-      top: 80%;
-      left: 30%;
-      animation-delay: 6s;
-    }
-
-    .block:nth-child(5) {
-      background: #cc00ff;
-      top: 10%;
-      left: 50%;
-      animation-delay: 8s;
-    }
-
-    .block:nth-child(6) {
-      background: #ff6600;
-      top: 70%;
-      left: 10%;
-      animation-delay: 10s;
-    }
-
-    .block:nth-child(7) {
-      background: #1F0596;
-      top: 70%;
-      left: 10%;
-      animation-delay: 12s;
-    }
-
+    .block:nth-child(1) { background: #ff0055; top: 20%; left: 10%; animation-delay: 0s; }
+    .block:nth-child(2) { background: #00aaff; top: 60%; left: 80%; animation-delay: 2s; }
+    .block:nth-child(3) { background: #ffcc00; top: 40%; left: 70%; animation-delay: 4s; }
+    .block:nth-child(4) { background: #00ff99; top: 80%; left: 30%; animation-delay: 6s; }
+    .block:nth-child(5) { background: #cc00ff; top: 10%; left: 50%; animation-delay: 8s; }
+    .block:nth-child(6) { background: #ff6600; top: 70%; left: 10%; animation-delay: 10s; }
+    .block:nth-child(7) { background: #1F0596; top: 70%; left: 10%; animation-delay: 12s; }
 
     @keyframes float {
-      0% {
-        transform: translate(0, 0) rotate(0deg);
-      }
-      25% {
-        transform: translate(100px, 100px) rotate(90deg);
-      }
-      50% {
-        transform: translate(200px, 0) rotate(180deg);
-      }
-      75% {
-        transform: translate(100px, -100px) rotate(270deg);
-      }
-      100% {
-        transform: translate(0, 0) rotate(360deg);
-      }
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(100px, 100px) rotate(90deg); }
+      50% { transform: translate(200px, 0) rotate(180deg); }
+      75% { transform: translate(100px, -100px) rotate(270deg); }
+      100% { transform: translate(0, 0) rotate(360deg); }
     }
 
-    /* Main heading animation */
     main h2 {
       font-size: 5rem;
       margin-bottom: 2rem;
@@ -311,19 +257,10 @@
     }
 
     @keyframes glow {
-      from {
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.7),
-                     0 0 20px rgba(255, 0, 85, 0.5),
-                     0 0 30px rgba(255, 0, 85, 0.3);
-      }
-      to {
-        text-shadow: 0 0 20px rgba(255, 255, 255, 0.9),
-                     0 0 30px rgba(255, 0, 85, 0.7),
-                     0 0 40px rgba(255, 0, 85, 0.5);
-      }
+      from { text-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 0 0 20px rgba(255, 0, 85, 0.5), 0 0 30px rgba(255, 0, 85, 0.3); }
+      to { text-shadow: 0 0 20px rgba(255, 255, 255, 0.9), 0 0 30px rgba(255, 0, 85, 0.7), 0 0 40px rgba(255, 0, 85, 0.5); }
     }
 
-    /* Typewriter effect */
     .typewriter-container {
       font-size: 2.3rem;
       margin-bottom: 2rem;
@@ -341,15 +278,10 @@
     }
 
     @keyframes blink {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0;
-      }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
     }
 
-    /* Pulsing button */
     .pulse-button {
       background: linear-gradient(45deg, #ff0055, #ffcc00);
       color: white;
@@ -373,18 +305,11 @@
     }
 
     @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
-      }
-      70% {
-        box-shadow: 0 0 0 20px rgba(255, 0, 85, 0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(255, 0, 85, 0);
-      }
+      0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 0, 85, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
     }
 
-    /* Social Links Section - Original maintain kiya */
     .social-links {
       margin-top: 20px;
       display: flex;
@@ -398,30 +323,22 @@
       font-weight: bold;
     }
 
-    /* Responsive adjustments */
     @media (max-width: 768px) {
-      main h2 {
-        font-size: 2.5rem;
-      }
-      
-      .typewriter-container {
-        font-size: 1.4rem;
-      }
+      main h2 { font-size: 2.5rem; }
+      .typewriter-container { font-size: 1.4rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Welcome Popup -->
   <div id="welcomePopup">
     <div class="popup-content">
-      <h2>Welcome Back!</h2>
-      <p>आपका पुनः स्वागत है!</p>
+      <h2 id="dynamicGreeting">Welcome!</h2>
+      <p>Welcome Back!</p>
       <button id="closePopup">शुरू करें (Continue)</button>
     </div>
   </div>
 
-  <!-- HEADER - Original maintain kiya -->
   <header>
     <div class="header-top">
       <img src="logo.png" alt="Logo" class="logo">
@@ -443,7 +360,6 @@
     </nav>
   </header>
 
-  <!-- MAIN - Sirf animations add kiye -->
   <main>
     <div class="color-blocks">
       <div class="block"></div>
@@ -459,7 +375,6 @@
     <button class="pulse-button"> For Explore Open Menu </button>
   </main>
 
-  <!-- FOOTER - Original maintain kiya -->
   <footer>
     <p>© 2025 Shiv Computer. All rights reserved.</p>
     <p>📍 27, Karnpur, Uttar Pradesh-225304 | 📞 +91-80901 53304 | ✉️ ceshivkumar@gmail.com</p>
@@ -468,7 +383,6 @@
       <span>WhatsApp</span>
     </a>
     
-    <!-- Social Links - Original maintain kiya -->
     <div class="social-links">
       <a href="https://www.facebook.com/profile.php?id=100093146240602">Facebook</a> |
       <a href="https://www.instagram.com/ceshiv.kumar/">Instagram</a> |
@@ -476,18 +390,35 @@
     </div>
   </footer>
 
-  <!-- SCRIPT - Original + new animations -->
   <script>
-    // Popup - Original maintain kiya
     document.addEventListener('DOMContentLoaded', function() {
+      // 1. Popup Elements
       const popup = document.getElementById('welcomePopup');
       const closeButton = document.getElementById('closePopup');
+      const greetingElement = document.getElementById('dynamicGreeting'); // Greeting Heading
+
+      // 2. Time Logic (Morning/Afternoon/Evening)
+      const hour = new Date().getHours();
+      let greetingText = "";
+
+      if (hour < 12) {
+          greetingText = "Good Morning ☀️";
+      } else if (hour < 18) {
+          greetingText = "Good Afternoon 🌤️";
+      } else {
+          greetingText = "Good Evening 🌙";
+      }
+      
+      // Greeting set karna
+      greetingElement.innerHTML = greetingText;
+
+      // 3. Close Button Logic
       closeButton.addEventListener('click', function() {
         popup.style.opacity = '0';
         setTimeout(() => popup.style.display = 'none', 500);
       });
 
-      // Typewriter effect - Naya add kiya
+      // 4. Typewriter effect
       const text = "Your go-to Place for Practical Computer Education.";
       const typewriterElement = document.getElementById('typewriter');
       let i = 0;
@@ -498,28 +429,23 @@
           i++;
           setTimeout(typeWriter, 100);
         } else {
-          // Keep the cursor blinking after typing is complete
           typewriterElement.innerHTML = text + '<span class="cursor"></span>';
         }
       }
-      
-      // Start the typewriter effect after a short delay
       setTimeout(typeWriter, 500);
     });
 
-    // Toggle Menu - Original maintain kiya
+    // Toggle Menu
     function toggleMenu() {
       document.getElementById("navMenu").classList.toggle("show");
     }
 
-    // Service Worker Registration - Original maintain kiya
+    // Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('service-worker.js').then(function(registration) {
-          // Registration was successful
           console.log('ServiceWorker registration successful with scope: ', registration.scope);
         }, function(err) {
-          // registration failed
           console.log('ServiceWorker registration failed: ', err);
         });
       });
