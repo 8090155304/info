@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mark Entry</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --secondary: #159895;
+            --accent: #eb455f;
+            --bg: #305c05;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .no-print {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: rgb(248, 168, 168);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #4ed102;
+            padding: 10px;
+            border-radius: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            border: none;
+            background: rgb(226, 247, 168);
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            background: rgb(241, 80, 169);
+            color: rgb(235, 232, 62);
+            transform: translateY(-2px);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #037027;
+            border-radius: 8px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-add {
+            background: var(--secondary);
+            color: rgb(239, 243, 4);
+        }
+
+        .btn-save {
+            background: rgb(255, 240, 190);
+            color: rgb(247, 20, 216);
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: var(--primary);
+            color: rgb(240, 245, 180);
+            padding: 12px;
+            font-size: 14px;
+            border-radius: 2px;
+            gap: 2px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ec0cc7;
+            background: rgb(255, 240, 190);
+        }
+
+        /* Print Layout - COLORFUL VERSION */
+        #print-area {
+            display: none;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            #print-area {
+                display: block !important;
+                padding: 0;
+            }
+
+            .ms-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 18px;
+            }
+
+            /* यहाँ हेडर का बैकग्राउंड और फॉन्ट कलर बदला गया है */
+            .ms-table th {
+                background-color: #e3f3c5 !important;
+                color: #0c0c0c !important;
+                /* फॉन्ट का रंग सफेद */
+                border: 1px solid black !important;
+                padding: 4px;
+                text-align: center;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .ms-table td {
+                border: 1px solid black !important;
+                padding: 8px;
+                font-size: 16px;
+                text-align: center;
+            }
+
+            .report-header {
+                text-align: center;
+                margin-bottom: 5px;
+                margin-top: -20;
+                color: #1a5f7a;
+            }
+
+            .report-header h1 {
+                color: #eb455f;
+                font-size: 50px;
+                padding: auto;
+                !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            /* स्कूल का नाम लाल */
+
+            .student-info-row {
+                display: flex;
+                justify-content: space-between;
+                font-weight: bold;
+                font-size: 20px;
+                margin-bottom: 8px;
+            }
+
+            .bottom-details {
+                margin-top: 10px;
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .bottom-details td {
+                border: 1px solid black !important;
+                padding: 8px;
+                font-size: 13px;
+            }
+
+            /* नीचे के बॉक्स का कलर */
+            .bottom-details td:first-child {
+                background-color: #e8f4f8 !important;
+                font-weight: bold;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .footer-sign {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 60px;
+                font-weight: bold;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print">
+        <h2 style="text-align:center; color:var(--primary)">छात्र प्रगति पत्र प्रबंधन प्रणाली</h2>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-subs', event)">1. विषय & पूर्णांक</button>
+            <button class="tab-btn" onclick="switchTab('tab-classes', event)">2. कक्षा मास्टर</button>
+            <button class="tab-btn" onclick="switchTab('tab-students', event)">3. छात्र पंजीकरण</button>
+            <button class="tab-btn" onclick="switchTab('tab-marks', event)">4. अंक प्रविष्टि (Entry)</button>
+            <button class="tab-btn" onclick="switchTab('tab-system', event)">5. बैकअप/रीस्टोर</button>
+        </div>
+
+        <div id="tab-subs" class="section active">
+            <div class="card">
+                <h3>नया विषय जोड़ें</h3>
+                <div class="grid-3">
+                    <input type="text" id="sub_name" placeholder="विषय का नाम">
+                    <input type="number" id="sub_def_max" value="100" placeholder="Default Max">
+                    <button class="btn-add" onclick="saveSubject()">+ विषय जोड़ें</button>
+                </div>
+                <table id="sub-list">
+                    <thead>
+                        <tr>
+                            <th>विषय</th>
+                            <th>डिफ़ॉल्ट पूर्णांक</th>
+                            <th>हटाएं</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-classes" class="section">
+            <div class="card">
+                <h3>कक्षा मास्टर</h3>
+                <input type="text" id="cls_name" placeholder="कक्षा (उदा. 5th)" style="margin-bottom:15px;">
+                <p><strong>विषय चुनें:</strong></p>
+                <div id="cls-subs-selection"
+                    style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; padding:15px; background:#f9f9f9; border-radius:8px;">
+                </div>
+                <button class="btn-add" onclick="saveClass()" style="margin-top:15px;">कक्षा सुरक्षित करें</button>
+                <table id="cls-list">
+                    <thead>
+                        <tr>
+                            <th>कक्षा</th>
+                            <th>चयनित विषय</th>
+                            <th>हटाएं</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-students" class="section">
+            <div class="card">
+                <h3>छात्र पंजीकरण</h3>
+                <div class="grid-3">
+                    <input type="text" id="stu_name" placeholder="छात्र का नाम">
+                    <select id="stu_cls_id"></select>
+                    <input type="text" id="stu_roll" placeholder="अनुक्रमांक">
+                </div>
+                <button class="btn-add" onclick="saveStudent()" style="margin-top:10px;">पंजीकरण करें</button>
+                <table id="stu-list">
+                    <thead>
+                        <tr>
+                            <th>Roll</th>
+                            <th>नाम</th>
+                            <th>कक्षा</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-marks" class="section">
+            <div class="card">
+                <div class="grid-3">
+                    <select id="entry_cls" onchange="syncStudentDropdown()">
+                        <option value="">कक्षा चुनें</option>
+                    </select>
+                    <select id="entry_stu">
+                        <option value="">छात्र चुनें</option>
+                    </select>
+                    <button class="btn-add" onclick="loadMarkingPanel()">अंक भरें/देखें</button>
+                </div>
+            </div>
+            <div id="marking-panel"></div>
+        </div>
+
+        <div id="tab-system" class="section">
+            <div class="card">
+                <h3>डेटा सुरक्षा</h3>
+                <button class="btn-add" onclick="exportData()" style="background:#2ecc71">Download Backup
+                    (.json)</button>
+                <div style="margin-top:20px;">
+                    <label>File Select Karein:</label>
+                    <input type="file" onchange="importData(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div class="report-header">
+            <h1>श्री दुर्गे माँ बाल गोविन्द इण्टर कालेज</h1>
+        </div>
+        <div class="report-header">
+            <h3>अचली खेड़ा, मोहनलालगंज लखनऊ </h3>
+        </div>
+        <div class="report-header">
+            <h2>प्रगति पत्र सत्र - 2025-26</h2>
+        </div>
+        <div class="student-info-row">
+            <span>नाम: <span id="p_name"></span></span>
+            <span>कक्षा: <span id="p_cls"></span></span>
+            <span>अनुक्रमांक: <span id="p_roll"></span></span>
+        </div>
+        <table class="ms-table">
+            <thead>
+                <tr>
+                    <th rowspan="2">क्र.</th>
+                    <th rowspan="2">विषय</th>
+                    <th colspan="5">त्रैमासिक परीक्षा</th>
+                    <th colspan="5">अर्द्धवार्षिक परीक्षा</th>
+                    <th colspan="5">वार्षिक परीक्षा</th>
+                    <th colspan="4">महायोग</th>
+                    <th rowspan="2">विवरण</th>
+                </tr>
+                <tr>
+                    <th>पूर्ण.</th>
+                    <th>1st</th>
+                    <th>2nd</th>
+                    <th>योग</th>
+                    <th>%</th>
+                    <th>पूर्ण.</th>
+                    <th>1st</th>
+                    <th>2nd</th>
+                    <th>योग</th>
+                    <th>%</th>
+                    <th>पूर्ण.</th>
+                    <th>1st</th>
+                    <th>2nd</th>
+                    <th>योग</th>
+                    <th>%</th>
+                    <th>पूर्ण.</th>
+                    <th>न्यून.</th>
+                    <th>प्राप्त</th>
+                    <th>%</th>
+                </tr>
+            </thead>
+            <tbody id="p_body"></tbody>
+            <tfoot id="p_foot"></tfoot>
+        </table>
+        <table class="bottom-details">
+            <tr>
+                <td width="20%">संकेतांक</td>
+                <td id="b_sanket"></td>
+                <td rowspan="5" width="40%" valign="top"><strong>सम्पूर्ण परीक्षाफल</strong><br><br>परिणाम: <span
+                        id="b_res_final"></span><br>कक्षा में स्थान: <span id="b_rank_final"></span></td>
+            </tr>
+            <tr>
+                <td>आचरण</td>
+                <td id="b_achar"></td>
+            </tr>
+            <tr>
+                <td>परीक्षाफल</td>
+                <td id="b_res"></td>
+            </tr>
+            <tr>
+                <td>कक्षा में स्थान</td>
+                <td id="b_rank"></td>
+            </tr>
+            <tr>
+                <td>उपस्थिति</td>
+                <td id="b_att"></td>
+            </tr>
+        </table>
+        <div class="footer-sign">
+            <div>कक्षा अध्यापक</div>
+            <div>प्रधानाचार्य</div>
+            <div>अभिभावक</div>
+        </div>
+    </div>
+
+    <script>
+        let db;
+        const request = indexedDB.open("SchoolReportFinalDB", 1);
+        request.onupgradeneeded = e => {
+            db = e.target.result;
+            db.createObjectStore("subjects", { keyPath: "id", autoIncrement: true });
+            db.createObjectStore("classes", { keyPath: "id", autoIncrement: true });
+            db.createObjectStore("students", { keyPath: "id", autoIncrement: true });
+            db.createObjectStore("marks", { keyPath: "sid" });
+        };
+        request.onsuccess = e => { db = e.target.result; syncAll(); };
+
+        function switchTab(id, event) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if (event) event.target.classList.add('active');
+            syncAll();
+        }
+
+        async function getStoreData(store) {
+            return new Promise(res => {
+                const tx = db.transaction(store, "readonly");
+                tx.objectStore(store).getAll().onsuccess = e => res(e.target.result);
+            });
+        }
+
+        async function syncAll() {
+            const subs = await getStoreData("subjects");
+            const classes = await getStoreData("classes");
+            const students = await getStoreData("students");
+            document.querySelector("#sub-list tbody").innerHTML = subs.map(s => `<tr><td>${s.name}</td><td>${s.max}</td><td><button onclick="deleteItem('subjects', ${s.id})" style="background:red; color:white;">Del</button></td></tr>`).join('');
+            document.getElementById("cls-subs-selection").innerHTML = subs.map(s => `<label><input type="checkbox" class="cls-sub-check" value="${s.name}" data-max="${s.max}"> ${s.name}</label>`).join('');
+            const clsOpt = '<option value="">कक्षा चुनें</option>' + classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById("stu_cls_id").innerHTML = clsOpt;
+            document.getElementById("entry_cls").innerHTML = clsOpt;
+            document.querySelector("#cls-list tbody").innerHTML = classes.map(c => `<tr><td>${c.name}</td><td>${c.subs.map(sb => sb.name).join(", ")}</td><td><button onclick="deleteItem('classes', ${c.id})" style="background:red; color:white;">Del</button></td></tr>`).join('');
+            document.querySelector("#stu-list tbody").innerHTML = students.map(s => `<tr><td>${s.roll}</td><td>${s.name}</td><td>${s.cname}</td><td><button onclick="deleteItem('students', ${s.id})" style="background:red; color:white;">Del</button></td></tr>`).join('');
+        }
+
+        function saveSubject() {
+            const name = document.getElementById("sub_name").value;
+            const max = parseInt(document.getElementById("sub_def_max").value);
+            if (!name) return;
+            db.transaction("subjects", "readwrite").objectStore("subjects").add({ name, max }).oncomplete = () => {
+                document.getElementById("sub_name").value = ""; syncAll();
+            };
+        }
+
+        function saveClass() {
+            const name = document.getElementById("cls_name").value;
+            const subs = Array.from(document.querySelectorAll(".cls-sub-check:checked")).map(cb => ({ name: cb.value, max: cb.dataset.max }));
+            if (!name || subs.length === 0) return alert("नाम और विषय चुनें");
+            db.transaction("classes", "readwrite").objectStore("classes").add({ name, subs }).oncomplete = () => {
+                document.getElementById("cls_name").value = ""; syncAll();
+            };
+        }
+
+        function saveStudent() {
+            const name = document.getElementById("stu_name").value;
+            const cid = parseInt(document.getElementById("stu_cls_id").value);
+            const roll = document.getElementById("stu_roll").value;
+            const cname = document.getElementById("stu_cls_id").options[document.getElementById("stu_cls_id").selectedIndex].text;
+            if (!name || !cid) return;
+            db.transaction("students", "readwrite").objectStore("students").add({ name, cid, roll, cname }).oncomplete = () => {
+                document.getElementById("stu_name").value = ""; document.getElementById("stu_roll").value = "";
+                syncAll(); syncStudentDropdown(); // Real-time sync
+            };
+        }
+
+        async function syncStudentDropdown() {
+            const cid = parseInt(document.getElementById("entry_cls").value);
+            const allSt = await getStoreData("students");
+            document.getElementById("entry_stu").innerHTML = '<option value="">छात्र चुनें</option>' +
+                allSt.filter(s => s.cid === cid).map(s => `<option value="${s.id}">${s.name} (${s.roll})</option>`).join('');
+        }
+
+        async function loadMarkingPanel() {
+            const sid = parseInt(document.getElementById("entry_stu").value);
+            if (!sid) return;
+            const student = (await getStoreData("students")).find(s => s.id === sid);
+            const cls = (await getStoreData("classes")).find(c => c.id === student.cid);
+            const saved = await new Promise(res => db.transaction("marks").objectStore("marks").get(sid).onsuccess = e => res(e.target.result || { sid, examData: {}, extra: {} }));
+            let html = `<div class="card"><h3>अंक प्रविष्टि: ${student.name}</h3><table><tr><th>विषय</th><th colspan="3">त्रैमासिक</th><th colspan="3">अर्द्धवार्षिक</th><th colspan="3">वार्षिक</th></tr><tr><th></th><th>Poorank</th><th>P1</th><th>P2</th><th>Poorank</th><th>P1</th><th>P2</th><th>Poorank</th><th>P1</th><th>P2</th></tr>`;
+            cls.subs.forEach(s => {
+                const d = saved.examData[s.name] || { q_m: 50, q1: 0, q2: 0, h_m: 100, h1: 0, h2: 0, a_m: 100, a1: 0, a2: 0 };
+                html += `<tr><td>${s.name}</td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="q_m" value="${d.q_m}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="q1" value="${d.q1}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="q2" value="${d.q2}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="h_m" value="${d.h_m}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="h1" value="${d.h1}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="h2" value="${d.h2}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="a_m" value="${d.a_m}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="a1" value="${d.a1}"></td><td><input type="number" class="m-in" oninput="autoSave(${sid})" data-s="${s.name}" data-f="a2" value="${d.a2}"></td></tr>`;
+            });
+            const ex = saved.extra || { sanket: '', achar: '', res: '', rank: '', att: '' };
+            html += `</table><div class="grid-3" style="margin-top:20px;"><input type="text" id="ex_sanket" oninput="autoSave(${sid})" placeholder="संकेतांक" value="${ex.sanket}"><input type="text" id="ex_achar" oninput="autoSave(${sid})" placeholder="आचरण" value="${ex.achar}"><input type="text" id="ex_res" oninput="autoSave(${sid})" placeholder="परीक्षाफल" value="${ex.res}"><input type="text" id="ex_rank" oninput="autoSave(${sid})" placeholder="कक्षा में स्थान" value="${ex.rank}"><input type="text" id="ex_att" oninput="autoSave(${sid})" placeholder="उपस्थिति" value="${ex.att}"></div><button class="btn-save" onclick="saveFinalMarks(${sid})">Save All Data & Sync</button><button class="btn-save" style="background:#2980b9" onclick="printReport(${sid})">Print Report Card</button></div>`;
+            document.getElementById("marking-panel").innerHTML = html;
+        }
+
+        function autoSave(sid) {
+            const examData = {};
+            document.querySelectorAll(".m-in").forEach(i => {
+                const s = i.dataset.s, f = i.dataset.f; if (!examData[s]) examData[s] = {};
+                examData[s][f] = parseInt(i.value) || 0;
+            });
+            const extra = { sanket: document.getElementById("ex_sanket").value, achar: document.getElementById("ex_achar").value, res: document.getElementById("ex_res").value, rank: document.getElementById("ex_rank").value, att: document.getElementById("ex_att").value };
+            db.transaction("marks", "readwrite").objectStore("marks").put({ sid, examData, extra });
+        }
+
+        function saveFinalMarks(sid) { autoSave(sid); alert('Data Saved!'); syncAll(); }
+
+        async function printReport(sid) {
+            const stu = (await getStoreData("students")).find(s => s.id === sid);
+            const cls = (await getStoreData("classes")).find(c => c.id === stu.cid);
+            const m = await new Promise(res => db.transaction("marks").objectStore("marks").get(sid).onsuccess = e => res(e.target.result));
+            document.getElementById("p_name").innerText = stu.name;
+            document.getElementById("p_cls").innerText = stu.cname;
+            document.getElementById("p_roll").innerText = stu.roll;
+
+            let h = ""; let t = { qp: 0, qy: 0, hp: 0, hy: 0, ap: 0, ay: 0, gp: 0, gy: 0 };
+            cls.subs.forEach((s, i) => {
+                const d = m.examData[s.name] || { q_m: 50, q1: 0, q2: 0, h_m: 100, h1: 0, h2: 0, a_m: 100, a1: 0, a2: 0 };
+                const qY = d.q1 + d.q2, hY = d.h1 + d.h2, aY = d.a1 + d.a2, rT = qY + hY + aY, rM = d.q_m + d.h_m + d.a_m;
+                const qP = d.q_m > 0 ? ((qY / d.q_m) * 100).toFixed(1) : 0;
+                const hP = d.h_m > 0 ? ((hY / d.h_m) * 100).toFixed(1) : 0;
+                const aP = d.a_m > 0 ? ((aY / d.a_m) * 100).toFixed(1) : 0;
+                const gP = rM > 0 ? ((rT / rM) * 100).toFixed(1) : 0;
+                h += `<tr><td>${i + 1}</td><td>${s.name}</td><td>${d.q_m}</td><td>${d.q1}</td><td>${d.q2}</td><td>${qY}</td><td>${qP}%</td><td>${d.h_m}</td><td>${d.h1}</td><td>${d.h2}</td><td>${hY}</td><td>${hP}%</td><td>${d.a_m}</td><td>${d.a1}</td><td>${d.a2}</td><td>${aY}</td><td>${aP}%</td><td>${rM}</td><td>${Math.round(rM * 0.33)}</td><td>${rT}</td><td>${gP}%</td><td></td></tr>`;
+                t.qp += d.q_m; t.qy += qY; t.hp += d.h_m; t.hy += hY; t.ap += d.a_m; t.ay += aY; t.gp += rM; t.gy += rT;
+            });
+            const ftQP = t.qp > 0 ? ((t.qy / t.qp) * 100).toFixed(1) : 0;
+            const ftHP = t.hp > 0 ? ((t.hy / t.hp) * 100).toFixed(1) : 0;
+            const ftAP = t.ap > 0 ? ((t.ay / t.ap) * 100).toFixed(1) : 0;
+            const ftGP = t.gp > 0 ? ((t.gy / t.gp) * 100).toFixed(1) : 0;
+            document.getElementById("p_body").innerHTML = h;
+            document.getElementById("p_foot").innerHTML = `<tr><td colspan="2">योग</td><td>${t.qp}</td><td></td><td></td><td>${t.qy}</td><td>${ftQP}%</td><td>${t.hp}</td><td></td><td></td><td>${t.hy}</td><td>${ftHP}%</td><td>${t.ap}</td><td></td><td></td><td>${t.ay}</td><td>${ftAP}%</td><td>${t.gp}</td><td></td><td>${t.gy}</td><td>${ftGP}%</td><td></td></tr>`;
+            ['sanket', 'achar', 'res', 'rank', 'att'].forEach(f => document.getElementById('b_' + f).innerText = m.extra[f]);
+            document.getElementById("b_res_final").innerText = m.extra.res;
+            document.getElementById("b_rank_final").innerText = m.extra.rank;
+            window.print();
+        }
+
+        function deleteItem(s, id) { if (confirm("Confirm Delete?")) db.transaction(s, "readwrite").objectStore(s).delete(id).oncomplete = syncAll; }
+        async function exportData() { const d = { subjects: await getStoreData("subjects"), classes: await getStoreData("classes"), students: await getStoreData("students"), marks: await getStoreData("marks") }; const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], { type: "application/json" })); a.download = "School_ERP_Backup.json"; a.click(); }
+        function importData(e) { const r = new FileReader(); r.onload = async ev => { const d = JSON.parse(ev.target.result); Object.keys(d).forEach(k => { const tx = db.transaction(k, "readwrite"); d[k].forEach(i => tx.objectStore(k).put(i)); }); alert("Data Restored!"); syncAll(); }; r.readAsText(e.target.files[0]); }
+    </script>
+</body>
+
+</html>

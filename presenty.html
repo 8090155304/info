@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Exam Attendance Tracker</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: rgb(230, 172, 172);
+                padding: 0;
+            }
+
+            .print-container {
+                width: 100%;
+                box-shadow: none;
+                border: none;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 12px;
+            }
+
+            th,
+            td {
+                border: 1px solid #ca0404;
+                padding: 6px;
+            }
+
+            .exam-header {
+                background-color: #def3a6;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen p-2 md:p-6 font-sans">
+
+    <div class="max-w-6xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print-container">
+        <div class="bg-slate-800 p-6 text-white no-print flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold italic">Attendance Pro <span class="text-blue-400">v2.0 | SHIV COMPUTER
+                        |</span></h1>
+                <p class="text-slate-400 text-xs">Quarterly | Half-Yearly | Annual Tracking</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportData()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">Backup</button>
+                <button onclick="document.getElementById('importFile').click()"
+                    class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">Restore</button>
+                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
+                <button onclick="window.print()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">Print
+                    Report</button>
+            </div>
+        </div>
+
+        <div class="p-6 border-b bg-slate-50 no-print">
+            <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 tracking-wider">कार्य दिवस सेटिंग्स (Global
+                Settings)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <label class="block text-xs font-bold text-blue-600 mb-1">Quarterly (त्रैमासिक)</label>
+                    <input type="number" id="qDays" onchange="updateAll()"
+                        class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-blue-500" value="60">
+                </div>
+                <div class="bg-white p-4 rounded-lg border-l-4 border-purple-500 shadow-sm">
+                    <label class="block text-xs font-bold text-purple-600 mb-1">Half-Yearly (अर्धवार्षिक)</label>
+                    <input type="number" id="hDays" onchange="updateAll()"
+                        class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-purple-500" value="120">
+                </div>
+                <div class="bg-white p-4 rounded-lg border-l-4 border-orange-500 shadow-sm">
+                    <label class="block text-xs font-bold text-orange-600 mb-1">Annual (वार्षिक)</label>
+                    <input type="number" id="aDays" onchange="updateAll()"
+                        class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-orange-500" value="220">
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-b no-print bg-white">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="studentName" placeholder="छात्र का नाम"
+                    class="p-2 border rounded outline-none focus:border-slate-500">
+                <input type="number" id="qPresent" placeholder="Q. उपस्थित" class="p-2 border rounded outline-none">
+                <input type="number" id="hPresent" placeholder="H.Y. उपस्थित" class="p-2 border rounded outline-none">
+                <input type="number" id="aPresent" placeholder="Annual उपस्थित" class="p-2 border rounded outline-none">
+            </div>
+            <button onclick="addStudent()"
+                class="mt-4 w-full bg-slate-800 hover:bg-black text-white py-2 rounded-lg font-bold transition">छात्र
+                डेटा सुरक्षित करें +</button>
+        </div>
+
+        <div class="p-4">
+            <h2 class="text-center text-xl font-bold mb-6 text-gray-800 hidden print:block border-b pb-2">वार्षिक छात्र
+                उपस्थिति रिपोर्ट (Session 2024-25)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-center border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-xs font-bold text-slate-700 uppercase">
+                            <th rowspan="2" class="p-3 border">क्र.</th>
+                            <th rowspan="2" class="p-3 border text-left">छात्र का नाम</th>
+                            <th colspan="2" class="border exam-header bg-blue-50">Quarterly</th>
+                            <th colspan="2" class="border exam-header bg-purple-50">Half-Yearly</th>
+                            <th colspan="2" class="border exam-header bg-orange-50">Annual</th>
+                            <th rowspan="2" class="p-3 border no-print">कार्य</th>
+                        </tr>
+                        <tr class="bg-slate-50 text-[10px] text-slate-600">
+                            <th class="p-2 border">दिन</th>
+                            <th class="p-2 border text-blue-700">प्रतिशत</th>
+                            <th class="p-2 border">दिन</th>
+                            <th class="p-2 border text-purple-700">प्रतिशत</th>
+                            <th class="p-2 border">दिन</th>
+                            <th class="p-2 border text-orange-700">प्रतिशत</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceBody" class="text-sm">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = JSON.parse(localStorage.getItem('multiExamData')) || [];
+
+        function addStudent() {
+            const name = document.getElementById('studentName').value;
+            const qP = document.getElementById('qPresent').value || 0;
+            const hP = document.getElementById('hPresent').value || 0;
+            const aP = document.getElementById('aPresent').value || 0;
+
+            if (!name) { alert("कृपया नाम लिखें"); return; }
+
+            students.push({
+                id: Date.now(),
+                name: name,
+                qPresent: parseInt(qP),
+                hPresent: parseInt(hP),
+                aPresent: parseInt(aP)
+            });
+
+            // Reset inputs
+            ['studentName', 'qPresent', 'hPresent', 'aPresent'].forEach(id => document.getElementById(id).value = '');
+            updateAll();
+        }
+
+        function deleteStudent(id) {
+            if (confirm("क्या आप इस छात्र का डेटा हटाना चाहते हैं?")) {
+                students = students.filter(s => s.id !== id);
+                updateAll();
+            }
+        }
+
+        function calculatePercent(present, total) {
+            if (total <= 0) return "0.00";
+            return ((present / total) * 100).toFixed(2);
+        }
+
+        function updateAll() {
+            const qTotal = document.getElementById('qDays').value || 1;
+            const hTotal = document.getElementById('hDays').value || 1;
+            const aTotal = document.getElementById('aDays').value || 1;
+
+            const tbody = document.getElementById('attendanceBody');
+            tbody.innerHTML = '';
+
+            students.forEach((s, index) => {
+                const qPerc = calculatePercent(s.qPresent, qTotal);
+                const hPerc = calculatePercent(s.hPresent, hTotal);
+                const aPerc = calculatePercent(s.aPresent, aTotal);
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-slate-50 transition">
+                        <td class="p-2 border text-gray-500">${index + 1}</td>
+                        <td class="p-2 border font-semibold text-left text-slate-800">${s.name}</td>
+                        <td class="p-2 border">${s.qPresent}</td>
+                        <td class="p-2 border font-bold ${qPerc < 75 ? 'text-red-500' : 'text-blue-600'}">${qPerc}%</td>
+                        <td class="p-2 border">${s.hPresent}</td>
+                        <td class="p-2 border font-bold ${hPerc < 75 ? 'text-red-500' : 'text-purple-600'}">${hPerc}%</td>
+                        <td class="p-2 border">${s.aPresent}</td>
+                        <td class="p-2 border font-bold ${aPerc < 75 ? 'text-red-500' : 'text-orange-600'}">${aPerc}%</td>
+                        <td class="p-2 border no-print">
+                            <button onclick="deleteStudent(${s.id})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-2 py-1 rounded transition text-xs">हटाएं</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Save state
+            localStorage.setItem('multiExamData', JSON.stringify(students));
+            localStorage.setItem('qDays', qTotal);
+            localStorage.setItem('hDays', hTotal);
+            localStorage.setItem('aDays', aTotal);
+        }
+
+        function exportData() {
+            const data = {
+                students,
+                q: document.getElementById('qDays').value,
+                h: document.getElementById('hDays').value,
+                a: document.getElementById('aDays').value
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "attendance_full_report.json");
+            dlAnchorElem.click();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = JSON.parse(e.target.result);
+                students = data.students;
+                document.getElementById('qDays').value = data.q;
+                document.getElementById('hDays').value = data.h;
+                document.getElementById('aDays').value = data.a;
+                updateAll();
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        window.onload = () => {
+            document.getElementById('qDays').value = localStorage.getItem('qDays') || 60;
+            document.getElementById('hDays').value = localStorage.getItem('hDays') || 120;
+            document.getElementById('aDays').value = localStorage.getItem('aDays') || 220;
+            updateAll();
+        }
+    </script>
+</body>
+
+</html>
