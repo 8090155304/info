@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to ICO Converter</title>
+    <title>Ultimate Multi-Resolution ICO Converter</title>
     <link rel="icon" type="image/png" href="SHIV.png">
     <style>
         /* Animated Background */
@@ -18,7 +18,6 @@
             background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
-            overflow: hidden;
         }
 
         @keyframes gradientBG {
@@ -27,219 +26,281 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Floating Glassmorphism Container */
+        /* Glassmorphism Container */
         .container {
             background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 3rem;
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 2.5rem;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
             text-align: center;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
-            animation: float 6s ease-in-out infinite;
             color: white;
-            transition: transform 0.3s ease;
-        }
-
-        .container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        @keyframes float {
-            0% { transform: translatey(0px); }
-            50% { transform: translatey(-20px); }
-            100% { transform: translatey(0px); }
+            margin: 20px;
         }
 
         h2 { 
-            color: #ffffff; 
             font-size: 2.2rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
 
-        p {
-            font-size: 1.1rem;
+        .subtitle {
+            font-size: 0.95rem;
             margin-bottom: 25px;
             opacity: 0.9;
         }
 
-        /* Styled Input & Select */
-        input[type="file"] {
-            margin: 10px 0;
-            padding: 12px;
+        /* File Upload */
+        .upload-box {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            cursor: pointer;
-            width: 100%;
-            box-sizing: border-box;
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: 0.3s;
         }
 
-        label {
-            display: block;
-            margin: 15px 0 10px;
-            font-weight: bold;
-        }
-
-        select {
-            padding: 12px;
-            margin-bottom: 30px;
-            border-radius: 12px;
-            border: none;
-            background: white;
-            color: #333;
-            font-size: 16px;
+        input[type="file"] {
             width: 100%;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            outline: none;
         }
 
-        /* Pulsing Button */
+        /* Size Selection Grid */
+        .size-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .size-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .size-item input {
+            margin-right: 10px;
+            cursor: pointer;
+            transform: scale(1.2);
+        }
+
+        /* Convert Button */
         button {
-            background: linear-gradient(45deg, #007bff, #00d2ff);
-            color: white;
+            background: linear-gradient(45deg, #00c853, #b2ff59);
+            color: #1a5e20;
             border: none;
-            padding: 15px 35px;
+            padding: 18px 40px;
             border-radius: 50px;
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
-            transition: all 0.4s ease;
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             text-transform: uppercase;
+            width: 100%;
+            margin-top: 10px;
             letter-spacing: 1px;
         }
 
         button:hover {
-            background: linear-gradient(45deg, #00c853, #b2ff59);
-            transform: scale(1.1);
-            box-shadow: 0 8px 20px rgba(0, 200, 83, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+            filter: brightness(1.1);
         }
 
-        button:active {
-            transform: scale(0.95);
-        }
-
-        canvas {
-            display: none;
-        }
-
-        /* Preview Styling */
+        /* Preview */
         #preview {
-            margin-top: 30px;
-            max-width: 150px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            margin-top: 25px;
+            max-width: 120px;
+            border-radius: 12px;
             display: none;
-            border: 4px solid rgba(255, 255, 255, 0.5);
-            animation: fadeIn 0.8s ease-in;
+            border: 4px solid white;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* Footer text */
         .footer-text {
-            margin-top: 20px;
+            margin-top: 25px;
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
+            opacity: 0.8;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>.ICO Converter Pro</h2>
-    <p>Apni Image Select Karein aur Size Chunein:</p>
+    <h2>.ICO Master Pro</h2>
+    <p class="subtitle">Multi-Resolution Image Converter (Up to 512px)</p>
     
-    <input type="file" id="upload" accept="image/*">
-    <br>
-    
-    <label for="size">Size Select Karein:</label>
-    <select id="size">
-        <option value="16">16 x 16 (Small Icon)</option>
-        <option value="32" selected>32 x 32 (Standard Favicon)</option>
-        <option value="48">48 x 48 (Large Icon)</option>
-        <option value="64">64 x 64</option>
-        <option value="128">128 x 128</option>
-        <option value="256">256 x 256</option>
-        <option value="512">512 x 512 (HQ Icon)</option>
-    </select>
-    <br>
+    <div class="upload-box">
+        <input type="file" id="upload" accept="image/*">
+    </div>
 
-    <button id="convertBtn">Convert & Download Now</button>
+    <p style="text-align: left; margin-bottom: 8px; font-weight: bold; font-size: 1.1rem;">In Sizes को शामिल करें:</p>
+    <p style="text-align: left; margin-bottom: 8px; font-weight: bold; font-size: 1.1rem;">किसी विशेष आकार के लिए केवल उसी को चुने सभी के लिए सबको सेलेक्ट करें:</p>
+    <div class="size-grid" id="sizeGrid">
+        <div class="size-item"><input type="checkbox" value="16" checked> 16x16</div>
+        <div class="size-item"><input type="checkbox" value="32" checked> 32x32</div>
+        <div class="size-item"><input type="checkbox" value="48" checked> 48x48</div>
+        <div class="size-item"><input type="checkbox" value="64" checked> 64x64</div>
+        <div class="size-item"><input type="checkbox" value="80" checked> 80x80</div>
+        <div class="size-item"><input type="checkbox" value="96" checked> 96x96</div>
+        <div class="size-item"><input type="checkbox" value="128" checked> 128x128</div>
+        <div class="size-item"><input type="checkbox" value="192" checked> 192x192</div>
+        <div class="size-item"><input type="checkbox" value="256" checked> 256x256</div>
+        <div class="size-item" style="grid-column: span 3; justify-content: center; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 8px;">
+            <input type="checkbox" value="512" checked> 512x512 (Ultra HQ)
+        </div>
+    </div>
+
+    <button id="convertBtn">Build & Download Multi-ICO</button>
+    
     <br>
-    
     <img id="preview" alt="Preview">
-    <canvas id="canvas"></canvas>
     
-    <div class="footer-text">Quick & Secure Browser-based Conversion</div>
-    <div class="footer-text">Powered By @ Shiv Computer</div>
+    <div class="footer-text">Maximum Quality • Secure Local Conversion</div>
+    <div class="footer-text">© Shiv Computer - Powering Your Design</div>
 </div>
 
+<canvas id="canvas" style="display:none;"></canvas>
+
 <script>
-    // Aapka original logic bina kisi badlav ke
     const upload = document.getElementById('upload');
-    const sizeSelect = document.getElementById('size');
     const convertBtn = document.getElementById('convertBtn');
+    const preview = document.getElementById('preview');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const preview = document.getElementById('preview');
 
+    // Preview image on upload
     upload.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = (event) => {
                 preview.src = event.target.result;
                 preview.style.display = 'inline-block';
-            }
+            };
             reader.readAsDataURL(file);
         }
     });
 
-    convertBtn.addEventListener('click', function() {
+    convertBtn.addEventListener('click', async function() {
         if (!upload.files[0]) {
-            alert("Kripya pehle ek image select karein!");
+            alert("Kripya ek image select karein!");
             return;
         }
 
-        const img = new Image();
-        const reader = new FileReader();
+        // Get all selected sizes from the checkboxes
+        const selectedSizes = Array.from(document.querySelectorAll('#sizeGrid input:checked'))
+                                   .map(cb => parseInt(cb.value))
+                                   .sort((a, b) => a - b);
 
-        reader.onload = function(e) {
-            img.onload = function() {
-                const size = parseInt(sizeSelect.value);
-                
-                canvas.width = size;
-                canvas.height = size;
+        if (selectedSizes.length === 0) {
+            alert("Kam se kam ek size select karein!");
+            return;
+        }
 
-                ctx.clearRect(0, 0, size, size);
-                ctx.drawImage(img, 0, 0, size, size);
+        const file = upload.files[0];
+        const img = await loadImage(URL.createObjectURL(file));
+        
+        const iconImages = [];
 
-                const dataURL = canvas.toDataURL("image/x-icon");
+        // Process each size and convert to PNG Blob
+        for (let size of selectedSizes) {
+            canvas.width = size;
+            canvas.height = size;
+            ctx.clearRect(0, 0, size, size);
+            
+            // Apply high quality scaling
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            ctx.drawImage(img, 0, 0, size, size);
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const buffer = await blob.arrayBuffer();
+            iconImages.push({
+                size: size,
+                buffer: new Uint8Array(buffer)
+            });
+        }
 
-                const link = document.createElement('a');
-                link.download = `favicon-${size}x${size}.ico`;
-                link.href = dataURL;
-                link.click();
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(upload.files[0]);
+        // Create the final binary ICO structure
+        const finalIcoBuffer = createMultiIco(iconImages);
+        const finalBlob = new Blob([finalIcoBuffer], { type: 'image/x-icon' });
+        
+        // Trigger Download
+        const link = document.createElement('a');
+        link.download = `professional-icon-pack.ico`;
+        link.href = URL.createObjectURL(finalBlob);
+        link.click();
     });
+
+    // Helper to load image async
+    function loadImage(url) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.src = url;
+        });
+    }
+
+    /**
+     * Creates a standard Windows Multi-Resolution ICO file
+     * Structure: Header (6 bytes) + Directory Entries (16 bytes per image) + Image Data
+     */
+    function createMultiIco(images) {
+        const count = images.length;
+        const headerSize = 6;
+        const directorySize = count * 16;
+        
+        // Calculate total buffer size needed
+        let totalImageBytes = 0;
+        images.forEach(img => totalImageBytes += img.buffer.length);
+        
+        const fullBuffer = new Uint8Array(headerSize + directorySize + totalImageBytes);
+        const view = new DataView(fullBuffer.buffer);
+
+        // 1. ICONDIR Header
+        view.setUint16(0, 0, true);      // Reserved
+        view.setUint16(2, 1, true);      // Resource Type (1 for ICO)
+        view.setUint16(4, count, true);  // Number of images included
+
+        // 2. ICONDIRENTRY (16 bytes each) & Image Data Writing
+        let currentOffset = headerSize + directorySize;
+
+        images.forEach((img, i) => {
+            const dirBase = headerSize + (i * 16);
+            // In ICO, 256 or larger is stored as 0 in the width/height byte
+            const sizeValue = img.size >= 256 ? 0 : img.size;
+
+            // Write Directory Entry
+            view.setUint8(dirBase + 0, sizeValue);       // Width
+            view.setUint8(dirBase + 1, sizeValue);       // Height
+            view.setUint8(dirBase + 2, 0);               // Color Palette (0 for PNG-based ICOs)
+            view.setUint8(dirBase + 3, 0);               // Reserved
+            view.setUint16(dirBase + 4, 1, true);        // Color Planes
+            view.setUint16(dirBase + 6, 32, true);       // Bits per pixel
+            view.setUint32(dirBase + 8, img.buffer.length, true); // Image Data Size
+            view.setUint32(dirBase + 12, currentOffset, true);    // Image Data Offset from start of file
+
+            // Write the actual image data into the buffer
+            fullBuffer.set(img.buffer, currentOffset);
+            currentOffset += img.buffer.length;
+        });
+
+        return fullBuffer;
+    }
 </script>
 
 </body>
-
 </html>
